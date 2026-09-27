@@ -142,7 +142,7 @@
       "sha256": "43bc4cb345ebbc27fc0140a12185a28cac07d08837a238c09ff711e8a5764318",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=91, fonts=6 (with /ToUnicode=6), text_ops(first pages)=23115, text_chars=176363, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=91, fonts=6 (with /ToUnicode=6), text_ops(first pages)=23115, text_chars=176363, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'ar', 'latin'}, text_ops=0, ActualText=7811, ReversedChars=0, Type0=6, ToUnicode=9, CIDToGIDMap=5, scanned=True, verdict=has /ActualText DISCREPANCY: probe sees fa, filename says ar — human reading required.",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=91, fonts=6 (with /ToUnicode=6), text_ops(first pages)=23115, text_chars=176363, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 91
     },
     {
@@ -159,7 +159,7 @@
       "sha256": "9c4da3bcf0e635b02042f87765a5b0b91a4683969e06a570e60e507f09ff0674",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=62, fonts=4 (with /ToUnicode=4), text_ops(first pages)=5820, text_chars=194953, encrypted=False, scripts=ar/latin, title='إطار منظمة الصحة العالمية للاستجابة للطوارئ: الإجارءات الداخلية للمنظمة'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=62, fonts=4 (with /ToUnicode=4), text_ops(first pages)=5820, text_chars=194953, encrypted=False, scripts=ar/latin, title='إطار منظمة الصحة العالمية للاستجابة للطوارئ: الإجارءات الداخلية للمنظمة'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'ar', 'latin'}, text_ops=0, ActualText=1009, ReversedChars=0, Type0=2, ToUnicode=4, CIDToGIDMap=2, scanned=True, verdict=has /ActualText DISCREPANCY: probe sees fa, filename says ar — human reading required.",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=62, fonts=4 (with /ToUnicode=4), text_ops(first pages)=5820, text_chars=194953, encrypted=False, scripts=ar/latin, title='إطار منظمة الصحة العالمية للاستجابة للطوارئ: الإجارءات الداخلية للمنظمة'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 62
     },
     {
@@ -176,7 +176,7 @@
       "sha256": "cd3047b629248acff674f51f8f97ed0418a09c93611bba69d0c30afecc8c3d4e",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=321, fonts=24 (with /ToUnicode=14), text_ops(first pages)=45069, text_chars=1158544, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=321, fonts=24 (with /ToUnicode=14), text_ops(first pages)=45069, text_chars=1158544, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'ar', 'latin'}, text_ops=45075, ActualText=9188, ReversedChars=0, Type0=0, ToUnicode=0, CIDToGIDMap=0, scanned=False, verdict=has /ActualText DISCREPANCY: probe sees fa, filename says ar — human reading required.",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=321, fonts=24 (with /ToUnicode=14), text_ops(first pages)=45069, text_chars=1158544, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 321
     },
     {
@@ -193,7 +193,7 @@
       "sha256": "866d188dab53df5bee6e93ee229477f31e7f335fd71156b74df73d7caaa34fa0",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=185, fonts=20 (with /ToUnicode=18), text_ops(first pages)=26424, text_chars=691183, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=185, fonts=20 (with /ToUnicode=18), text_ops(first pages)=26424, text_chars=691183, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'he'}, text_ops=0, ActualText=0, ReversedChars=0, Type0=127, ToUnicode=167, CIDToGIDMap=7, scanned=True, verdict=no /ActualText: recovery depends on ToUnicode DISCREPANCY: probe sees fa, filename says ar — human reading required.",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=185, fonts=20 (with /ToUnicode=18), text_ops(first pages)=26424, text_chars=691183, encrypted=False, scripts=ar/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 185
     },
     {
@@ -370,7 +370,7 @@
       "sha256": "324d340fdb320b3ec5cfcae1124515f4d9cbbe3f3f38fae4f00f0107ddc102cb",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=3, fonts=7 (with /ToUnicode=4), text_ops(first pages)=226, text_chars=8498, encrypted=False, scripts=ar/he/latin, title='paper_24.pdf'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=3, fonts=7 (with /ToUnicode=4), text_ops(first pages)=226, text_chars=8498, encrypted=False, scripts=ar/he/latin, title='paper_24.pdf'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=3, scripts={'latin'}, text_ops=411, ActualText=0, ReversedChars=0, Type0=0, ToUnicode=5, CIDToGIDMap=0, scanned=False, verdict=no /ActualText: recovery depends on ToUnicode DISCREPANCY: probe sees fa, filename says he — human reading required.",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=3, fonts=7 (with /ToUnicode=4), text_ops(first pages)=226, text_chars=8498, encrypted=False, scripts=ar/he/latin, title='paper_24.pdf'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 3
     },
     {
@@ -387,7 +387,7 @@
       "sha256": "7cdda7db4b28de7f39e00e8e36a4f7e16bc28c929d052ce880c69751a56d579b",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=29, fonts=9 (with /ToUnicode=0), text_ops(first pages)=714, text_chars=59025, encrypted=False, scripts=latin/ar, title='2023 Mizmor OA file (1).pdf'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=29, fonts=9 (with /ToUnicode=0), text_ops(first pages)=714, text_chars=59025, encrypted=False, scripts=latin/ar, title='2023 Mizmor OA file (1).pdf'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=29, scripts={'ar'}, text_ops=1, ActualText=0, ReversedChars=0, Type0=4, ToUnicode=0, CIDToGIDMap=0, scanned=False, verdict=no /ActualText: recovery depends on ToUnicode DISCREPANCY: probe sees fa, filename says he — human reading required. DISCREPANCY: filename says Hebrew, probe found latin/ar — human reading required.",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=29, fonts=9 (with /ToUnicode=0), text_ops(first pages)=714, text_chars=59025, encrypted=False, scripts=latin/ar, title='2023 Mizmor OA file (1).pdf'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). DISCREPANCY: filename says Hebrew, probe found latin/ar — human reading required.",
       "pages": 29
     },
     {
@@ -404,7 +404,7 @@
       "sha256": "9b5b23ee29b7dfa617bdd02bd7164277a544ce43f2136dcaf00283b58b0b8b01",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=4, fonts=4 (with /ToUnicode=4), text_ops(first pages)=24, text_chars=8706, encrypted=False, scripts=he/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=4, fonts=4 (with /ToUnicode=4), text_ops(first pages)=24, text_chars=8706, encrypted=False, scripts=he/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'latin'}, text_ops=0, ActualText=12, ReversedChars=0, Type0=0, ToUnicode=4, CIDToGIDMap=0, scanned=True, verdict=has /ActualText",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=4, fonts=4 (with /ToUnicode=4), text_ops(first pages)=24, text_chars=8706, encrypted=False, scripts=he/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 4
     },
     {
@@ -421,7 +421,7 @@
       "sha256": "e0d584bb7ba4ff6e6e135ce36176dac4c08193754afd687b0cad9b60b381bbb6",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=44, fonts=11 (with /ToUnicode=10), text_ops(first pages)=2443, text_chars=45124, encrypted=False, scripts=he/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=44, fonts=11 (with /ToUnicode=10), text_ops(first pages)=2443, text_chars=45124, encrypted=False, scripts=he/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'he', 'ar', 'latin'}, text_ops=0, ActualText=260, ReversedChars=0, Type0=14, ToUnicode=23, CIDToGIDMap=6, scanned=True, verdict=has /ActualText",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=44, fonts=11 (with /ToUnicode=10), text_ops(first pages)=2443, text_chars=45124, encrypted=False, scripts=he/latin, title=''. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 44
     },
     {
@@ -438,7 +438,7 @@
       "sha256": "33fbb502647caa6659910611b37dcd8998f64ac3d594685fd17164ceea9055a7",
       "redistributable": false,
       "status": "probed",
-      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=56, fonts=15 (with /ToUnicode=8), text_ops(first pages)=4740, text_chars=35532, encrypted=False, scripts=he/latin, title='דוח פניות ציבור'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=56, fonts=15 (with /ToUnicode=8), text_ops(first pages)=4740, text_chars=35532, encrypted=False, scripts=he/latin, title='דוח פניות ציבור'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Triage: pages=None, scripts={'latin'}, text_ops=4765, ActualText=1186, ReversedChars=0, Type0=0, ToUnicode=0, CIDToGIDMap=0, scanned=False, verdict=has /ActualText",
+      "notes": "Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages=56, fonts=15 (with /ToUnicode=8), text_ops(first pages)=4740, text_chars=35532, encrypted=False, scripts=he/latin, title='דוח פניות ציבור'. Byte-triage numbers (unreliable on these files, kept for the record): Real-world archive file, provenance unresolved (licence unknown — see docs/OPEN-QUESTIONS.md Q-005).",
       "pages": 56
     },
     {

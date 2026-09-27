@@ -123,6 +123,9 @@ def main() -> int:
         row["producer"] = meta_value(entry, "producer") or row.get("producer")
         row["producer_tool"] = meta_value(entry, "creator") or row.get("producer_tool")
         row["status"] = "probed"
+        # Rebuild from the byte-triage base instead of appending: appending made the notes grow
+        # on every run and left a stale discrepancy from a previous pass looking current.
+        base_notes = row["notes"].split(" Verified by pypdf:")[0]
         row["notes"] = (
             f"Real-world archive file, provenance unresolved (licence unknown — see "
             f"docs/OPEN-QUESTIONS.md Q-005). Verified by pypdf: pages={entry.get('pages')}, "
@@ -130,7 +133,7 @@ def main() -> int:
             f"text_ops(first pages)={entry.get('text_ops')}, text_chars={entry.get('text_chars')}, "
             f"encrypted={entry.get('encrypted')}, scripts={'/'.join(scripts) or 'none'}, "
             f"title={meta_value(entry, 'title')!r}. "
-            f"Byte-triage numbers (unreliable on these files, kept for the record): {row['notes']}"
+            f"Byte-triage numbers (unreliable on these files, kept for the record): {base_notes}"
             f"{discrepancy}"
         )
         updated += 1
