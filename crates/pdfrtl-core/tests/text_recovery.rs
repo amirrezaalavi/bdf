@@ -264,3 +264,60 @@ end";
     let (_, reasons) = recover_text(stream.as_bytes(), &empty);
     assert!(reasons.contains(&Reason::UnsupportedBrokenToUnicode));
 }
+
+/// The RTL/LTR boundary line: this is where run-order reconstruction earns its keep.
+/// If any fixture were special-cased, this one would be first to break.
+#[test]
+fn chrome_mixed_fa_en_recovers_the_rtl_run_first() {
+    let pages =
+        pdfrtl_core::extract(Path::new(&format!("{CHROME}/mixed-fa-en.pdf"))).expect("loads");
+    let text = &pages[0].text;
+    let expected = "گزارش فنی pdfrtl v0.1 — ISO 32000-1 §9.7.4.3 — 42%";
+    assert_eq!(first_line(text), expected, "page text was {text:?}");
+    assert!(
+        pages[0].reasons.contains(&Reason::BidiReordered),
+        "run order was reconstructed: {:?}",
+        pages[0].reasons
+    );
+}
+
+/// The LTR control stores logical order already: pass it through, one clean reason.
+#[test]
+fn chrome_en_control_is_passed_through_untouched() {
+    let pages =
+        pdfrtl_core::extract(Path::new(&format!("{CHROME}/en-control.pdf"))).expect("loads");
+    let text = &pages[0].text;
+    assert_eq!(
+        first_line(text),
+        "pdfrtl v0.1 — ISO 32000-1",
+        "page text was {text:?}"
+    );
+    assert_eq!(pages[0].reasons, vec![Reason::ToUnicodeLogical]);
+}
+
+/// Type1 simple fonts encode one byte per code (hebrew-2.pdf): the codespacerange
+/// width must drive decoding instead of a guessed 2, and garbage CMaps stay total.
+#[test]
+fn one_byte_codespace_decodes_simple_font_codes() {
+    let cmap = "1 begincodespacerange\n<00> <FF>\nendcodespacerange\n2 beginbfchar\n<4E> <05D0>\n<61> <0041>\nendbfchar";
+    let parsed = ToUnicode::parse(cmap.as_bytes());
+    assert_eq!(
+        parsed.code_len(),
+        1,
+        "one byte per code, from codespacerange"
+    );
+    assert_eq!(parsed.get(0x4E), Some("\u{05D0}"));
+
+    // One-byte stream: each byte is its own code, each code one unit.
+    let stream = "BT /F1 12 Tf 10 700 Td <4E61> Tj ET";
+    let fonts = fonts(b"F1", cmap);
+    let (text, reasons) = recover_text(stream.as_bytes(), &fonts);
+    assert_eq!(text, "\u{05D0}A");
+    assert!(
+        !reasons.iter().any(|reason| reason.is_unsupported()),
+        "{reasons:?}"
+    );
+
+    // Garbage in, empty map out — total, no panic, no guess.
+    assert!(ToUnicode::parse(b"\x00\x01 not-a-cmap << [( \xff").is_empty());
+}
