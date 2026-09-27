@@ -17,6 +17,22 @@ Five-variant experiment: Latin ActualText extracts fine (Hello), Persian ActualT
 
 *recorded:* 2026-09-27T12:55:37Z
 
+### Chrome RTL output: /ReversedChars + per-cluster /ActualText in visual order
+
+Chrome wraps the RTL run in /ReversedChars BMC..EMC, emits one Tj per cluster, and attaches /ActualText per cluster with text in logical order inside the cluster (ligature lam-alef = U+0644 U+0627). Some clusters carry no ActualText and must be decoded per CID via ToUnicode. Inversion rule: build units (ActualText cluster = 1 unit, un-annotated Tj = 1 unit per CID), then reverse the unit order inside a /ReversedChars run. Verified on fa-plain: units [ا ی ن د ␠ م لا س] reversed -> سلام دنیا.
+
+*source:* docs/problems/0002-chrome-visual-order-actualtext-structure.md
+
+*recorded:* 2026-09-27T13:26:58Z
+
+### poppler returns only Latin output for real Chrome Persian PDFs
+
+pdftotext on mixed-fa-en.pdf printed the Latin identifiers and dropped every Persian character, on a real Chrome file (not just our synthetic fixture). poppler is therefore an oracle for LTR and structure only.
+
+*source:* docs/problems/0001, 0002
+
+*recorded:* 2026-09-27T13:26:58Z
+
 ## lesson
 
 ### Storage order is producer-dependent
