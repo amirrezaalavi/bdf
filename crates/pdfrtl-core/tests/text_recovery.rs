@@ -92,7 +92,16 @@ fn problem_0002_stream_recovers_salam_donya_by_unit_reversal() {
     let units = stream_units(PROBLEM_0002_STREAM.as_bytes(), &fonts);
     assert_eq!(
         units,
-        vec!["\u{0627}", "\u{06CC}", "\u{0646}", "\u{062F}", " ", "\u{0645}", "\u{0644}\u{0627}", "\u{0633}"],
+        vec![
+            "\u{0627}",
+            "\u{06CC}",
+            "\u{0646}",
+            "\u{062F}",
+            " ",
+            "\u{0645}",
+            "\u{0644}\u{0627}",
+            "\u{0633}"
+        ],
         "the 3-CID run must split into one unit per CID (د, space, م) and لا must stay whole"
     );
     assert!(
@@ -105,12 +114,20 @@ fn problem_0002_stream_recovers_salam_donya_by_unit_reversal() {
     let expected = "سلام دنیا";
     assert_eq!(text, expected);
 
-    // 3. Why unit-level: a whole-string reversal of the visual text corrupts both the
-    //    ligature and the word space, so it must NOT equal the answer.
+    // 3. Why unit-level: a whole-string reversal of the visual text splits the lam-alef
+    //    into ا+ل and yields "سالم دنیا" — a different, plausible-looking Persian word.
+    //    That is the silent bug: wrong text, no error, no visible damage.
     let visual: String = units.concat();
     let string_reversal: String = visual.chars().rev().collect();
-    assert_eq!(string_reversal, "سلا مدنیا");
-    assert_ne!(string_reversal, expected, "string reversal is the classic silent bug");
+    assert_eq!(string_reversal, "سالم دنیا");
+    assert_ne!(
+        string_reversal, expected,
+        "string reversal is the classic silent bug"
+    );
+    assert!(
+        expected.starts_with("\u{0633}\u{0644}\u{0627}"),
+        "the answer keeps لا whole where string reversal would not"
+    );
     // …while reversing the unit ORDER reproduces it exactly.
     let unit_reversal: String = units.iter().rev().cloned().collect();
     assert_eq!(unit_reversal, expected, "reversal happens at unit level");
@@ -134,7 +151,10 @@ fn chrome_fa_plain_matches_sources() {
     let expected = "سلام دنیا";
     assert_eq!(first_line(text), expected, "page text was {text:?}");
     assert!(text.contains(expected));
-    assert!(text.contains("\u{0644}\u{0627}"), "lam-alef survives: {text:?}");
+    assert!(
+        text.contains("\u{0644}\u{0627}"),
+        "lam-alef survives: {text:?}"
+    );
     assert!(pages[0].reasons.contains(&Reason::ActualText));
     assert!(pages[0].reasons.contains(&Reason::ProducerVisualOrderKnown));
     assert!(pages[0].reasons.contains(&Reason::ToUnicodeLogical));
@@ -147,17 +167,25 @@ fn chrome_fa_plain_matches_sources() {
 
 #[test]
 fn chrome_fa_zwnj_word_keeps_u200c() {
-    let pages = pdfrtl_core::extract(Path::new(&format!("{CHROME}/fa-zwnj-word.pdf"))).expect("loads");
+    let pages =
+        pdfrtl_core::extract(Path::new(&format!("{CHROME}/fa-zwnj-word.pdf"))).expect("loads");
     let text = &pages[0].text;
     let expected = "می\u{200C}روم";
-    assert!(expected.contains('\u{200c}'), "the guard against a lost ZWNJ");
+    assert!(
+        expected.contains('\u{200c}'),
+        "the guard against a lost ZWNJ"
+    );
     assert_eq!(first_line(text), expected, "page text was {text:?}");
     assert!(
         text.contains('\u{200c}'),
         "U+200C must survive extraction: {:?}",
         text.chars().map(|c| c as u32).collect::<Vec<_>>()
     );
-    assert_ne!(first_line(text), "میروم", "ZWNJ loss is invisible to the eye");
+    assert_ne!(
+        first_line(text),
+        "میروم",
+        "ZWNJ loss is invisible to the eye"
+    );
 }
 
 #[test]
@@ -166,8 +194,14 @@ fn chrome_fa_zwnj_lamalef_matches_sources_with_the_date_last() {
         pdfrtl_core::extract(Path::new(&format!("{CHROME}/fa-zwnj-lamalef.pdf"))).expect("loads");
     let text = &pages[0].text;
     let expected = "نیم\u{200C}فاصله و لا اله الا الله — ۱۴۰۳/۰۵/۱۲";
-    assert!(expected.contains('\u{200c}'), "the guard against a lost ZWNJ");
-    assert!(expected.contains('\u{0644}'), "lam-alef in the source sentence");
+    assert!(
+        expected.contains('\u{200c}'),
+        "the guard against a lost ZWNJ"
+    );
+    assert!(
+        expected.contains('\u{0644}'),
+        "lam-alef in the source sentence"
+    );
     assert_eq!(first_line(text), expected, "page text was {text:?}");
     assert!(text.contains('\u{200c}'), "U+200C survives: {text:?}");
     // The date is a separate content-stream block drawn to the LEFT of the RTL run, so
@@ -182,11 +216,14 @@ fn chrome_fa_zwnj_lamalef_matches_sources_with_the_date_last() {
 /// docs/problems/0001 P1: the synthetic /ActualText fixture must come back verbatim.
 #[test]
 fn synthetic_actualtext_fa_returns_both_lines() {
-    let pages =
-        pdfrtl_core::extract(Path::new("../../corpus/raw/synthetic/actualtext-fa.pdf")).expect("loads");
+    let pages = pdfrtl_core::extract(Path::new("../../corpus/raw/synthetic/actualtext-fa.pdf"))
+        .expect("loads");
     let text = &pages[0].text;
     let expected = "سلام دنیا\nمی\u{200C}روم";
-    assert!(expected.contains('\u{200c}'), "the guard against a lost ZWNJ");
+    assert!(
+        expected.contains('\u{200c}'),
+        "the guard against a lost ZWNJ"
+    );
     assert_eq!(text, expected, "page text was {text:?}");
     assert_eq!(pages[0].reasons, vec![Reason::ActualText]);
 }
@@ -217,7 +254,10 @@ end";
         "undecodable CID must be reported as unsupported_broken_to_unicode, got {reasons:?}"
     );
     assert!(reasons.iter().any(|r| r.is_unsupported()));
-    assert_eq!(text, "", "nothing may be invented for a glyph we cannot decode");
+    assert_eq!(
+        text, "",
+        "nothing may be invented for a glyph we cannot decode"
+    );
 
     // Missing ToUnicode entirely is the same refusal (the Reason's own definition).
     let empty: HashMap<Vec<u8>, ToUnicode> = HashMap::new();

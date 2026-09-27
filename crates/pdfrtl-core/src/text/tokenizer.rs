@@ -46,7 +46,10 @@ fn is_ws(b: u8) -> bool {
 }
 
 fn is_delim(b: u8) -> bool {
-    matches!(b, b'(' | b')' | b'<' | b'>' | b'[' | b']' | b'{' | b'}' | b'/' | b'%')
+    matches!(
+        b,
+        b'(' | b')' | b'<' | b'>' | b'[' | b']' | b'{' | b'}' | b'/' | b'%'
+    )
 }
 
 fn hex_val(b: u8) -> Option<u8> {
@@ -311,7 +314,8 @@ pub fn parse_value(tokens: &[Token], i: &mut usize) -> Option<Value> {
             Some(Value::Str(s.clone()))
         }
         Token::Num(n) => {
-            if let (Some(Token::Num(m)), Some(Token::Op(op))) = (tokens.get(*i + 1), tokens.get(*i + 2))
+            if let (Some(Token::Num(m)), Some(Token::Op(op))) =
+                (tokens.get(*i + 1), tokens.get(*i + 2))
             {
                 if op.as_slice() == b"R" {
                     let (a, b) = (to_u32(*n), to_u32(*m));

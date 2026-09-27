@@ -164,7 +164,7 @@ fn utf16be_to_string(bytes: &[u8]) -> Option<String> {
 }
 
 fn decode_units(bytes: &[u8]) -> Option<Vec<u16>> {
-    if bytes.len() % 2 != 0 {
+    if !bytes.len().is_multiple_of(2) {
         return None;
     }
     Some(
