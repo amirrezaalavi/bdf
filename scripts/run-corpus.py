@@ -143,8 +143,13 @@ def run_fixture(binary: str, row: dict, expected: dict | None) -> Result:
                       reason, proc.returncode)
 
     if expected and expected.get("text") is not None:
-        # P1: extraction equality. Until `extract` exists this branch is never taken,
-        # and that is visible in the report as a fixture counted as inspect-only.
+        # Extraction equality. Guarded by `verified_by`: expected text is ground truth only
+        # once a human has verified it (corpus/AGENT.md rule 5). Until then the report says
+        # so out loud instead of silently asserting an agent's guess.
+        if not expected.get("verified_by"):
+            return Result(fixture_id, row["path"], "skip",
+                          "expected text present but unverified by a human — not asserted",
+                          reason, proc.returncode)
         proc_ex = subprocess.run([binary, "--json", "extract", str(path)],
                                  capture_output=True, text=True, cwd=ROOT)
         if proc_ex.returncode != 0:

@@ -16,6 +16,21 @@
       "redistributable": true,
       "status": "expected-recorded",
       "notes": "Hand-generated deterministic baseline: one page, Helvetica, 'Hello pdfrtl'. Used to prove the toolchain, the CLI contract and the oracle path before any RTL work."
+    },
+    {
+      "id": "synthetic-actualtext-fa-001",
+      "path": "corpus/raw/synthetic/actualtext-fa.pdf",
+      "language": "fa",
+      "script": "Arab",
+      "direction": "rtl",
+      "producer": "pdfrtl-gen",
+      "producer_class": "logical",
+      "licence": "own-work",
+      "source_url": null,
+      "sha256": "0d6ac126911261200bbd011fc795aa11a6b7cab2d088cbf1ec1c6710524438e5",
+      "redistributable": true,
+      "status": "unverified",
+      "notes": "Hand-built fixture: Persian logical text in /ActualText over Latin glyphs. producer_class=logical because the /ActualText payload IS the logical string (no visual reordering involved)."
     }
   ]
 }

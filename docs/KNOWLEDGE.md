@@ -7,6 +7,16 @@ then `python3 scripts/db.py export` and commit both this file and the change.
 This is how the *why* survives: the SQLite file is the working index, this file is
 the record that travels with the repository.
 
+## finding
+
+### pdftotext substitutes /ActualText but silently drops Arabic-script text
+
+Five-variant experiment: Latin ActualText extracts fine (Hello), Persian ActualText extracts empty, and in a two-run page the Persian run simply vanishes. Mechanism works, script is dropped because the substituted characters are emitted through the font encoding (Helvetica cannot map Arabic). Consequence: poppler is an oracle for LTR and structure only, never for RTL; PDFium is required for RTL verification.
+
+*source:* docs/problems/0001-pdftotext-drops-rtl-actualtext.md
+
+*recorded:* 2026-09-27T12:55:37Z
+
 ## lesson
 
 ### Storage order is producer-dependent

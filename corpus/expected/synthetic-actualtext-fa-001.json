@@ -1,0 +1,18 @@
+{
+  "id": "synthetic-actualtext-fa-001",
+  "language": "fa",
+  "script": "Arab",
+  "direction": "rtl",
+  "source": "tools/gen_actualtext_fixture.py",
+  "text": "سلام دنیا\nمی‌روم",
+  "verified_by": null,
+  "verified_at": null,
+  "status": "unverified",
+  "notes": [
+    "Expected text is the /ActualText payload the generator wrote, which is authoritative",
+    "per ISO 32000-1 §14.9.4 — but per corpus/AGENT.md rule 5 an agent may not flip it to",
+    "verified: a human must confirm that this is the text a correct reader should return.",
+    "Contains the lam-alef cluster (سلام) and a semantically meaningful ZWNJ (می‌روم).",
+    "Oracle warning: pdftotext drops this text entirely — see docs/problems/0001."
+  ]
+}

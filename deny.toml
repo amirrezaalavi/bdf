@@ -42,10 +42,12 @@ allow = [
     "OpenSSL",
     "FTL",
 ]
-[[licenses.exceptions]]
-# FreeType licence text is not SPDX-parseable by cargo-deny's classifier.
-name = "freetype-sys"
-allow = ["FTL"]
+
+# Our own crates are AGPL-3.0-or-later *by design* (ADR 0001) and are `publish = false`,
+# so they are exempt from the allow list. Third-party crates are not: if one of ours ever
+# leaks into the graph as a dependency of something, this exemption does not cover it.
+[licenses.private]
+ignore = true
 
 [bans]
 multiple-versions = "warn"
