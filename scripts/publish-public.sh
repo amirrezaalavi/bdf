@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Publish the current working tree to the public mirror repo (github.com/amirrezaalavi/bdf).
+#
+# Why this script exists: the local working copy holds real customer documents (corpus/raw/private)
+# and reports that name them. That material must never reach a public remote, and "remember to
+# exclude it" is not a control. This script is the control: it stages a copy, strips the private
+# fixture rows out of the manifest, runs an explicit deny-list check against the ORIGINAL filenames,
+# and refuses to publish if anything matches.
+#
+# Usage:  bash scripts/publish-public.sh ["commit message"]
+# Env:    MIRROR=<path to the public clone>   (default ~/playground/ai/bdf-snapshot)
+#
+# The mirror clone holds the public repo's git history; only its working tree is rebuilt here.
+set -euo pipefail
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+MIRROR="${MIRROR:-$HOME/playground/ai/bdf-snapshot}"
+# native path for the Windows Python interpreter (MSYS paths are NOT translated for native programs)
+MIRROR_NATIVE="$(cd "$MIRROR" && pwd -W 2>/dev/null || printf '%s' "$MIRROR")"
+REPO_NATIVE="$(cd "$REPO" && pwd -W 2>/dev/null || printf '%s' "$REPO")"
+
+if [ ! -d "$MIRROR/.git" ]; then
+  echo "ERROR: $MIRROR is not a clone of the public repo. Clone it first:" >&2
+  echo "  git clone https://github.com/amirrezaalavi/bdf.git $MIRROR" >&2
+  exit 2
+fi
+
+PY="$REPO/.venv/Scripts/python.exe"
+[ -x "$PY" ] || PY="$(command -v python || command -v python3)"
+
+STAGE="$MIRROR/.stage"
+rm -rf "$STAGE"; mkdir -p "$STAGE"
+echo "== staging working tree (private corpus and reports excluded) =="
+tar -cf - -C "$REPO" \
+    --exclude='./.git' --exclude='./target' --exclude='./target-*' --exclude='./.venv' \
+    --exclude='./corpus/raw/private' --exclude='./reports' \
+    --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.bak-*' . \
+  | tar -xf - -C "$STAGE"
+
+STAGE_NATIVE="$STAGE"
+"$PY" - "$REPO_NATIVE" "$STAGE_NATIVE" <<'PY'
+import json, pathlib, re, sys
+repo, stage = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+
+# 1. private fixtures describe files that are not published: drop their manifest rows
+mp = stage / "corpus/manifest.json"
+if mp.exists():
+    m = json.loads(mp.read_text(encoding="utf-8"))
+    before = len(m["fixtures"])
+    m["fixtures"] = [r for r in m["fixtures"] if not r["path"].startswith("corpus/raw/private/")]
+    mp.write_text(json.dumps(m, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"manifest: {before} -> {len(m['fixtures'])} public rows")
+
+# 2. deny-list = the real private identities, so the check cannot be talked around
+deny = set()
+rmp = repo / "reports/rename-map.json"
+if rmp.exists():
+    for move in json.loads(rmp.read_text(encoding="utf-8")).get("moves", []):
+        for cand in (move.get("old", ""), pathlib.Path(move.get("old", "")).stem):
+            if len(cand) >= 8 and not pathlib.Path(cand).stem.isdigit():
+                deny.add(cand)
+lmp = repo / "corpus/manifest.json"
+if lmp.exists():
+    for row in json.loads(lmp.read_text(encoding="utf-8"))["fixtures"]:
+        for title in re.findall(r"title='([^']*)'", row.get("notes", "")):
+            if len(title.strip()) >= 8:
+                deny.add(title.strip())
+
+hits = []
+for path in stage.rglob("*"):
+    if not path.is_file() or ".git" in path.parts:
+        continue
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        continue
+    hits += [(path.relative_to(stage).as_posix(), needle[:70]) for needle in deny if needle in text]
+
+if hits:
+    print("REFUSING TO PUBLISH - private material found:")
+    for path, needle in hits[:20]:
+        print(f"   {path}  <-  {needle!r}")
+    sys.exit(1)
+print(f"deny-list clean ({len(deny)} private identities checked)")
+PY
+
+echo "== replacing mirror working tree =="
+find "$MIRROR" -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.stage' -exec rm -rf {} +
+cp -a "$STAGE/." "$MIRROR/"
+rm -rf "$STAGE"
+
+cd "$MIRROR"
+git add -A
+if git diff --cached --quiet; then
+  echo "== public mirror already up to date, nothing to publish =="
+  exit 0
+fi
+git commit -q -m "${1:-chore: sync public mirror}"
+git log --oneline -1
+git config credential.helper "store --file=$HOME/.git-credentials-yolka"
+git push origin main 2>&1 | sed 's#//[^@/]*@#//[REDACTED]@#g' | tail -3

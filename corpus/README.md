@@ -70,7 +70,3 @@ Each row in the report must show: fixture id · expected vs actual (pass/fail) �
 `Reason` code returned · the exit code. A fixture we cannot handle is a **pass** if and
 only if it returns the honest `unsupported_*` reason — refusing is a correct outcome,
 guessing is not.
-
----
-
-**Public mirror note:** private-corpus fixtures (real customer documents) are registered and hashed only in the author's local working copy, which is why this repo lists fewer fixtures than `docs/ROADMAP.md` describes. Nothing about those documents is published here: not their names, not their hashes, not their metadata.
