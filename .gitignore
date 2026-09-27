@@ -1,0 +1,13 @@
+/target
+/target-*
+corpus/raw/private/
+corpus/tmp/
+reports/tmp/
+*.sqlite3
+*.db
+.env
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.venv/

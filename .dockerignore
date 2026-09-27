@@ -1,0 +1,10 @@
+.git
+target
+target-*
+corpus/raw/private
+reports/tmp
+db
+.hermes
+*.db
+*.sqlite3
+.env

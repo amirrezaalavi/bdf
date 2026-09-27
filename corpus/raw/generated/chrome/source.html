@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>pdfrtl producer fixture</title>
+<style>
+  @page { size: A4; margin: 18mm; }
+  body { font-family: Tahoma, 'Segoe UI', 'Times New Roman', sans-serif; }
+  section { margin-bottom: 14mm; }
+  .body { font-size: 18pt; line-height: 1.9; }
+  .meta { font-size: 8pt; color: #666; font-family: monospace; direction: ltr; }
+</style>
+</head>
+<body>
+  <section lang="fa" dir="rtl">
+    <div class="body">نیم‌فاصله و لا اله الا الله — ۱۴۰۳/۰۵/۱۲</div>
+    <div class="meta">fa-zwnj-lamalef · fa · rtl</div>
+  </section>
+  <section lang="fa" dir="rtl">
+    <div class="body">می‌روم</div>
+    <div class="meta">fa-zwnj-word · fa · rtl</div>
+  </section>
+  <section lang="fa" dir="rtl">
+    <div class="body">سلام دنیا</div>
+    <div class="meta">fa-plain · fa · rtl</div>
+  </section>
+  <section lang="en" dir="ltr">
+    <div class="body">pdfrtl v0.1 — ISO 32000-1</div>
+    <div class="meta">en-control · en · ltr</div>
+  </section>
+  <section lang="fa" dir="rtl">
+    <div class="body">گزارش فنی pdfrtl v0.1 — ISO 32000-1 §9.7.4.3 — 42%</div>
+    <div class="meta">mixed-fa-en · fa · rtl</div>
+  </section>
+</body>
+</html>
