@@ -83,6 +83,17 @@ def check(manifest: dict) -> int:
             if actual != row["sha256"]:
                 problems.append(f"{rid}: sha256 mismatch (manifest {row['sha256'][:12]}…, "
                                 f"file {actual[:12]}…)")
+
+    # Orphans: a fixture file sitting in corpus/raw/ that no row describes is invisible to
+    # the harness — worse than absent, because it looks like test coverage. This check exists
+    # because an importer once merged two files into one row and the loss was invisible.
+    referenced = {pathlib.PurePosixPath(r.get("path", "")).as_posix() for r in manifest["fixtures"]}
+    raw_root = ROOT / "corpus" / "raw"
+    if raw_root.exists():
+        for candidate in sorted(raw_root.rglob("*.pdf")):
+            rel = candidate.relative_to(ROOT).as_posix()
+            if rel not in referenced:
+                problems.append(f"{rel}: file exists but no manifest row describes it (orphan)")
     if problems:
         for problem in problems:
             print(f"FAIL {problem}", file=sys.stderr)

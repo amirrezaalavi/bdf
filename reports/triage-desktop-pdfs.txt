@@ -1,0 +1,47 @@
+   0.92 MB  p=   ?  -            AT=0    RC=0   T0=11  | 1.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.11 MB  p=   ?  -            AT=0    RC=0   T0=3   | 318.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.13 MB  p=   1  -            AT=0    RC=0   T0=1   | archietectural 1.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.20 MB  p=   ?  latin        AT=0    RC=0   T0=0   | asnad-9 32.pdf  :: plain text, no marked content
+   0.20 MB  p=   ?  latin        AT=0    RC=0   T0=0   | asnad-9 39.pdf  :: plain text, no marked content
+   0.21 MB  p=   ?  latin        AT=0    RC=0   T0=0   | asnad-9 40.pdf  :: plain text, no marked content
+   0.20 MB  p=   ?  latin        AT=0    RC=0   T0=0   | asnad-9 42.pdf  :: plain text, no marked content
+   0.20 MB  p=   ?  latin        AT=0    RC=0   T0=0   | asnad-9 43.pdf  :: plain text, no marked content
+   1.05 MB  p=   ?  -            AT=0    RC=0   T0=2   | B3.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.56 MB  p=   3  latin        AT=0    RC=0   T0=1   | BOM.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.21 MB  p=   1  -            AT=0    RC=0   T0=0   | CamScanner 18-08-2025 12.45.pdf  :: no text layer (scanned/image-only?)
+  12.60 MB  p=   ?  -            AT=0    RC=0   T0=0   | catalog-afsharnejad-1.pdf  :: no text layer (scanned/image-only?)
+   9.63 MB  p=  75  latin        AT=0    RC=0   T0=0   | CDID-7JLM9P_R12_EN.pdf  :: no text layer (scanned/image-only?)
+   0.17 MB  p=   1  -            AT=0    RC=0   T0=1   | chasis roof IT02.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.11 MB  p=   ?  -            AT=0    RC=0   T0=0   | HLD-7-summary-fa.pdf  :: no /ActualText: recovery depends on ToUnicode
+   3.06 MB  p=   ?  -            AT=0    RC=0   T0=0   | Honeywell-Cataluge-Fire-Supression.pdf  :: no text layer (scanned/image-only?)
+   0.59 MB  p=   2  -            AT=0    RC=0   T0=3   | inverter-hybrid-growatt-30KW.pdf  :: no /ActualText: recovery depends on ToUnicode
+   2.56 MB  p=   ?  -            AT=0    RC=0   T0=2   | irancell-expansion-layout.pdf  :: no /ActualText: recovery depends on ToUnicode
+   2.68 MB  p=   9  -            AT=0    RC=0   T0=0   | ketab.pdf  :: no text layer (scanned/image-only?)
+   0.15 MB  p=   2  latin        AT=0    RC=0   T0=6   | lom.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.12 MB  p=   3  -            AT=15   RC=0   T0=3   | Nexans+-+Fibre+Patch+Panels_5.pdf  :: has /ActualText
+   1.37 MB  p=   5  -            AT=0    RC=0   T0=0   | panel-6.pdf  :: no text layer (scanned/image-only?)
+   0.41 MB  p=   ?  -            AT=0    RC=0   T0=6   | panel1.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.26 MB  p=   ?  latin        AT=0    RC=0   T0=9   | PAYVAST1 (2).pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.08 MB  p=   1  -            AT=0    RC=0   T0=1   | POWER ROOM.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.16 MB  p=   1  latin        AT=0    RC=0   T0=5   | Pro2587 شرکت برناراد.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.31 MB  p=   8  latin        AT=0    RC=0   T0=7   | proposal-vB-revised-fa-office.pdf  :: no /ActualText: recovery depends on ToUnicode
+   5.73 MB  p=   ?  -            AT=0    RC=0   T0=27  | REPORT DG REVISION.pdf  :: no /ActualText: recovery depends on ToUnicode
+   1.86 MB  p=   ?  latin        AT=0    RC=0   T0=0   | REPORT IT011 REVISION.pdf  :: plain text, no marked content
+   8.08 MB  p=   ?  -            AT=0    RC=0   T0=33  | REPORT IT02 REVISION.pdf  :: no /ActualText: recovery depends on ToUnicode
+   5.34 MB  p=   ?  -            AT=0    RC=0   T0=32  | REPORT NOC REVISION.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.10 MB  p=   ?  latin        AT=0    RC=0   T0=5   | resume-devops-1.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.96 MB  p=   ?  -            AT=0    RC=0   T0=2   | ROOF2.pdf  :: no /ActualText: recovery depends on ToUnicode
+   1.03 MB  p=  11  latin        AT=0    RC=0   T0=4   | SAD-PRPOPOSAL.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.09 MB  p=   1  -            AT=0    RC=0   T0=1   | SERVER ROOM.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.30 MB  p=   ?  -            AT=0    RC=0   T0=0   | solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf  :: no text layer (scanned/image-only?)
+   0.17 MB  p=   1  -            AT=0    RC=0   T0=1   | SPEC.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.83 MB  p=   ?  latin        AT=356  RC=0   T0=0   | Tabriz Expansion Data Center.pdf  :: has /ActualText
+   0.23 MB  p=   1  -            AT=0    RC=0   T0=1   | ارت.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.06 MB  p=   ?  latin        AT=0    RC=0   T0=5   | فاکتور#.pdf  :: no /ActualText: recovery depends on ToUnicode
+   0.38 MB  p=  10  latin        AT=0    RC=0   T0=9   | قرارداد پشتیبانی و برون_سپاری خدمات فناوری اطلاعات (IT) اصلاح شده.pdf  :: no /ActualText: recovery depends on ToUnicode
+   2.62 MB  p=   ?  -            AT=0    RC=0   T0=2   | پلان اصلی.pdf  :: no /ActualText: recovery depends on ToUnicode
+
+wrote reports\triage-desktop-pdfs.json
+wrote reports\triage-desktop-pdfs.md
+
+triaged 42 file(s)
