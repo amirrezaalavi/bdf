@@ -360,16 +360,19 @@ fn decode_text_string(bytes: &[u8]) -> String {
 }
 
 fn lossy_utf16(bytes: &[u8], big_endian: bool) -> String {
-    let units: Vec<u16> = bytes
-        .chunks_exact(2)
-        .map(|c| {
-            if big_endian {
-                u16::from_be_bytes([c[0], c[1]])
-            } else {
-                u16::from_le_bytes([c[0], c[1]])
-            }
-        })
-        .collect();
+    // Explicit index stepping, not `chunks_exact(2)`: a trailing odd byte is dropped
+    // exactly as `chunks_exact` dropped it — that policy is pinned by a test.
+    let mut units: Vec<u16> = Vec::with_capacity(bytes.len() / 2);
+    let mut i = 0usize;
+    while i + 1 < bytes.len() {
+        let pair = [bytes[i], bytes[i + 1]];
+        units.push(if big_endian {
+            u16::from_be_bytes(pair)
+        } else {
+            u16::from_le_bytes(pair)
+        });
+        i += 2;
+    }
     char::decode_utf16(units)
         .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
         .collect()
@@ -791,5 +794,27 @@ fn resolve<'a>(doc: &'a Document, value: &'a Object) -> Option<&'a Object> {
     match value {
         Object::Reference(id) => doc.get_object(*id).ok(),
         other => Some(other),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::decode_text_string;
+
+    /// UTF-16BE with a BOM and a trailing odd byte: complete pairs decode, the odd
+    /// byte is dropped — never mis-paired with a neighbour (that would shift the
+    /// whole string). Same policy as `chunks_exact(2)` had; pinned here so the
+    /// index-stepped rewrite cannot drift.
+    #[test]
+    fn text_string_bom_with_odd_trailing_byte_drops_only_the_tail() {
+        let be = [0xFE, 0xFF, 0x00, 0x41, 0x00, 0x42, 0x00];
+        assert_eq!(decode_text_string(&be), "AB");
+
+        let le = [0xFF, 0xFE, 0x41, 0x00, 0x42];
+        assert_eq!(
+            decode_text_string(&le),
+            "A",
+            "LE tail byte is dropped, not treated as a high surrogate"
+        );
     }
 }

@@ -167,12 +167,15 @@ fn decode_units(bytes: &[u8]) -> Option<Vec<u16>> {
     if !bytes.len().is_multiple_of(2) {
         return None;
     }
-    Some(
-        bytes
-            .chunks_exact(2)
-            .map(|c| u16::from_be_bytes([c[0], c[1]]))
-            .collect(),
-    )
+    // Explicit index stepping, not `chunks_exact(2)`: the pair read must stay
+    // byte-identical (UTF-16BE) and stable under every clippy version we gate on.
+    let mut units = Vec::with_capacity(bytes.len() / 2);
+    let mut i = 0usize;
+    while i + 1 < bytes.len() {
+        units.push(u16::from_be_bytes([bytes[i], bytes[i + 1]]));
+        i += 2;
+    }
+    Some(units)
 }
 
 /// `<lo> <hi> <dst>`: successive codes map to `dst`, `dst+1`, … (big-endian carry).
@@ -231,5 +234,48 @@ fn add_offset(units: &mut [u16], delta: usize) {
         if carry == 0 {
             break;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Odd-length UTF-16 payloads are refused outright, never half-read: the pair
+    /// walk must stop at the last complete pair (the old `chunks_exact(2)` policy).
+    #[test]
+    fn odd_length_destination_is_refused_not_half_read() {
+        assert_eq!(decode_units(&[0x00]), None, "one byte is not a UTF-16 unit");
+        assert_eq!(decode_units(&[]), Some(Vec::new()), "zero pairs is fine");
+        assert_eq!(decode_units(&[0x00, 0x41]), Some(vec![0x0041]));
+        assert_eq!(
+            decode_units(&[0x00, 0x41, 0x00]),
+            None,
+            "the trailing byte must not become a code unit"
+        );
+
+        // Behavioural form: the entry is dropped, so the code stays undecodable
+        // downstream and surfaces as an explicit unsupported reason.
+        let cmap = "\
+1 begincodespacerange
+<00> <FF>
+endcodespacerange
+1 beginbfchar
+<41> <00414>
+endbfchar";
+        let parsed = ToUnicode::parse(cmap.as_bytes());
+        assert!(
+            parsed.is_empty(),
+            "odd-length destination must be dropped, not mis-decoded"
+        );
+    }
+
+    /// Even-length multi-unit destinations decode exactly, byte for byte.
+    #[test]
+    fn even_length_destination_decodes_pair_by_pair() {
+        assert_eq!(
+            decode_units(&[0x06, 0x44, 0x06, 0x27]),
+            Some(vec![0x0644, 0x0627])
+        );
     }
 }
