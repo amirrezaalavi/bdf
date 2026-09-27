@@ -1,0 +1,29 @@
+# pdfrtl — workspace root.
+# Licence: AGPL-3.0-or-later (see LICENSE). Commercial licensing available (see LICENSE-COMMERCIAL.md).
+# Dependency rule (binding): shipped default features must be permissive-only.
+# Rationale: dual licensing requires us to own the whole work, so we cannot take
+# copyleft (GPL/AGPL/LGPL) dependencies into anything we ship. Enforced by `cargo deny`.
+[workspace]
+resolver = "2"
+members = ["crates/pdfrtl-core", "crates/pdfrtl-cli", "crates/pdfrtl-mcp"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.97"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[workspace.dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+lopdf = "0.45"
+unicode-normalization = "0.1"
+unicode-bidi = "=0.3.18"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

@@ -1,0 +1,18 @@
+[package]
+name = "pdfrtl-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "RTL-first PDF core: document model, text pipeline, extraction, generation"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+lopdf.workspace = true
+unicode-normalization.workspace = true
+unicode-bidi.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

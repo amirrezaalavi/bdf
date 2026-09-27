@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "note": "One row per fixture. See corpus/README.md for field meanings and rules. sha256 is auto-filled for synthetic/generated fixtures by `python3 scripts/run-corpus.py --update-hashes`; downloaded fixtures are verified, never auto-written.",
+  "fixtures": [
+    {
+      "id": "synthetic-minimal-ltr-001",
+      "path": "corpus/raw/synthetic/minimal-ltr.pdf",
+      "language": "en",
+      "script": "Latn",
+      "direction": "ltr",
+      "producer": "pdfrtl-gen",
+      "producer_class": "logical",
+      "licence": "own-work",
+      "source_url": null,
+      "sha256": "4218c9566d3cc4ebb9d3956b15583b7df2022e1bae2b8a9d1ea932d9b7b6f636",
+      "redistributable": true,
+      "status": "expected-recorded",
+      "notes": "Hand-generated deterministic baseline: one page, Helvetica, 'Hello pdfrtl'. Used to prove the toolchain, the CLI contract and the oracle path before any RTL work."
+    }
+  ]
+}

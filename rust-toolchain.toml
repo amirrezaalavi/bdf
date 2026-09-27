@@ -1,0 +1,13 @@
+# Pinned toolchain channel.
+#
+# Rationale: this machine already carries Rust 1.97.1 stable in ~/.rustup.
+# Pinning the *channel* to "stable" avoids downloading a duplicate versioned
+# toolchain (~500 MB) purely for cosmetics. The exact compiler is pinned in two
+# other places instead:
+#   * [workspace.package] rust-version in Cargo.toml  -> MSRV floor (1.97)
+#   * .github/workflows/ci.yml -> dtolnay/rust-toolchain@1.97.1 (exact, in CI)
+# Keep all three in sync when upgrading.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

@@ -1,0 +1,98 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "lane/**"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Deterministic builds; also stops cargo from silently using a different resolver.
+  CARGO_NET_RETRY: "3"
+
+jobs:
+  # The gate. Every other job is advisory; this one blocks a merge.
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.97.1
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy (warnings are errors)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: tests
+        run: cargo test --workspace --locked
+
+  # The licence red line (ADR 0003): shipped features must stay permissive-only.
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+
+  # Anti-slop gate: bans the patterns that make agent-written Rust rot.
+  slop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: no unwrap/expect/todo/dbg in library code
+        run: |
+          set -euo pipefail
+          # unwrap()/expect() outside tests; todo!()/unimplemented!()/dbg! anywhere.
+          if grep -rnE '\b(unwrap|expect)\(' crates/pdfrtl-core/src --include='*.rs' \
+               | grep -v '^\s*//' ; then
+            echo "::error::unwrap()/expect() in library code — return Result instead"
+            exit 1
+          fi
+          if grep -rnE '\b(todo|unimplemented|dbg)!' crates/*/src --include='*.rs'; then
+            echo "::error::todo!/unimplemented!/dbg! left in shipped code"
+            exit 1
+          fi
+          echo "slop gate clean"
+      - name: no stray prints in the core (the CLI owns stdout)
+        run: |
+          set -euo pipefail
+          if grep -rnE '\b(println|print|eprintln)!' crates/pdfrtl-core/src --include='*.rs'; then
+            echo "::error::core must not print; the CLI owns stdout"
+            exit 1
+          fi
+          echo "print gate clean"
+
+  # Dependency ledger must match the resolver: docs/DEPS.md is generated, never typed.
+  deps-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.97.1
+      - name: regenerate DEPS.md and fail if it changed
+        run: |
+          python3 scripts/gen-deps.py
+          git diff --exit-code docs/DEPS.md \
+            || { echo "::error::docs/DEPS.md is stale — run python3 scripts/gen-deps.py"; exit 1; }
+
+  # Corpus harness with independent oracles. Needs the tools, so it is its own job.
+  oracle:
+    runs-on: ubuntu-latest
+    continue-on-error: true # P0: the corpus is still being populated; do not block merges yet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: Swatinem/rust-cache@v2
+      - name: install oracles
+        run: sudo apt-get update && sudo apt-get install -y qpdf poppler-utils ghostscript
+      - name: build cli
+        run: cargo build --locked -p pdfrtl-cli
+      - name: run corpus
+        run: python3 scripts/run-corpus.py --binary target/debug/pdfrtl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: corpus-report
+          path: reports/
