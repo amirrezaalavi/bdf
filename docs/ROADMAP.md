@@ -71,7 +71,7 @@ Status 2026-09-27. Every claim here has an artifact behind it; the evidence is n
 | W8 | **Packaging & product** | not started | |
 | W8.1 | MCP server over the core (the paid-tier surface) | not started | transport decision (Rust SDK vs TS over CLI) still open |
 | W8.2 | Docker image + single static binary per platform (linux x64/arm64, macOS, Windows) | partial | `Dockerfile` exists and is wired to the corpus harness |
-| W8.3 | Release automation, MSRV, `cargo vet`, reproducible builds | not started | |
+| W8.3 | Release automation, MSRV, `cargo vet`, reproducible builds | not started | toolchain now pinned to **1.98.1** on both sides (local + CI) after a gate-drift incident cost 3 red CI runs (`docs/problems/0003`); `rust-version = "1.97"` in Cargo.toml is an **untested** MSRV claim — needs an MSRV job or a bump |
 | W8.4 | Final licence choice (AGPL+commercial vs permissive core) | deferred by you | must land before shipping an SDK, not before the POC |
 | W9 | **Continuity** | ongoing | |
 | W9.1 | Knowledge DB (SQLite+FTS5 + markdown export) | exists | keep feeding: every bug we hit goes in |

@@ -1,13 +1,22 @@
-# Pinned toolchain channel.
+# Pinned toolchain — an EXACT version, never "stable".
 #
-# Rationale: this machine already carries Rust 1.97.1 stable in ~/.rustup.
-# Pinning the *channel* to "stable" avoids downloading a duplicate versioned
-# toolchain (~500 MB) purely for cosmetics. The exact compiler is pinned in two
-# other places instead:
-#   * [workspace.package] rust-version in Cargo.toml  -> MSRV floor (1.97)
-#   * .github/workflows/ci.yml -> dtolnay/rust-toolchain@1.97.1 (exact, in CI)
-# Keep all three in sync when upgrading.
+# Why exact: this file said `channel = "stable"` and the local gate and CI silently
+# became two different compilers — the runner's stable resolved to 1.98.1 while the
+# local rustup stayed at 1.97.1, so clippy's `chunks_exact_to_as_chunks` failed CI on
+# code the local gate called green. The workflow's `dtolnay/rust-toolchain@1.97.1`
+# pin did not help: a rust-toolchain.toml in the repo overrides `rustup default`.
+# A gate that does not run the compilers CI runs is not a gate. See
+# docs/problems/0003-toolchain-drift-made-the-gate-lie.md.
+#
+# The same exact version is pinned in .github/workflows/ci.yml
+# (dtolnay/rust-toolchain@1.98.1) — change both together or the drift returns.
+#   * [workspace.package] rust-version in Cargo.toml is the MSRV floor, a separate
+#     claim about consumers; nothing tests it yet (tracked in docs/ROADMAP.md).
+#
+# Install note: mirrors.aliyun.com/rustup is STALE (advertises 1.96.0 as stable and
+# 404s on the 1.97/1.98 tarballs). Fetch toolchains from static.rust-lang.org, which
+# is reachable from WSL; use the Aliyun mirror for crates only.
 [toolchain]
-channel = "stable"
+channel = "1.98.1"
 components = ["rustfmt", "clippy"]
 profile = "minimal"

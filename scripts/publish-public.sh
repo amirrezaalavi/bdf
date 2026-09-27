@@ -98,4 +98,19 @@ fi
 git commit -q -m "${1:-chore: sync public mirror}"
 git log --oneline -1
 git config credential.helper "store --file=$HOME/.git-credentials-yolka"
-git push origin main 2>&1 | sed 's#//[^@/]*@#//[REDACTED]@#g' | tail -3
+SHA=$(git rev-parse HEAD)
+
+# main only ever receives commits whose CI is green: snapshot branch -> CI -> main.
+# On 2026-09-27 three commits reached main with red CI while every local gate reported
+# green (docs/problems/0003). This ordering makes that impossible rather than unlikely.
+BRANCH="snapshot/$(date -u +%Y%m%dT%H%M%SZ)"
+echo "== pushing $BRANCH (main stays untouched until CI passes) =="
+git push -q origin "HEAD:refs/heads/$BRANCH" 2>&1 | sed 's#//[^@/]*@#//[REDACTED]@#g' | tail -2
+if ! bash "$(dirname "$0")/ci-wait.sh" "$SHA"; then
+  echo "== CI did not pass for $SHA: main is untouched, the snapshot stayed on $BRANCH =="
+  exit 3
+fi
+echo "== CI green: fast-forwarding main =="
+git push -q origin "HEAD:refs/heads/main" 2>&1 | sed 's#//[^@/]*@#//[REDACTED]@#g' | tail -2
+git push -q origin --delete "$BRANCH" 2>/dev/null || true
+echo "== published: origin/main == $SHA =="
