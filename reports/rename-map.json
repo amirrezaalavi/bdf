@@ -1,0 +1,543 @@
+{
+  "directory": "corpus\\raw\\private\\desktop-pdfs",
+  "moves": [
+    {
+      "old": "1.pdf",
+      "new": "persian-1.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": true,
+      "slug": "1",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "318.pdf",
+      "new": "persian-2.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": true,
+      "slug": "318",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "archietectural 1.pdf",
+      "new": "persian-archietectural-1.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "archietectural-1",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "asnad-9 32.pdf",
+      "new": "english-asnad-9-32.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "asnad-9-32",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "asnad-9 39.pdf",
+      "new": "english-asnad-9-39.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "asnad-9-39",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "asnad-9 40.pdf",
+      "new": "english-asnad-9-40.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "asnad-9-40",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "asnad-9 42.pdf",
+      "new": "english-asnad-9-42.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "asnad-9-42",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "asnad-9 43.pdf",
+      "new": "english-asnad-9-43.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "asnad-9-43",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "B3.pdf",
+      "new": "unknown-1.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": true,
+      "slug": "b3",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "BOM.pdf",
+      "new": "english-1.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": true,
+      "slug": "bom",
+      "pages": 3,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "CamScanner 18-08-2025 12.45.pdf",
+      "new": "unknown-camscanner-18-08-2025-12-45.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": false,
+      "slug": "camscanner-18-08-2025-12-45",
+      "pages": 1,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "catalog-afsharnejad-1.pdf",
+      "new": "persian-catalog-afsharnejad-1.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "catalog-afsharnejad-1",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "CDID-7JLM9P_R12_EN.pdf",
+      "new": "english-cdid-7jlm9p-r12-en.pdf",
+      "label": "english",
+      "evidence": "filename-marker",
+      "numbered": false,
+      "slug": "cdid-7jlm9p-r12-en",
+      "pages": 75,
+      "text_layer": false,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "chasis roof IT02.pdf",
+      "new": "persian-chasis-roof-it02.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "chasis-roof-it02",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "HLD-7-summary-fa.pdf",
+      "new": "persian-hld-7-summary-fa.pdf",
+      "label": "persian",
+      "evidence": "filename-marker",
+      "numbered": false,
+      "slug": "hld-7-summary-fa",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "Honeywell-Cataluge-Fire-Supression.pdf",
+      "new": "unknown-honeywell-cataluge-fire-supression.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": false,
+      "slug": "honeywell-cataluge-fire-supression",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "inverter-hybrid-growatt-30KW.pdf",
+      "new": "persian-inverter-hybrid-growatt-30kw.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "inverter-hybrid-growatt-30kw",
+      "pages": 2,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "irancell-expansion-layout.pdf",
+      "new": "persian-irancell-expansion-layout.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "irancell-expansion-layout",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "ketab.pdf",
+      "new": "unknown-ketab.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": false,
+      "slug": "ketab",
+      "pages": 9,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "lom.pdf",
+      "new": "persian-3.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": true,
+      "slug": "lom",
+      "pages": 2,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "Nexans+-+Fibre+Patch+Panels_5.pdf",
+      "new": "english-nexans-fibre-patch-panels-5.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "nexans-fibre-patch-panels-5",
+      "pages": 3,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "panel-6.pdf",
+      "new": "persian-panel-6.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "panel-6",
+      "pages": 5,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "panel1.pdf",
+      "new": "persian-panel1.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "panel1",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "PAYVAST1 (2).pdf",
+      "new": "persian-payvast1-2.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "payvast1-2",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "POWER ROOM.pdf",
+      "new": "english-power-room.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "power-room",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "Pro2587 شرکت برناراد.pdf",
+      "new": "persian-4.pdf",
+      "label": "persian",
+      "evidence": "filename-script",
+      "numbered": true,
+      "slug": "",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "proposal-vB-revised-fa-office.pdf",
+      "new": "persian-proposal-vb-revised-fa-office.pdf",
+      "label": "persian",
+      "evidence": "filename-marker",
+      "numbered": false,
+      "slug": "proposal-vb-revised-fa-office",
+      "pages": 8,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "REPORT DG REVISION.pdf",
+      "new": "persian-report-dg-revision.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "report-dg-revision",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "REPORT IT011 REVISION.pdf",
+      "new": "persian-hebrew-report-it011-revision.pdf",
+      "label": "persian-hebrew",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "report-it011-revision",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "REPORT IT02 REVISION.pdf",
+      "new": "persian-report-it02-revision.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "report-it02-revision",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "REPORT NOC REVISION.pdf",
+      "new": "persian-report-noc-revision.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "report-noc-revision",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "resume-devops-1.pdf",
+      "new": "unknown-resume-devops-1.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": false,
+      "slug": "resume-devops-1",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "ROOF2.pdf",
+      "new": "unknown-roof2.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": false,
+      "slug": "roof2",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "SAD-PRPOPOSAL.pdf",
+      "new": "english-sad-prpoposal.pdf",
+      "label": "english",
+      "evidence": "assumed(latin text only)",
+      "numbered": false,
+      "slug": "sad-prpoposal",
+      "pages": 11,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "SERVER ROOM.pdf",
+      "new": "persian-server-room.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "server-room",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf",
+      "new": "unknown-solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf",
+      "label": "unknown",
+      "evidence": "undetermined(no text layer)",
+      "numbered": false,
+      "slug": "solid-cable-3-50-25-afsharnezhad-khorasan-datasheet",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "SPEC.pdf",
+      "new": "persian-spec.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "spec",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "Tabriz Expansion Data Center.pdf",
+      "new": "persian-tabriz-expansion-data-center.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": false,
+      "slug": "tabriz-expansion-data-center",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "ارت.pdf",
+      "new": "persian-5.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": true,
+      "slug": "",
+      "pages": 1,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    },
+    {
+      "old": "فاکتور#.pdf",
+      "new": "persian-6.pdf",
+      "label": "persian",
+      "evidence": "filename-script",
+      "numbered": true,
+      "slug": "",
+      "pages": null,
+      "text_layer": false,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "قرارداد پشتیبانی و برون_سپاری خدمات فناوری اطلاعات (IT) اصلاح شده.pdf",
+      "new": "persian-7.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": true,
+      "slug": "",
+      "pages": 10,
+      "text_layer": true,
+      "scripts": [
+        "latin"
+      ],
+      "skipped": false
+    },
+    {
+      "old": "پلان اصلی.pdf",
+      "new": "persian-8.pdf",
+      "label": "persian",
+      "evidence": "metadata",
+      "numbered": true,
+      "slug": "",
+      "pages": null,
+      "text_layer": true,
+      "scripts": [],
+      "skipped": false
+    }
+  ]
+}

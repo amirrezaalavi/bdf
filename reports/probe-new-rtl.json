@@ -1,0 +1,1049 @@
+{
+  "files": [
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\arabic-1.pdf",
+      "bytes": 1736064,
+      "encrypted": false,
+      "pages": 91,
+      "metadata": {
+        "creationdate": {
+          "value": "D:20250404144156+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Adobe InDesign 20.0 (Windows)",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20250404144203+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Adobe PDF Library 17.0",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "trapped": {
+          "value": "/False",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/C2_0:/Type0": {
+          "pages": 89,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT0:/TrueType": {
+          "pages": 87,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/C2_1:/Type0": {
+          "pages": 75,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT1:/TrueType": {
+          "pages": 63,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT2:/TrueType": {
+          "pages": 50,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/C2_2:/Type0": {
+          "pages": 44,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        }
+      },
+      "tounicode_fonts": 6,
+      "fonts_total": 6,
+      "text_ops": 23115,
+      "text_chars": 176363,
+      "page_text_scripts": [
+        "ar",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\arabic-2.pdf",
+      "bytes": 1095362,
+      "encrypted": false,
+      "pages": 62,
+      "metadata": {
+        "author": {
+          "value": "WHO",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creationdate": {
+          "value": "D:20240521191656+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Adobe InDesign 19.4 (Windows)",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20240521191703+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Adobe PDF Library 17.0",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "title": {
+          "value": "إطار منظمة الصحة العالمية للاستجابة للطوارئ: الإجارءات الداخلية للمنظمة",
+          "scripts": [
+            "ar",
+            "latin"
+          ]
+        },
+        "trapped": {
+          "value": "/False",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/C2_0:/Type0": {
+          "pages": 61,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/T1_0:/Type1": {
+          "pages": 3,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/C2_1:/Type0": {
+          "pages": 59,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT0:/TrueType": {
+          "pages": 39,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        }
+      },
+      "tounicode_fonts": 4,
+      "fonts_total": 4,
+      "text_ops": 5820,
+      "text_chars": 194953,
+      "page_text_scripts": [
+        "ar",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\arabic-3.pdf",
+      "bytes": 14878046,
+      "encrypted": false,
+      "pages": 321,
+      "metadata": {
+        "creationdate": {
+          "value": "D:20211129191408+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Adobe Acrobat Pro 11.0.0",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20211129191408+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Adobe Acrobat Pro 11.0.0",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "title": {
+          "value": "",
+          "scripts": []
+        }
+      },
+      "fonts": {
+        "/C2_0:/Type0": {
+          "pages": 1,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/C2_1:/Type0": {
+          "pages": 1,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F1:/TrueType": {
+          "pages": 6,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F2:/Type0": {
+          "pages": 69,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F1:/Type0": {
+          "pages": 312,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F2:/TrueType": {
+          "pages": 160,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F3:/Type0": {
+          "pages": 79,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F4:/TrueType": {
+          "pages": 202,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F5:/Type0": {
+          "pages": 12,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F6:/TrueType": {
+          "pages": 135,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F7:/TrueType": {
+          "pages": 47,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F8:/TrueType": {
+          "pages": 37,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F9:/TrueType": {
+          "pages": 32,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F10:/Type0": {
+          "pages": 10,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F11:/Type0": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F12:/Type0": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F5:/TrueType": {
+          "pages": 150,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F6:/Type0": {
+          "pages": 16,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F3:/TrueType": {
+          "pages": 177,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F4:/Type0": {
+          "pages": 7,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F7:/Type0": {
+          "pages": 13,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F10:/TrueType": {
+          "pages": 2,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F9:/Type0": {
+          "pages": 8,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F8:/Type0": {
+          "pages": 7,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        }
+      },
+      "tounicode_fonts": 14,
+      "fonts_total": 24,
+      "text_ops": 45069,
+      "text_chars": 1158544,
+      "page_text_scripts": [
+        "ar",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\arabic-4.pdf",
+      "bytes": 3072269,
+      "encrypted": false,
+      "pages": 185,
+      "metadata": {
+        "creationdate": {
+          "value": "D:20221030165404-04'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Adobe InDesign 17.3 (Macintosh)",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20221030170859-04'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Adobe PDF Library 16.0.7",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "trapped": {
+          "value": "/False",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/C2_0:/Type0": {
+          "pages": 158,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/C2_1:/Type0": {
+          "pages": 91,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/C2_2:/Type0": {
+          "pages": 42,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/C2_3:/Type0": {
+          "pages": 24,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/T1_0:/Type1": {
+          "pages": 174,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/T1_1:/Type1": {
+          "pages": 166,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/T1_2:/Type1": {
+          "pages": 158,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/T1_3:/Type1": {
+          "pages": 81,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/T1_4:/Type1": {
+          "pages": 54,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT0:/TrueType": {
+          "pages": 67,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/T1_5:/Type1": {
+          "pages": 32,
+          "tounicode": true,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/TT1:/TrueType": {
+          "pages": 27,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/C2_4:/Type0": {
+          "pages": 6,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT2:/TrueType": {
+          "pages": 3,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT3:/TrueType": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT4:/TrueType": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/T1_6:/Type1": {
+          "pages": 12,
+          "tounicode": true,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/T1_7:/Type1": {
+          "pages": 1,
+          "tounicode": false,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/T1_8:/Type1": {
+          "pages": 1,
+          "tounicode": false,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/C2_5:/Type0": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        }
+      },
+      "tounicode_fonts": 18,
+      "fonts_total": 20,
+      "text_ops": 26424,
+      "text_chars": 691183,
+      "page_text_scripts": [
+        "ar",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\hebrew-1.pdf",
+      "bytes": 412482,
+      "encrypted": false,
+      "pages": 29,
+      "metadata": {
+        "producer": {
+          "value": "Nitro PDF PrimoPDF",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creationdate": {
+          "value": "D:20241211183257-02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20241211183257-02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "title": {
+          "value": "2023 Mizmor OA file (1).pdf",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "PrimoPDF http://www.primopdf.com",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "author": {
+          "value": "ora",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/R11:/Type0": {
+          "pages": 28,
+          "tounicode": false,
+          "encoding": "/Identity-H",
+          "w_array": true
+        },
+        "/R14:/TrueType": {
+          "pages": 29,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/R16:/TrueType": {
+          "pages": 10,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/R18:/Type1": {
+          "pages": 1,
+          "tounicode": false,
+          "encoding": "{'/Type': '/Encoding', '"
+        },
+        "/R28:/Type0": {
+          "pages": 27,
+          "tounicode": false,
+          "encoding": "/Identity-H",
+          "w_array": true
+        },
+        "/R26:/TrueType": {
+          "pages": 28,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/R52:/Type0": {
+          "pages": 17,
+          "tounicode": false,
+          "encoding": "/Identity-H",
+          "w_array": true
+        },
+        "/R67:/Type0": {
+          "pages": 16,
+          "tounicode": false,
+          "encoding": "/Identity-H",
+          "w_array": true
+        },
+        "/R95:/TrueType": {
+          "pages": 10,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        }
+      },
+      "tounicode_fonts": 0,
+      "fonts_total": 9,
+      "text_ops": 714,
+      "text_chars": 59025,
+      "page_text_scripts": [
+        "latin",
+        "ar"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\hebrew-2.pdf",
+      "bytes": 175813,
+      "encrypted": false,
+      "pages": 4,
+      "metadata": {
+        "creationdate": {
+          "value": "D:20231210111303+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Adobe InDesign 18.5 (Windows)",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20231210111303+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Adobe PDF Library 17.0",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "trapped": {
+          "value": "/False",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/T1_0:/Type1": {
+          "pages": 4,
+          "tounicode": true,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/T1_1:/Type1": {
+          "pages": 4,
+          "tounicode": true,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/T1_2:/Type1": {
+          "pages": 3,
+          "tounicode": true,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        },
+        "/T1_3:/Type1": {
+          "pages": 1,
+          "tounicode": true,
+          "encoding": "{'/BaseEncoding': '/WinA"
+        }
+      },
+      "tounicode_fonts": 4,
+      "fonts_total": 4,
+      "text_ops": 24,
+      "text_chars": 8706,
+      "page_text_scripts": [
+        "he",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\hebrew-3.pdf",
+      "bytes": 3195580,
+      "encrypted": false,
+      "pages": 44,
+      "metadata": {
+        "creationdate": {
+          "value": "D:20221207114027+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Adobe InDesign 18.0 (Windows)",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20221208113247+02'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Adobe PDF Library 17.0",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "trapped": {
+          "value": "/False",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/C2_0:/Type0": {
+          "pages": 44,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/C2_1:/Type0": {
+          "pages": 43,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT0:/TrueType": {
+          "pages": 44,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT1:/TrueType": {
+          "pages": 37,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/C2_2:/Type0": {
+          "pages": 29,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT2:/TrueType": {
+          "pages": 33,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT3:/TrueType": {
+          "pages": 24,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT4:/TrueType": {
+          "pages": 20,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/C2_3:/Type0": {
+          "pages": 15,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/TT5:/TrueType": {
+          "pages": 11,
+          "tounicode": true,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/TT6:/TrueType": {
+          "pages": 3,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        }
+      },
+      "tounicode_fonts": 10,
+      "fonts_total": 11,
+      "text_ops": 2443,
+      "text_chars": 45124,
+      "page_text_scripts": [
+        "he",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\hebrew-4.pdf",
+      "bytes": 2571218,
+      "encrypted": false,
+      "pages": 56,
+      "metadata": {
+        "author": {
+          "value": "t3shahai",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creationdate": {
+          "value": "D:20160713113838+03'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Microsoft® Word 2013",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20160724171302+03'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Microsoft® Word 2013",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "title": {
+          "value": "דוח פניות ציבור",
+          "scripts": [
+            "he",
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/F1:/Type0": {
+          "pages": 3,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F2:/Type0": {
+          "pages": 38,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F3:/Type0": {
+          "pages": 55,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F4:/Type0": {
+          "pages": 35,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F10:/TrueType": {
+          "pages": 33,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F11:/Type0": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F6:/TrueType": {
+          "pages": 54,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F7:/Type0": {
+          "pages": 4,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F8:/TrueType": {
+          "pages": 6,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F9:/Type0": {
+          "pages": 19,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        },
+        "/F12:/TrueType": {
+          "pages": 5,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F13:/TrueType": {
+          "pages": 4,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F14:/TrueType": {
+          "pages": 1,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F15:/TrueType": {
+          "pages": 1,
+          "tounicode": false,
+          "encoding": "/WinAnsiEncoding"
+        },
+        "/F20:/Type0": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "/Identity-H",
+          "w_array": true,
+          "cid_to_gid_map": true
+        }
+      },
+      "tounicode_fonts": 8,
+      "fonts_total": 15,
+      "text_ops": 4740,
+      "text_chars": 35532,
+      "page_text_scripts": [
+        "he",
+        "latin"
+      ]
+    },
+    {
+      "path": "corpus\\raw\\private\\desktop-pdfs\\he-eng-ar.pdf",
+      "bytes": 159210,
+      "encrypted": false,
+      "pages": 3,
+      "metadata": {
+        "title": {
+          "value": "paper_24.pdf",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "producer": {
+          "value": "Mac OS X 10.10 Quartz PDFContext",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creator": {
+          "value": "Preview",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "creationdate": {
+          "value": "D:20141116081523Z00'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "moddate": {
+          "value": "D:20141116081523Z00'00'",
+          "scripts": [
+            "latin"
+          ]
+        },
+        "keywords": {
+          "value": "",
+          "scripts": []
+        },
+        "aapl:keywords": {
+          "value": "[]",
+          "scripts": [
+            "latin"
+          ]
+        }
+      },
+      "fonts": {
+        "/TT4:/TrueType": {
+          "pages": 3,
+          "tounicode": false,
+          "encoding": "/MacRomanEncoding"
+        },
+        "/TT1:/TrueType": {
+          "pages": 3,
+          "tounicode": false,
+          "encoding": "/MacRomanEncoding"
+        },
+        "/TT6:/TrueType": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "None"
+        },
+        "/TT8:/TrueType": {
+          "pages": 1,
+          "tounicode": true,
+          "encoding": "None"
+        },
+        "/TT3:/TrueType": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "None"
+        },
+        "/TT9:/TrueType": {
+          "pages": 3,
+          "tounicode": false,
+          "encoding": "/MacRomanEncoding"
+        },
+        "/TT11:/TrueType": {
+          "pages": 2,
+          "tounicode": true,
+          "encoding": "None"
+        }
+      },
+      "tounicode_fonts": 4,
+      "fonts_total": 7,
+      "text_ops": 226,
+      "text_chars": 8498,
+      "page_text_scripts": [
+        "ar",
+        "he",
+        "latin"
+      ]
+    }
+  ]
+}

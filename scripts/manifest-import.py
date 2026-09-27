@@ -72,7 +72,11 @@ def main() -> int:
             continue
 
         counts = entry.get("counts", {})
-        scripts = entry.get("scripts") or []
+        # Same positive-evidence ladder the renamer uses, so a file named persian-*.pdf never
+        # ends up with an `und` language in the manifest.
+        scripts = set(entry.get("scripts") or []) | {
+            s for s in (entry.get("metadata_scripts") or []) if s in ("ar", "he")
+        }
         if "ar" in scripts:
             language, direction = "fa", "rtl"
         elif "he" in scripts:

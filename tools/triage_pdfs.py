@@ -87,6 +87,43 @@ def pdfinfo(path: pathlib.Path) -> dict:
     return info
 
 
+def probe_pdftotext(path: pathlib.Path) -> list[str]:
+    """Which scripts appear in an oracle extraction of the first pages.
+
+    Used only to *classify* a file (what language is this?), never as evidence about ordering
+    or correctness — poppler gets RTL order and /ActualText wrong, but it does report which
+    Unicode blocks a text layer claims to contain, which is exactly the question here.
+    """
+    try:
+        out = subprocess.run(["pdftotext", "-f", "1", "-l", "3", str(path), "-"],
+                             capture_output=True, timeout=120)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    text = out.stdout.decode("utf-8", "ignore")
+    return which_scripts({ord(ch) for ch in text})
+
+
+# Runs of >=3 consecutive RTL codepoints stored as UTF-16BE. A 3-in-a-row match inside
+# compressed data is vanishingly unlikely, so this finds Persian/Hebrew strings in /Info and
+# XMP metadata (and in any uncompressed string) without a false-positive storm.
+UTF16BE_ARABIC_RUN = re.compile(rb"(?:\x06[\x00-\xff]|[\xfb-\xfd][\x50-\xff]|\xfe[\x70-\xff]){4,}")
+UTF16BE_HEBREW_RUN = re.compile(rb"(?:\x05[\x90-\xff]|\xfb[\x1d-\x4f]){5,}")
+
+
+def probe_metadata_scripts(data: bytes) -> list[str]:
+    """Scripts visible in UTF-16BE strings — metadata, not the text layer.
+
+    A *positive* signal only. Absence proves nothing, because the reliable places to look for
+    RTL text (ToUnicode, /ActualText) are compressed and frequently missing altogether.
+    """
+    found: set[int] = set()
+    if UTF16BE_ARABIC_RUN.search(data):
+        found.add(0x0600)
+    if UTF16BE_HEBREW_RUN.search(data):
+        found.add(0x0590)
+    return which_scripts(found)
+
+
 def triage(path: pathlib.Path) -> dict:
     data = path.read_bytes()
     result: dict = {
@@ -164,6 +201,7 @@ def triage(path: pathlib.Path) -> dict:
     counts["actual_text"] = actual_text_in_streams
 
     scripts = which_scripts(codepoints)
+    pdftotext_scripts = probe_pdftotext(path)
     has_font_resources = counts["type0_fonts"] > 0 or counts["tounicode_refs"] > 0
     verdict = []
     if text_ops == 0 and not has_font_resources:
@@ -182,6 +220,8 @@ def triage(path: pathlib.Path) -> dict:
             "counts": counts,
             "text_ops": text_ops,
             "scripts": scripts,
+            "metadata_scripts": probe_metadata_scripts(data),
+            "pdftotext_scripts": pdftotext_scripts,
             "has_text_layer": text_ops > 0,
             "verdict": "; ".join(verdict) or "plain text, no marked content",
         }
