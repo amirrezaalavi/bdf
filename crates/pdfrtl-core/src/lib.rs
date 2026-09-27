@@ -5,6 +5,8 @@
 //! Silent reversal is a bug, never a fallback.
 pub mod docinfo;
 pub mod reasons;
+pub mod text;
 
 pub use docinfo::{inspect, DocInfo};
 pub use reasons::Reason;
+pub use text::{extract, PageText};
