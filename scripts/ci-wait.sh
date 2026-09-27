@@ -12,8 +12,9 @@
 set -uo pipefail
 
 SHA="${1:?usage: ci-wait.sh <sha> [max_seconds]}"
-MAX="${2:-900}"
+MAX="${2:-600}"
 REPO="amirrezaalavi/bdf"
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 CRED=$(grep -m1 'github.com' "$HOME/.git-credentials-yolka" 2>/dev/null || true)
 TOKEN=$(printf '%s' "$CRED" | sed -n 's#.*://[^:]*:\([^@]*\)@.*#\1#p')
@@ -21,7 +22,18 @@ if [ -z "$TOKEN" ]; then
   echo "ci-wait: no GitHub credential in ~/.git-credentials-yolka" >&2
   exit 2
 fi
-PY=$(command -v python3 || command -v python)
+
+# Interpreter choice matters on Windows/MSYS: `python3` can resolve to a stub that does
+# not actually run (the working interpreter on this host is `python`). Pick the first
+# candidate that really executes - preferring the repo's venv - instead of trusting PATH.
+PY=""
+for cand in "$REPO_DIR/.venv/Scripts/python.exe" python python3 py; do
+  case "$cand" in
+    /*) [ -x "$cand" ] || continue ;;
+  esac
+  if "$cand" -c 'import json' >/dev/null 2>&1; then PY="$cand"; break; fi
+done
+[ -n "$PY" ] || { echo "ci-wait: no working Python (tried venv, python, python3, py)" >&2; exit 2; }
 
 deadline=$(( $(date +%s) + MAX ))
 while [ "$(date +%s)" -lt "$deadline" ]; do

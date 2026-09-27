@@ -2,7 +2,10 @@ name: ci
 
 on:
   push:
-    branches: [main, "lane/**"]
+    # "lane/**" is the repo's branch-per-task convention. "snapshot/**" is what
+    # scripts/publish-public.sh pushes so that a commit is judged by CI *before* it can
+    # be fast-forwarded onto main (docs/problems/0003: three commits reached main red).
+    branches: [main, "lane/**", "snapshot/**"]
   pull_request:
 
 env:
