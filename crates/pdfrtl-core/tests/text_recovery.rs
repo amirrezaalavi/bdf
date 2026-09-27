@@ -92,7 +92,16 @@ fn problem_0002_stream_recovers_salam_donya_by_unit_reversal() {
     let units = stream_units(PROBLEM_0002_STREAM.as_bytes(), &fonts);
     assert_eq!(
         units,
-        vec!["\u{0627}", "\u{06CC}", "\u{0646}", "\u{062F}", " ", "\u{0645}", "\u{0644}\u{0627}", "\u{0633}"],
+        vec![
+            "\u{0627}",
+            "\u{06CC}",
+            "\u{0646}",
+            "\u{062F}",
+            " ",
+            "\u{0645}",
+            "\u{0644}\u{0627}",
+            "\u{0633}"
+        ],
         "the 3-CID run must split into one unit per CID (د, space, م) and لا must stay whole"
     );
     assert!(
@@ -105,12 +114,20 @@ fn problem_0002_stream_recovers_salam_donya_by_unit_reversal() {
     let expected = "سلام دنیا";
     assert_eq!(text, expected);
 
-    // 3. Why unit-level: a whole-string reversal of the visual text corrupts both the
-    //    ligature and the word space, so it must NOT equal the answer.
+    // 3. Why unit-level: a whole-string reversal of the visual text splits the lam-alef
+    //    into ا+ل and yields "سالم دنیا" — a different, plausible-looking Persian word.
+    //    That is the silent bug: wrong text, no error, no visible damage.
     let visual: String = units.concat();
     let string_reversal: String = visual.chars().rev().collect();
-    assert_eq!(string_reversal, "سلا مدنیا");
-    assert_ne!(string_reversal, expected, "string reversal is the classic silent bug");
+    assert_eq!(string_reversal, "سالم دنیا");
+    assert_ne!(
+        string_reversal, expected,
+        "string reversal is the classic silent bug"
+    );
+    assert!(
+        expected.starts_with("\u{0633}\u{0644}\u{0627}"),
+        "the answer keeps لا whole where string reversal would not"
+    );
     // …while reversing the unit ORDER reproduces it exactly.
     let unit_reversal: String = units.iter().rev().cloned().collect();
     assert_eq!(unit_reversal, expected, "reversal happens at unit level");
@@ -134,7 +151,10 @@ fn chrome_fa_plain_matches_sources() {
     let expected = "سلام دنیا";
     assert_eq!(first_line(text), expected, "page text was {text:?}");
     assert!(text.contains(expected));
-    assert!(text.contains("\u{0644}\u{0627}"), "lam-alef survives: {text:?}");
+    assert!(
+        text.contains("\u{0644}\u{0627}"),
+        "lam-alef survives: {text:?}"
+    );
     assert!(pages[0].reasons.contains(&Reason::ActualText));
     assert!(pages[0].reasons.contains(&Reason::ProducerVisualOrderKnown));
     assert!(pages[0].reasons.contains(&Reason::ToUnicodeLogical));
@@ -147,17 +167,25 @@ fn chrome_fa_plain_matches_sources() {
 
 #[test]
 fn chrome_fa_zwnj_word_keeps_u200c() {
-    let pages = pdfrtl_core::extract(Path::new(&format!("{CHROME}/fa-zwnj-word.pdf"))).expect("loads");
+    let pages =
+        pdfrtl_core::extract(Path::new(&format!("{CHROME}/fa-zwnj-word.pdf"))).expect("loads");
     let text = &pages[0].text;
     let expected = "می\u{200C}روم";
-    assert!(expected.contains('\u{200c}'), "the guard against a lost ZWNJ");
+    assert!(
+        expected.contains('\u{200c}'),
+        "the guard against a lost ZWNJ"
+    );
     assert_eq!(first_line(text), expected, "page text was {text:?}");
     assert!(
         text.contains('\u{200c}'),
         "U+200C must survive extraction: {:?}",
         text.chars().map(|c| c as u32).collect::<Vec<_>>()
     );
-    assert_ne!(first_line(text), "میروم", "ZWNJ loss is invisible to the eye");
+    assert_ne!(
+        first_line(text),
+        "میروم",
+        "ZWNJ loss is invisible to the eye"
+    );
 }
 
 #[test]
@@ -166,8 +194,14 @@ fn chrome_fa_zwnj_lamalef_matches_sources_with_the_date_last() {
         pdfrtl_core::extract(Path::new(&format!("{CHROME}/fa-zwnj-lamalef.pdf"))).expect("loads");
     let text = &pages[0].text;
     let expected = "نیم\u{200C}فاصله و لا اله الا الله — ۱۴۰۳/۰۵/۱۲";
-    assert!(expected.contains('\u{200c}'), "the guard against a lost ZWNJ");
-    assert!(expected.contains('\u{0644}'), "lam-alef in the source sentence");
+    assert!(
+        expected.contains('\u{200c}'),
+        "the guard against a lost ZWNJ"
+    );
+    assert!(
+        expected.contains('\u{0644}'),
+        "lam-alef in the source sentence"
+    );
     assert_eq!(first_line(text), expected, "page text was {text:?}");
     assert!(text.contains('\u{200c}'), "U+200C survives: {text:?}");
     // The date is a separate content-stream block drawn to the LEFT of the RTL run, so
@@ -182,11 +216,14 @@ fn chrome_fa_zwnj_lamalef_matches_sources_with_the_date_last() {
 /// docs/problems/0001 P1: the synthetic /ActualText fixture must come back verbatim.
 #[test]
 fn synthetic_actualtext_fa_returns_both_lines() {
-    let pages =
-        pdfrtl_core::extract(Path::new("../../corpus/raw/synthetic/actualtext-fa.pdf")).expect("loads");
+    let pages = pdfrtl_core::extract(Path::new("../../corpus/raw/synthetic/actualtext-fa.pdf"))
+        .expect("loads");
     let text = &pages[0].text;
     let expected = "سلام دنیا\nمی\u{200C}روم";
-    assert!(expected.contains('\u{200c}'), "the guard against a lost ZWNJ");
+    assert!(
+        expected.contains('\u{200c}'),
+        "the guard against a lost ZWNJ"
+    );
     assert_eq!(text, expected, "page text was {text:?}");
     assert_eq!(pages[0].reasons, vec![Reason::ActualText]);
 }
@@ -217,10 +254,70 @@ end";
         "undecodable CID must be reported as unsupported_broken_to_unicode, got {reasons:?}"
     );
     assert!(reasons.iter().any(|r| r.is_unsupported()));
-    assert_eq!(text, "", "nothing may be invented for a glyph we cannot decode");
+    assert_eq!(
+        text, "",
+        "nothing may be invented for a glyph we cannot decode"
+    );
 
     // Missing ToUnicode entirely is the same refusal (the Reason's own definition).
     let empty: HashMap<Vec<u8>, ToUnicode> = HashMap::new();
     let (_, reasons) = recover_text(stream.as_bytes(), &empty);
     assert!(reasons.contains(&Reason::UnsupportedBrokenToUnicode));
+}
+
+/// The RTL/LTR boundary line: this is where run-order reconstruction earns its keep.
+/// If any fixture were special-cased, this one would be first to break.
+#[test]
+fn chrome_mixed_fa_en_recovers_the_rtl_run_first() {
+    let pages =
+        pdfrtl_core::extract(Path::new(&format!("{CHROME}/mixed-fa-en.pdf"))).expect("loads");
+    let text = &pages[0].text;
+    let expected = "گزارش فنی pdfrtl v0.1 — ISO 32000-1 §9.7.4.3 — 42%";
+    assert_eq!(first_line(text), expected, "page text was {text:?}");
+    assert!(
+        pages[0].reasons.contains(&Reason::BidiReordered),
+        "run order was reconstructed: {:?}",
+        pages[0].reasons
+    );
+}
+
+/// The LTR control stores logical order already: pass it through, one clean reason.
+#[test]
+fn chrome_en_control_is_passed_through_untouched() {
+    let pages =
+        pdfrtl_core::extract(Path::new(&format!("{CHROME}/en-control.pdf"))).expect("loads");
+    let text = &pages[0].text;
+    assert_eq!(
+        first_line(text),
+        "pdfrtl v0.1 — ISO 32000-1",
+        "page text was {text:?}"
+    );
+    assert_eq!(pages[0].reasons, vec![Reason::ToUnicodeLogical]);
+}
+
+/// Type1 simple fonts encode one byte per code (hebrew-2.pdf): the codespacerange
+/// width must drive decoding instead of a guessed 2, and garbage CMaps stay total.
+#[test]
+fn one_byte_codespace_decodes_simple_font_codes() {
+    let cmap = "1 begincodespacerange\n<00> <FF>\nendcodespacerange\n2 beginbfchar\n<4E> <05D0>\n<61> <0041>\nendbfchar";
+    let parsed = ToUnicode::parse(cmap.as_bytes());
+    assert_eq!(
+        parsed.code_len(),
+        1,
+        "one byte per code, from codespacerange"
+    );
+    assert_eq!(parsed.get(0x4E), Some("\u{05D0}"));
+
+    // One-byte stream: each byte is its own code, each code one unit.
+    let stream = "BT /F1 12 Tf 10 700 Td <4E61> Tj ET";
+    let fonts = fonts(b"F1", cmap);
+    let (text, reasons) = recover_text(stream.as_bytes(), &fonts);
+    assert_eq!(text, "\u{05D0}A");
+    assert!(
+        !reasons.iter().any(|reason| reason.is_unsupported()),
+        "{reasons:?}"
+    );
+
+    // Garbage in, empty map out — total, no panic, no guess.
+    assert!(ToUnicode::parse(b"\x00\x01 not-a-cmap << [( \xff").is_empty());
 }

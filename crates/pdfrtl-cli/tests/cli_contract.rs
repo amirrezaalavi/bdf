@@ -134,6 +134,12 @@ fn extract_json_envelope_carries_logical_text_and_pages() {
             .any(|r| r.as_str() == Some("producer_visual_order_known")),
         "reasons: {reasons:?}"
     );
+    // The em-dash + date ordering is run-level reconstruction, reported as such —
+    // never a fixture-specific special case (docs/problems/0002).
+    assert!(
+        reasons.iter().any(|r| r.as_str() == Some("bidi_reordered")),
+        "run order was reconstructed: {reasons:?}"
+    );
 }
 
 /// Builds the smallest PDF whose only glyph is a CID no font can decode:
@@ -149,7 +155,11 @@ fn write_undecodable_cid_pdf() -> std::path::PathBuf {
         "<< /Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H \
            /DescendantFonts [6 0 R] >>"
             .to_string(),
-        format!("<< /Length {} >>\nstream\n{}\nendstream", content.len(), content),
+        format!(
+            "<< /Length {} >>\nstream\n{}\nendstream",
+            content.len(),
+            content
+        ),
         "<< /Type /Font /Subtype /CIDFontType2 /BaseFont /X \
            /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> \
            /CIDToGIDMap /Identity >>"
@@ -176,7 +186,8 @@ fn write_undecodable_cid_pdf() -> std::path::PathBuf {
         .as_bytes(),
     );
 
-    let path = std::env::temp_dir().join(format!("pdfrtl-undecodable-cid-{}.pdf", std::process::id()));
+    let path =
+        std::env::temp_dir().join(format!("pdfrtl-undecodable-cid-{}.pdf", std::process::id()));
     std::fs::write(&path, pdf).expect("temp pdf is writable");
     path
 }
