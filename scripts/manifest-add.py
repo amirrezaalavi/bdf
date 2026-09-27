@@ -98,7 +98,10 @@ def main() -> int:
     parser.add_argument("--language")
     parser.add_argument("--script")
     parser.add_argument("--direction", choices=["rtl", "ltr", "ttb"])
-    parser.add_argument("--producer")
+    parser.add_argument("--producer", help="exactly what the file's /Info /Producer says")
+    parser.add_argument("--producer-tool",
+                        help="the tool a human used to make it, e.g. 'Microsoft Word 2021' "
+                             "(optional; /Producer often reports an internal engine like 'Skia/PDF m154')")
     parser.add_argument("--producer-class", choices=sorted(CLASSES))
     parser.add_argument("--licence")
     parser.add_argument("--source-url")
@@ -136,6 +139,7 @@ def main() -> int:
         "script": args.script,
         "direction": args.direction,
         "producer": args.producer,
+        "producer_tool": args.producer_tool,
         "producer_class": args.producer_class,
         "licence": args.licence,
         "source_url": args.source_url,

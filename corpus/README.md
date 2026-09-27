@@ -37,7 +37,8 @@ product: a claim without a fixture is a marketing sentence.
   "language": "fa",
   "script": "Arab",
   "direction": "rtl",
-  "producer": "Microsoft Word",
+  "producer": "Skia/PDF m154",
+  "producer_tool": "Google Chrome (headless print-to-pdf)",
   "producer_class": "visual",
   "licence": "own-work",
   "source_url": null,
@@ -48,9 +49,15 @@ product: a claim without a fixture is a marketing sentence.
 }
 ```
 
+`producer` must be **exactly what the file's `/Info /Producer` reports** (verified by the
+harness); `producer_tool` is the human-facing name of the tool that made it. They differ
+often — Chrome reports `Skia/PDF m154`. Recording the tool name in `producer` makes the
+harness fail, which is how this field was cleaned up in the first place.
+
 `producer_class` ∈ `visual` | `logical` | `unknown` — this field is how the extraction
 heuristic is allowed to know anything. It is filled from evidence (a fixture whose
-`/ActualText`/glyph order we inspected), never guessed.
+`/ActualText`/glyph order we inspected), never guessed. See `docs/problems/0002` for the
+worked Chrome example.
 
 ## Running
 
