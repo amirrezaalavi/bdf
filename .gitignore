@@ -11,3 +11,8 @@ Thumbs.db
 __pycache__/
 *.pyc
 .venv/
+# Regenerable, not committed: rendered review pages (scripts/render_pages.py) and the
+# orchestrator's probe output. The recorded findings live in reports/*.md and docs/problems/.
+reports/render/
+reports/verify/
+.verify/

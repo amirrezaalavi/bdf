@@ -23,10 +23,15 @@ Status 2026-09-27. Every claim here has an artifact behind it; the evidence is n
    Chrome marks an RTL run with `/ReversedChars` and annotates clusters with `/ActualText`.
    Your real Persian/Arabic/Hebrew archive does neither — those files carry only `ToUnicode`,
    and 19 of them have no text layer at all. Both paths must exist, and they fail differently.
-2. **No third-party tool can be the reference for RTL.** poppler drops Arabic-script
-   `/ActualText` payloads outright (measured on our own fixtures); PDFium and PDF.js return
-   visual order. Ground truth for logical order is a human reading the page — which is why the
-   vision/render lane exists and why the critical path is *review capacity*, not code volume.
+2. **No third-party tool can be the reference for RTL — measured, not assumed.** On the same
+   five fixtures, against the authority strings: ours is byte-exact, poppler flips every
+   lam-alef pair (`سلام` → `سالم`, and that survives a casual read), Xpdf returns visual order
+   and, on the mixed fa/en line, swaps the runs; PDFium drops ZWNJ and returns per-cluster
+   visual order. Also: the `pdftotext` on this host's `PATH` is **Xpdf 4.00, not poppler** —
+   earlier notes said poppler and were wrong. Full matrix and raw codepoints:
+   `docs/problems/0004-no-oracle-is-byte-faithful-for-rtl.md`. Ground truth is a human or
+   vision read of the rendered page, which is why the critical path is *review capacity*,
+   not code volume.
 3. **"No `ToUnicode`" is a real, common, recoverable case — and it is not an OCR case.**
    `hebrew-1.pdf` is an English volume quoting Hebrew. Its Hebrew sits in `Identity-H` fonts
    with **no `ToUnicode` and no `CIDToGIDMap`**, so the text layer yields garbage codepoints
@@ -50,10 +55,10 @@ Status 2026-09-27. Every claim here has an artifact behind it; the evidence is n
 | W2.3 | Arabic + Hebrew + English in one paragraph (`he-eng-ar.pdf`) | not started | real fixture available |
 | W2.4 | Search/index normalization (NFKC, harakat, ZWNJ for matching only, digit folding, lam-alef collapse, Hebrew niqqud) | **in flight** | `docs/SEARCH-NORMALIZATION.md` will be the rule record; search-side only, never applied to output |
 | W2.5 | Multi-column / table reading order | not started | needs a Reason, never a silent guess |
-| W3 | **Verification lane** | in flight | PDFium pixels + vision review (dispatched) |
-| W3.1 | PDFium pixel goldens (`pypdfium2`), fixed scale, non-blank assertion | **running** | |
-| W3.2 | Rendered PNGs for human/vision review of every RTL fixture | **running** | this is the lane you asked for ("I'll review, you could too, with vision") |
-| W3.3 | Differential oracle report: ours vs PDFium vs poppler, with the documented policy that they can't be *right* for RTL | **running** | |
+| W3 | **Verification lane** | **landed** | PDFium pixels + vision review; the oracle matrix is now recorded in `docs/problems/0004` |
+| W3.1 | PDFium pixel goldens (`pypdfium2`), fixed scale, non-blank assertion | **landed** | `scripts/render_pages.py`. Deviation: the 99.5%-white rule alone rejects correct one-line A4 renders (they measure 99.6–99.9% white), so blank now requires white ≥99.5% **and** <256 ink pixels; verified in both directions (fixture exits 0, empty PDF exits 1) |
+| W3.2 | Rendered PNGs for human/vision review of every RTL fixture | **landed** | 8 pages in `reports/render/*/page-1.png` + `reports/vision-review-2026-09-27.md` checklist. Vision-checked here: `fa-zwnj-lamalef` renders the expected sentence with the ZWNJ, em dash and Persian date in correct visual positions |
+| W3.3 | Differential oracle report | **landed** | `reports/oracle-extraction.md` + the orchestrator's independent matrix in `docs/problems/0004`. Findings: Xpdf≠poppler on this host; lam-alef flipped by poppler; ZWNJ dropped by PDFium; no mode without `-enc UTF-8` returns any RTL |
 | W3.4 | CI: pinned PDFium/qpdf oracles, corpus + goldens on every push | pending | poppler/mutool stay CI-only, never shipped |
 | W4 | **Generation / writer (P3)** | not started | the biggest new-code chunk |
 | W4.1 | Shaping + subsetting: Type0/Identity-H, `ToUnicode`, 65536-entry `CIDToGIDMap`, cluster → `/ActualText` | not started | `CIDToGIDMap` is the al-bdf "Latin glyphs instead of Persian" trap — already documented in the knowledge DB |
@@ -71,7 +76,7 @@ Status 2026-09-27. Every claim here has an artifact behind it; the evidence is n
 | W8 | **Packaging & product** | not started | |
 | W8.1 | MCP server over the core (the paid-tier surface) | not started | transport decision (Rust SDK vs TS over CLI) still open |
 | W8.2 | Docker image + single static binary per platform (linux x64/arm64, macOS, Windows) | partial | `Dockerfile` exists and is wired to the corpus harness |
-| W8.3 | Release automation, MSRV, `cargo vet`, reproducible builds | not started | |
+| W8.3 | Release automation, MSRV, `cargo vet`, reproducible builds | not started | toolchain now pinned to **1.98.1** on both sides (local + CI) after a gate-drift incident cost 3 red CI runs (`docs/problems/0003`); `rust-version = "1.97"` in Cargo.toml is an **untested** MSRV claim — needs an MSRV job or a bump |
 | W8.4 | Final licence choice (AGPL+commercial vs permissive core) | deferred by you | must land before shipping an SDK, not before the POC |
 | W9 | **Continuity** | ongoing | |
 | W9.1 | Knowledge DB (SQLite+FTS5 + markdown export) | exists | keep feeding: every bug we hit goes in |

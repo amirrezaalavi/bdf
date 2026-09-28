@@ -142,6 +142,108 @@ fn extract_json_envelope_carries_logical_text_and_pages() {
     );
 }
 
+/// The same page shape, but ordered: two `/ActualText` clusters on ONE line, no
+/// `/ReversedChars`, and a producer nobody has measured. Nothing in the file says
+/// whether the producer wrote those clusters in reading order or mirrored them —
+/// so the characters may be decoded, but they are NOT text (ADR 0004).
+fn write_unproven_order_pdf() -> std::path::PathBuf {
+    let content = "BT /F1 12 Tf 20 80 Td\n\
+/Span<</ActualText <FEFF0633> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF0644> >> BDC (.) Tj EMC\n\
+ET";
+    let objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 120] /Contents 4 0 R >>".to_string(),
+        format!(
+            "<< /Length {} >>\nstream\n{}\nendstream",
+            content.len(),
+            content
+        ),
+        "<< /Producer (pdfrtl-test) /Creator (pdfrtl-test) >>".to_string(),
+    ];
+
+    let mut pdf: Vec<u8> = b"%PDF-1.4\n".to_vec();
+    let mut offsets = Vec::new();
+    for (i, object) in objects.iter().enumerate() {
+        offsets.push(pdf.len());
+        pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", i + 1, object).as_bytes());
+    }
+    let startxref = pdf.len();
+    let mut table = format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1);
+    for offset in &offsets {
+        table.push_str(&format!("{offset:010} 00000 n \n"));
+    }
+    pdf.extend_from_slice(table.as_bytes());
+    pdf.extend_from_slice(
+        format!(
+            "trailer\n<< /Size {} /Root 1 0 R /Info 5 0 R >>\nstartxref\n{startxref}\n%%EOF\n",
+            objects.len() + 1
+        )
+        .as_bytes(),
+    );
+
+    let path =
+        std::env::temp_dir().join(format!("pdfrtl-unproven-order-{}.pdf", std::process::id()));
+    std::fs::write(&path, pdf).expect("temp pdf is writable");
+    path
+}
+
+/// Decoded but unorderable text must be impossible to mistake for good text:
+/// `data.text` is EMPTY, the page reports `unsupported_visual_order` in its own
+/// reasons, and the characters we did decode survive only as a count.
+#[test]
+fn unproven_order_is_withheld_from_data_text_but_still_counted() {
+    let path = write_unproven_order_pdf();
+    let out = pdfrtl()
+        .args(["--json", "extract"])
+        .arg(&path)
+        .output()
+        .expect("binary runs");
+    let _ = std::fs::remove_file(&path);
+
+    assert_eq!(
+        out.status.code(),
+        Some(i32::from(pdfrtl_cli::exit::EXIT_UNSUPPORTED)),
+        "stderr: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let v: serde_json::Value = serde_json::from_str(&stdout).expect("stdout is JSON");
+
+    assert_eq!(v["ok"], serde_json::json!(false));
+    assert_eq!(
+        v["data"]["text"],
+        serde_json::json!(""),
+        "visual-order characters must never reach data.text: {v}"
+    );
+    assert_eq!(
+        v["data"]["unordered_chars"],
+        serde_json::json!(2),
+        "the 'decoded but cannot order it' number survives: {v}"
+    );
+
+    let page = &v["data"]["pages"][0];
+    assert_eq!(page["ok"], serde_json::json!(false));
+    assert_eq!(page["text"], serde_json::json!(""));
+    assert_eq!(page["unordered_chars"], serde_json::json!(2));
+    let reasons = page["reasons"].as_array().expect("per-page reasons exist");
+    assert!(
+        reasons
+            .iter()
+            .any(|r| r.as_str() == Some("unsupported_visual_order")),
+        "the page names why its own text is withheld: {reasons:?}"
+    );
+    assert!(
+        v["reasons"]
+            .as_array()
+            .expect("reasons is an array")
+            .iter()
+            .any(|r| r.as_str() == Some("unsupported_visual_order")),
+        "file-level reasons repeat it: {v}"
+    );
+}
+
 /// Builds the smallest PDF whose only glyph is a CID no font can decode:
 /// no /ActualText, no /ToUnicode. Refusing (exit 3) is the specified behaviour.
 fn write_undecodable_cid_pdf() -> std::path::PathBuf {

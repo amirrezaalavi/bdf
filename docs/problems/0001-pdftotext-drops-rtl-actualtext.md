@@ -3,6 +3,15 @@
 * **Found:** 2026-09-27, while validating the first RTL fixture
 * **Severity:** high for our *verification strategy*, not a bug in our code
 * **Status:** understood, policy recorded below
+* **CORRECTED 2026-09-27 — two things in this file are wrong, and the fix is in
+  [`0004`](0004-no-oracle-is-byte-faithful-for-rtl.md).** (a) The tool was never poppler:
+  the `pdftotext` on this host's `PATH` is **Xpdf 4.00** (`Copyright 1996-2017 Glyph & Cog,
+  LLC`, `/mingw64/bin/pdftotext`). (b) The cause is not the font — it is the **output
+  charset**. With `-enc UTF-8`, real poppler returns the Persian in logical order (but flips
+  every lam-alef pair: `سلام` → `سالم`) and Xpdf returns it in visual order; without it, both
+  drop RTL characters whatever `LANG`/`LC_ALL` say. Read the correction before quoting
+  anything below: the *conclusion that no extractor can be ground truth* stands, the
+  *reason* does not.
 
 ## What we saw
 
@@ -37,9 +46,14 @@ consequence is what matters.
 
 ## Consequences for this project
 
-1. **`pdftotext` is not an oracle for RTL text.** It may only be used for LTR controls and
-   structural checks (`qpdf --check` style), never as ground truth for Arabic/Persian/Hebrew
-   output. Any RTL comparison against poppler is invalid.
+1. **No `pdftotext` mode is an oracle for RTL text identity.** *(Revised 2026-09-27: the
+   original text here said a RTL comparison against poppler is invalid — too strong, and it
+   named the wrong binary.)* With `-enc UTF-8`, poppler's layout mode **may** be used to
+   cross-check *order* only; it flips every lam-alef pair, so it must never be used to judge
+   text identity. Xpdf's layout mode may not be used for mixed-direction lines (run-level
+   visual order) and any mode without `-enc UTF-8` returns no RTL at all. Also true, and the
+   only thing that survived unchanged: poppler/Xpdf are LTR-control and structural oracles,
+   never ground truth. See `0004`.
 2. **PDFium moves from "nice to have" to required** for RTL verification: pixel goldens
    plus its own text extraction (P2 task). Until then, RTL fixtures are asserted against
    human-verified expected text (see `corpus/AGENT.md` rule 5), not against another tool.

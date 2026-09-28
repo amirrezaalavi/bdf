@@ -2,7 +2,10 @@ name: ci
 
 on:
   push:
-    branches: [main, "lane/**"]
+    # "lane/**" is the repo's branch-per-task convention. "snapshot/**" is what
+    # scripts/publish-public.sh pushes so that a commit is judged by CI *before* it can
+    # be fast-forwarded onto main (docs/problems/0003: three commits reached main red).
+    branches: [main, "lane/**", "snapshot/**"]
   pull_request:
 
 env:
@@ -16,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: dtolnay/rust-toolchain@1.98.1
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
@@ -32,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: dtolnay/rust-toolchain@1.98.1
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
@@ -70,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: dtolnay/rust-toolchain@1.98.1
       - name: regenerate DEPS.md and fail if it changed
         run: |
           python3 scripts/gen-deps.py
@@ -83,7 +86,7 @@ jobs:
     continue-on-error: true # P0: the corpus is still being populated; do not block merges yet
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.97.1
+      - uses: dtolnay/rust-toolchain@1.98.1
       - uses: Swatinem/rust-cache@v2
       - name: install oracles
         run: sudo apt-get update && sudo apt-get install -y qpdf poppler-utils ghostscript

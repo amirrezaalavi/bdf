@@ -146,6 +146,37 @@ def stats(text: str) -> dict:
     }
 
 
+def _reverse_units(chars: str) -> str:
+    """Reverse at character-unit level: a combining mark stays attached to its base."""
+    units: list[str] = []
+    for ch in chars:
+        if units and unicodedata.category(ch) in ("Mn", "Mc", "Me"):
+            units[-1] += ch
+        else:
+            units.append(ch)
+    return "".join(reversed(units))
+
+
+def reverse_bidi(s: str) -> str:
+    """Reversal that respects bidi numbering: maximal runs of digits (AN/EN, e.g. the
+    Persian date (U+06F1 U+06F4 U+06F0 U+06F3 U+002F U+06F0 U+06F5 U+002F U+06F1
+    U+06F2) keep their internal left-to-right order and only move as a
+    block; RTL letter runs reverse. A plain s[::-1] would write the date backwards and
+    misclassify a correctly visual output as scrambled.
+    """
+    runs: list[list] = []
+    for ch in s:
+        is_digit = ch.isdigit()
+        if runs and runs[-1][0] == is_digit:
+            runs[-1][1].append(ch)
+        else:
+            runs.append([is_digit, [ch]])
+    out: list[str] = []
+    for is_digit, chars in reversed(runs):
+        out.append("".join(chars) if is_digit else _reverse_units("".join(chars)))
+    return "".join(out)
+
+
 def classify(expected: str, candidate: str) -> dict:
     """Classify `candidate` against `expected`: LOGICAL (iii) / VISUAL (ii) / ABSENT (i)."""
     exp_rtl, cand_rtl = rtl_only(expected), rtl_only(candidate)
@@ -181,16 +212,26 @@ def classify(expected: str, candidate: str) -> dict:
     if exp_rtl in cand_rtl:
         result.update(verdict="LOGICAL", scheme="(iii)", method="RTL substring, logical order")
         return result
-    if exp_rtl[::-1] in cand_rtl:
-        result.update(verdict="VISUAL", scheme="(ii)",
-                      method="RTL substring, naive reversal")
-        return result
-    if mask_lam_alef(exp_rtl)[::-1] in mask_lam_alef(cand_rtl):
-        # The lam-alef ligature is one glyph, so a correct visual reversal keeps it whole
-        # where the logical string has two codepoints. Compare with it masked out.
-        result.update(verdict="VISUAL", scheme="(ii)",
-                      method="RTL substring, reversal with lam-alef ligature masked")
-        return result
+
+    # Visual order: what your eye reads left-to-right on the rendered page. Try the
+    # variants people actually attempt first (plain reversal), then the two that respect
+    # bidi (digit runs do not reverse) and lam-alef ligature clustering.
+    masked_cand = mask_lam_alef(cand_rtl)
+    variants = (
+        ("RTL substring, naive reversal", lambda s: _reverse_units(s), False),
+        ("RTL substring, naive reversal with lam-alef ligature masked",
+         lambda s: _reverse_units(s), True),
+        ("RTL substring, bidi-aware reversal (digit runs keep order)",
+         reverse_bidi, False),
+        ("RTL substring, bidi-aware reversal with lam-alef ligature masked",
+         reverse_bidi, True),
+    )
+    for label, rev, do_mask in variants:
+        target = mask_lam_alef(exp_rtl) if do_mask else exp_rtl
+        haystack = masked_cand if do_mask else cand_rtl
+        if rev(target) in haystack:
+            result.update(verdict="VISUAL", scheme="(ii)", method=label)
+            return result
 
     missing = Counter(exp_rtl) - Counter(cand_rtl)
     if not missing:
@@ -223,7 +264,9 @@ def compare_relative(reference: str, candidate: str) -> str:
         return "reverse of PDFium's RTL order (ignoring lam-alef ligature clustering)"
     missing = Counter(ref) - Counter(cand)
     if not missing:
-        return "same RTL characters as PDFium but in a third order (neither order matches)"
+        return (f"same RTL characters as PDFium ({len(cand)}) but in a third order "
+                f"(neither order matches at page level; pdfium lines="
+                f"{len(reference.splitlines())}, output lines={len(candidate.splitlines())})")
     return "differs from PDFium; missing: " + ", ".join(
         "U+%04X x%d" % (ord(k), v) for k, v in sorted(missing.items()))
 
@@ -289,23 +332,28 @@ def build_extractors() -> list[dict]:
 def environment_block(pdftotext_path: str | None, pdftotext_banner: str) -> list[str]:
     import locale
     import platform
+    try:
+        from importlib.metadata import version as _dist_version
+        pdfium_pkg = f"pypdfium2 {_dist_version('pypdfium2')}"
+    except Exception as exc:  # noqa: BLE001 - reporting only
+        pdfium_pkg = f"pypdfium2 (version unknown: {type(exc).__name__})"
     lines = [
         "",
         "## Environment (recorded so the numbers can be reproduced)",
         "",
         f"- python: {platform.python_version()} ({sys.executable})",
-        f"- pypdfium2: {getattr(pdfium, 'V_PYPDFIUM2', 'unknown')} "
-        f"(PDFium {getattr(pdfium, 'V_PDFIUM', '?')})",
+        f"- {pdfium_pkg}",
         f"- pdftotext path: {pdftotext_path or 'NOT FOUND'}",
         "- pdftotext banner (verbatim):",
         "",
         "```",
-        pdftotext_banner.rstrip("\n") or "(no banner captured)",
+        pdftotext_banner.replace("\r\n", "\n").replace("\r", "\n").rstrip("\n")
+        or "(no banner captured)",
         "```",
         f"- output charset env: LANG={_env('LANG')!r} LC_ALL={_env('LC_ALL')!r} "
         f"LANGUAGE={_env('LANGUAGE')!r}",
-        "- The banner says Glyph & Cog / the binary self-identifies as Xpdf, not poppler; "
-        "the ids `pdftotext-*` below mean this binary.",
+        "- The banner says Glyph & Cog and the binary self-identifies as Xpdf, not "
+        "poppler; the ids `pdftotext-*` below mean this binary.",
         "",
     ]
     return lines
@@ -510,9 +558,9 @@ def write_report(report_path: pathlib.Path, collected: list[dict], extractors: l
         "without `-enc UTF-8` they run in the binary's default charset, so they are "
         "reported twice: as specified, and with `-enc UTF-8` for a charset-independent "
         "result. The difference between those two runs is the point of this report.")
-    add("- Files with **no authority string** (the real-world PDFs) get "
-        "`n/a` plus a *relative* comparison against PDFium. That comparison shows the two "
-        "tools disagreeing; it does not say which one is right.")
+    add("- Files with **no authority string** (the real-world PDFs and the synthetic "
+        "ActualText fixture) get `n/a` plus a *relative* comparison against PDFium. That "
+        "comparison shows the two tools disagreeing; it does not say which one is right.")
     add("")
     lines += environment_block(pdftotext_path, banner)
 
@@ -555,8 +603,8 @@ def write_report(report_path: pathlib.Path, collected: list[dict], extractors: l
             continue
         add(f"- pages: {entry['page_count']} (extracted: {entry['pages_extracted']})")
         if entry["expect"]:
-            add(f"- expectation: `{md_escape(unescape_expect(entry['expect_raw']), 0)}` = "
-                f"`{md_escape(entry['expect'], 0)}`")
+            add(f"- expectation (--expect): `{entry['expect_raw']}`")
+            add(f"- expectation: `{md_escape(entry['expect'], 0)}`")
             add(f"- expectation codepoints: `{codepoint_dump(entry['expect'], 60)}`")
         else:
             add("- expectation: none (no authority string; see the relative comparison)")
@@ -643,9 +691,16 @@ def write_report(report_path: pathlib.Path, collected: list[dict], extractors: l
                 + " | ".join(cells) + " |")
         add("")
     add("---")
-    add("Reproduce: `./.venv/Scripts/python.exe scripts/oracle_extract.py "
-        + " ".join(e["file"] for e in collected)
-        + " --expect ... --report " + str(report_path).replace("\\", "/") + "`")
+    add("Reproduce (expects are the exact values used for this run):")
+    add("")
+    add("```")
+    add("./.venv/Scripts/python.exe scripts/oracle_extract.py")
+    for entry in collected:
+        add(f"  {entry['file']}")
+    for entry in collected:
+        add(f"  --expect '{entry['expect_raw']}'")
+    add(f"  --pages {args.pages} --report {report_path.as_posix()}")
+    add("```")
     add("")
 
     report_path.parent.mkdir(parents=True, exist_ok=True)

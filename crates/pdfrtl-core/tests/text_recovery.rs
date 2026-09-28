@@ -9,7 +9,7 @@
 //! and a bare `<CID> Tj` is ONE unit PER CID via `ToUnicode`; then the UNIT order is
 //! reversed — never the string.
 
-use pdfrtl_core::text::{recover_text, stream_units, ToUnicode};
+use pdfrtl_core::text::{recover_text, stream_units, Font, ToUnicode};
 use pdfrtl_core::Reason;
 use std::collections::HashMap;
 use std::path::Path;
@@ -72,9 +72,12 @@ CMapName currentdict /CMap defineresource pop
 end
 end"#;
 
-fn fonts(name: &[u8], cmap: &str) -> HashMap<Vec<u8>, ToUnicode> {
+fn fonts(name: &[u8], cmap: &str) -> HashMap<Vec<u8>, Font> {
     let mut map = HashMap::new();
-    map.insert(name.to_vec(), ToUnicode::parse(cmap.as_bytes()));
+    map.insert(
+        name.to_vec(),
+        Font::ToUnicode(ToUnicode::parse(cmap.as_bytes())),
+    );
     map
 }
 
@@ -260,9 +263,103 @@ end";
     );
 
     // Missing ToUnicode entirely is the same refusal (the Reason's own definition).
-    let empty: HashMap<Vec<u8>, ToUnicode> = HashMap::new();
+    let empty: HashMap<Vec<u8>, Font> = HashMap::new();
     let (_, reasons) = recover_text(stream.as_bytes(), &empty);
     assert!(reasons.contains(&Reason::UnsupportedBrokenToUnicode));
+}
+
+/// Build a one-page PDF around a content stream, with a fixed `/Producer`+`/Creator`.
+/// The font is deliberately absent: `/ActualText` short-circuits decoding
+/// (ISO 32000-1 §14.9.4), so nothing else in the file can decide the outcome.
+fn write_probe_pdf(name: &str, producer: &str, content: &str) -> std::path::PathBuf {
+    let objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 120] /Contents 4 0 R >>".to_string(),
+        format!(
+            "<< /Length {} >>\nstream\n{}\nendstream",
+            content.len(),
+            content
+        ),
+        format!("<< /Producer ({producer}) /Creator ({producer}) >>"),
+    ];
+    let mut pdf: Vec<u8> = b"%PDF-1.4\n".to_vec();
+    let mut offsets = Vec::new();
+    for (index, object) in objects.iter().enumerate() {
+        offsets.push(pdf.len());
+        pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes());
+    }
+    let startxref = pdf.len();
+    let mut table = format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1);
+    for offset in &offsets {
+        table.push_str(&format!("{offset:010} 00000 n \n"));
+    }
+    pdf.extend_from_slice(table.as_bytes());
+    pdf.extend_from_slice(
+        format!(
+            "trailer\n<< /Size {} /Root 1 0 R /Info 5 0 R >>\nstartxref\n{startxref}\n%%EOF\n",
+            objects.len() + 1
+        )
+        .as_bytes(),
+    );
+    let path = std::env::temp_dir().join(format!("pdfrtl-{name}-{}.pdf", std::process::id()));
+    std::fs::write(&path, pdf).expect("temp pdf is writable");
+    path
+}
+
+/// `دنیا` stored the way a producer that mirrors its runs stores it: clusters in
+/// VISUAL order (ا ی ن د) inside `/ReversedChars BMC … EMC`, one `/ActualText`
+/// per cluster. The producer, though, is one we have NEVER measured
+/// (`pdfrtl-test`) — the marker, not the fingerprint, is what establishes order
+/// (ADR 0004 rung 2).
+const MIRRORED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
+/ReversedChars BMC\n\
+/Span<</ActualText <FEFF0627> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF06CC> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF0646> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
+EMC\nET";
+
+/// The SAME four clusters with the marker deleted: now nothing in the file says
+/// the producer mirrored them, and the producer is unknown — so the order claim
+/// must be refused, not assumed.
+const UNMARKED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
+/Span<</ActualText <FEFF0627> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF06CC> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF0646> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
+ET";
+
+/// `/ReversedChars` is page-local order evidence; the producer fingerprint is only
+/// consulted for lines that carry none. One marker changes the outcome, and
+/// nothing else about the file does — that is the ladder, isolated.
+#[test]
+fn reversed_chars_marker_is_order_evidence_no_matter_the_producer() {
+    let marked = write_probe_pdf("reversed-marker", "pdfrtl-test", MIRRORED_DONYA);
+    let pages = pdfrtl_core::extract(&marked).expect("loads");
+    let _ = std::fs::remove_file(&marked);
+    assert_eq!(pages[0].text, "دنیا", "unit order reversed, not the string");
+    assert_eq!(
+        pages[0].reasons,
+        vec![Reason::ActualText, Reason::ProducerVisualOrderKnown],
+        "the marker is the evidence; no fingerprint was needed"
+    );
+    assert!(pages[0].is_ordered(), "this page's order IS established");
+
+    let unmarked = write_probe_pdf("unmarked", "pdfrtl-test", UNMARKED_DONYA);
+    let pages = pdfrtl_core::extract(&unmarked).expect("loads");
+    let _ = std::fs::remove_file(&unmarked);
+    assert_eq!(
+        pages[0].reasons,
+        vec![Reason::ActualText, Reason::UnsupportedVisualOrder],
+        "identical clusters without the marker: the order claim must be refused"
+    );
+    assert!(!pages[0].is_ordered());
+    assert_eq!(
+        pages[0].text, "",
+        "unestablished order is withdrawn, never emitted (ADR 0004)"
+    );
+    assert_eq!(pages[0].unordered_chars, 4, "the decoded count survives");
 }
 
 /// The RTL/LTR boundary line: this is where run-order reconstruction earns its keep.

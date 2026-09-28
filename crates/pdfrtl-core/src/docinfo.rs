@@ -4,7 +4,7 @@
 //! encryption flag. Text-level facts (fonts, `ToUnicode`, `/ActualText`) come in P1
 //! and are reported as `Option::None` until then — never as a misleading `false`.
 use anyhow::{Context, Result};
-use lopdf::Document;
+use lopdf::{Document, Object};
 use serde::Serialize;
 use std::path::Path;
 
@@ -22,6 +22,36 @@ pub struct DocInfo {
     pub font_count: Option<u32>,
 }
 
+/// Decode a PDF text string: UTF-16 when it carries a BOM (Microsoft Word writes
+/// its `/Producer` that way), otherwise UTF-8 when the bytes are valid UTF-8,
+/// otherwise Latin-1 — PDF strings are never UTF-8 by spec, and `%C2%AE`-style
+/// lossy decoding is how `Microsoft(R) Word` turned into `Microsoft? Word`.
+fn decode_pdf_text(bytes: &[u8]) -> String {
+    let utf16 = |be: bool| -> String {
+        let mut units = Vec::with_capacity(bytes.len() / 2);
+        let mut i = 2;
+        while i + 1 < bytes.len() {
+            let pair = [bytes[i], bytes[i + 1]];
+            units.push(if be {
+                u16::from_be_bytes(pair)
+            } else {
+                u16::from_le_bytes(pair)
+            });
+            i += 2;
+        }
+        String::from_utf16_lossy(&units)
+    };
+    if bytes.starts_with(&[0xFE, 0xFF]) {
+        utf16(true)
+    } else if bytes.starts_with(&[0xFF, 0xFE]) {
+        utf16(false)
+    } else if let Ok(text) = std::str::from_utf8(bytes) {
+        text.to_string()
+    } else {
+        bytes.iter().map(|&b| b as char).collect()
+    }
+}
+
 /// Inspect a PDF file. Never decodes text; safe on arbitrary input.
 pub fn inspect(path: &Path) -> Result<DocInfo> {
     let doc = Document::load(path).with_context(|| format!("loading {}", path.display()))?;
@@ -37,8 +67,13 @@ pub fn inspect(path: &Path) -> Result<DocInfo> {
     let get_info_str = |key: &[u8]| -> Option<String> {
         info_dict
             .and_then(|d| d.get(key).ok())
+            // Producers routinely store `/Producer` as an indirect reference.
+            .and_then(|o| match o {
+                Object::Reference(id) => doc.get_object(*id).ok(),
+                other => Some(other),
+            })
             .and_then(|o| o.as_str().ok())
-            .map(|bytes| String::from_utf8_lossy(bytes).into_owned())
+            .map(decode_pdf_text)
     };
 
     Ok(DocInfo {
