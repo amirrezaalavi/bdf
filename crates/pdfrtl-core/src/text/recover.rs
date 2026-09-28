@@ -18,8 +18,9 @@
 //!   refused with `Reason::UnsupportedNoEvidence` rather than guessed at.
 use crate::reasons::Reason;
 use crate::text::cmap::ToUnicode;
+use crate::text::encoding::{BaseEncoding, Font, SimpleEncoding};
 use crate::text::tokenizer::{parse_value, tokenize, Token, Value};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use lopdf::{Dictionary, Document, Object, ObjectId};
 use std::collections::HashMap;
 use unicode_bidi::{bidi_class, BidiClass, BidiInfo, Level};
@@ -27,22 +28,76 @@ use unicode_bidi::{bidi_class, BidiClass, BidiInfo, Level};
 /// Decompressed content cap per page: a page is text, not a bomb.
 const MAX_PAGE_CONTENT: usize = 32 * 1024 * 1024;
 
+/// Simple-font subtypes whose byte codes come from `/Encoding` (PDF spec §9.6.6).
+const SIMPLE_FONT_SUBTYPES: &[&[u8]] = &[b"Type1", b"MMType1", b"TrueType"];
+
 /// One page's recovered text plus the reasons that justify its order.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageText {
     pub page: u32,
     pub text: String,
     pub reasons: Vec<Reason>,
+    /// Characters this page DECODED but did not emit, because their order is not
+    /// established. Only the count is kept: the honest "we read it but cannot yet
+    /// order it" number survives, the unorderable characters are not handed out.
+    pub unordered_chars: usize,
+}
+
+impl PageText {
+    /// True when every glyph this page showed was decoded with a justification.
+    /// A page that failed still carries whatever text it did recover — partial
+    /// text is reported, never dropped (ADR 0004).
+    pub fn is_decoded(&self) -> bool {
+        !self.reasons.iter().any(|reason| reason.is_unsupported())
+    }
+
+    /// True when everything in `text` was put in reading order by a named rule.
+    ///
+    /// False for a page carrying `unsupported_visual_order`: its characters were
+    /// decoded but their order was not established, so they live in
+    /// [`PageText::unordered_chars`] and `text` is empty (ADR 0004 — extraction
+    /// returns logical order or it fails; there is no third outcome).
+    pub fn is_ordered(&self) -> bool {
+        !self.reasons.contains(&Reason::UnsupportedVisualOrder)
+    }
+
+    /// Withdraw text whose order was never established. Runs after
+    /// [`settle_rtl_order`], which is what can add the refusal.
+    fn withdraw_unordered(&mut self) {
+        if !self.is_ordered() && !self.text.is_empty() {
+            self.unordered_chars = self.text.chars().count();
+            self.text.clear();
+        }
+    }
 }
 
 /// Recover logical text (and its justification) from one content stream.
-pub fn recover_text(stream: &[u8], fonts: &HashMap<Vec<u8>, ToUnicode>) -> (String, Vec<Reason>) {
+///
+/// No producer fingerprint is applied here — `recover_text` is the pure
+/// content-stream ladder. The producer rung is consulted by
+/// [`extract_document`], which is where `/Producer` is known.
+pub fn recover_text(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> (String, Vec<Reason>) {
+    let recovered = recover(stream, fonts);
+    (recovered.text, recovered.reasons)
+}
+
+/// One page's recovery result: text, its justifications, and the lines that are
+/// still waiting for the producer rung of the ladder.
+struct Recovered {
+    text: String,
+    reasons: Vec<Reason>,
+    /// Indices (into the emitted line order) of lines that carry NO order evidence
+    /// of their own — see [`settle_rtl_order`].
+    pending: Vec<usize>,
+}
+
+fn recover(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Recovered {
     assemble(walk(stream, fonts))
 }
 
 /// The units a producer wrote for one stream, in STREAM (visual) order — before any
 /// recovery. Exposed so tests can pin the unit model itself.
-pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, ToUnicode>) -> Vec<String> {
+pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Vec<String> {
     walk(stream, fonts)
         .units
         .into_iter()
@@ -51,21 +106,271 @@ pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, ToUnicode>) -> Vec<S
 }
 
 /// Recover every page of a loaded document, in page order.
+///
+/// Failures are **page-level**: a content stream we cannot decode costs us that
+/// page (reported as `unsupported_page_content`), never the pages around it.
 pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
     let mut pages = Vec::new();
+    let producer = producer_fingerprint(doc);
     for (page_num, page_id) in doc.get_pages() {
-        let content = doc
-            .get_page_content_with_limit(page_id, MAX_PAGE_CONTENT)
-            .with_context(|| format!("decoding content of page {page_num}"))?;
-        let fonts = collect_fonts(doc, page_id);
-        let (text, reasons) = recover_text(&content, &fonts);
-        pages.push(PageText {
-            page: page_num,
-            text,
-            reasons,
-        });
+        let page = match doc.get_page_content_with_limit(page_id, MAX_PAGE_CONTENT) {
+            Ok(content) => {
+                let fonts = collect_fonts(doc, page_id);
+                let recovered = recover(&content, &fonts);
+                let mut page = PageText {
+                    page: page_num,
+                    text: recovered.text,
+                    reasons: recovered.reasons,
+                    unordered_chars: 0,
+                };
+                settle_rtl_order(&mut page, &producer, &recovered.pending);
+                page.withdraw_unordered();
+                page
+            }
+            // The document loaded; this one page did not. Keep the page in the
+            // result with its own reason instead of failing the whole file.
+            Err(_) => PageText {
+                page: page_num,
+                text: String::new(),
+                reasons: vec![Reason::UnsupportedPageContent],
+                unordered_chars: 0,
+            },
+        };
+        pages.push(page);
     }
     Ok(pages)
+}
+
+/// The document's `/Producer` and `/Creator`, lowercased: the producer fingerprint
+/// used to decide right-to-left order (ADR 0004).
+fn producer_fingerprint(doc: &Document) -> String {
+    let info = doc
+        .trailer
+        .get(b"Info")
+        .ok()
+        .and_then(|obj| obj.as_reference().ok())
+        .and_then(|id| doc.get_object(id).ok())
+        .and_then(|obj| obj.as_dict().ok());
+    let get = |key: &[u8]| -> String {
+        info.and_then(|dict| dict.get(key).ok())
+            .and_then(|obj| obj.as_str().ok())
+            .map(pdf_text_string)
+            .unwrap_or_default()
+    };
+    let mut fingerprint = get(b"Producer");
+    fingerprint.push(' ');
+    fingerprint.push_str(&get(b"Creator"));
+    fingerprint.to_ascii_lowercase()
+}
+
+/// A PDF text string: UTF-16BE when it carries a BOM (Microsoft Word writes its
+/// `/Producer` that way), otherwise bytes read as UTF-8.
+fn pdf_text_string(bytes: &[u8]) -> String {
+    let utf16 = |be: bool| -> String {
+        let mut units = Vec::with_capacity(bytes.len() / 2);
+        let mut i = 2;
+        while i + 1 < bytes.len() {
+            let pair = [bytes[i], bytes[i + 1]];
+            units.push(if be {
+                u16::from_be_bytes(pair)
+            } else {
+                u16::from_le_bytes(pair)
+            });
+            i += 2;
+        }
+        String::from_utf16_lossy(&units)
+    };
+    if bytes.starts_with(&[0xFE, 0xFF]) {
+        utf16(true)
+    } else if bytes.starts_with(&[0xFF, 0xFE]) {
+        utf16(false)
+    } else {
+        String::from_utf8_lossy(bytes).into_owned()
+    }
+}
+
+/// Producers that store right-to-left text in *visual* order. Measured on this
+/// corpus (ADR 0004): every Word/InDesign RTL file decodes to the mirror of what
+/// pdftotext and pypdf call logical, and none of them carries `/ReversedChars`.
+fn stores_visual_order(fingerprint: &str) -> bool {
+    (fingerprint.contains("microsoft") && fingerprint.contains("word"))
+        || fingerprint.contains("indesign")
+}
+
+/// Producers measured to store right-to-left text in *logical* order: Chromium's
+/// fixtures extract byte-exact with no inversion at all (ADR 0004).
+fn stores_logical_order(fingerprint: &str) -> bool {
+    fingerprint.contains("skia") || fingerprint.contains("chrom")
+}
+
+fn is_rtl(ch: char) -> bool {
+    let cp = ch as u32;
+    matches!(
+        cp,
+        0x0590..=0x05FF
+            | 0x0600..=0x06FF
+            | 0x0750..=0x077F
+            | 0x08A0..=0x08FF
+            | 0xFB50..=0xFDFF
+            | 0xFE70..=0xFEFF
+    )
+}
+
+/// Combining marks and bidi/format controls that must stay glued to their base
+/// when a line is inverted — reversing a base away from its marks corrupts the
+/// text just as surely as reversing the line.
+fn is_combining(ch: char) -> bool {
+    let cp = ch as u32;
+    matches!(
+        cp,
+        0x0300..=0x036F
+            | 0x0483..=0x0489
+            | 0x0591..=0x05C7
+            | 0x0610..=0x061A
+            | 0x064B..=0x065F
+            | 0x0670
+            | 0x06D6..=0x06DC
+            | 0x06DF..=0x06E4
+            | 0x06E7..=0x06E8
+            | 0x06EA..=0x06ED
+            | 0x0711
+            | 0x0730..=0x074A
+            | 0x07A6..=0x07B0
+            | 0x0900..=0x0903
+            | 0x093A..=0x094F
+            | 0x0951..=0x0957
+            | 0x0E31
+            | 0x0E34..=0x0E3A
+            | 0x0E47..=0x0E4E
+            | 0x200C..=0x200F
+            | 0x202A..=0x202E
+            | 0x2060..=0x2064
+            | 0xFE00..=0xFE0F
+            | 0xFE20..=0xFE2F
+    )
+}
+
+/// A character that can *start* an embedded left-to-right run: Latin/Greek
+/// letters and digits (never a right-to-left one).
+fn ltr_start(ch: char) -> bool {
+    ch.is_alphanumeric() && !is_rtl(ch) && (ch as u32) < 0x0900
+}
+
+/// Characters allowed *inside* an LTR run: the ASCII punctuation that occurs in
+/// Latin tokens (URLs, decimals, dates).
+fn ltr_run_char(ch: char) -> bool {
+    matches!(
+        ch,
+        '.' | ',' | ':' | '/' | '-' | '_' | '@' | '#' | '%' | '?' | '!' | '&' | '=' | '+' | '\''
+    ) || ltr_start(ch)
+}
+
+/// A line worth settling: at least two right-to-left letters (a stray mark is not
+/// evidence of an RTL run).
+fn has_rtl_run(text: &str) -> bool {
+    text.chars().filter(|ch| is_rtl(*ch)).count() >= 2
+}
+
+/// Visual -> logical for one line of base-direction RTL: reverse the line in
+/// clusters (base + combining marks), then put embedded left-to-right runs back
+/// into reading order. This is the inverse of the UAX #9 L2 reversal the renderer
+/// performed when it drew the line left to right.
+fn visual_to_logical(line: &str) -> String {
+    let chars: Vec<char> = line.chars().collect();
+    if !chars.iter().any(|ch| is_rtl(*ch)) {
+        return line.to_string();
+    }
+
+    // Cluster: a base character with the marks/format controls glued to it.
+    let mut clusters: Vec<Vec<char>> = Vec::new();
+    let mut i = 0;
+    while i < chars.len() {
+        let mut j = i + 1;
+        while j < chars.len() && is_combining(chars[j]) {
+            j += 1;
+        }
+        clusters.push(chars[i..j].to_vec());
+        i = j;
+    }
+    clusters.reverse();
+
+    let starts_ltr = |cluster: &[char]| cluster.first().is_some_and(|ch| ltr_start(*ch));
+    let is_space = |cluster: &[char]| cluster.first() == Some(&' ');
+    let ltr_after_space = |clusters: &[Vec<char>], index: usize| {
+        let mut next = index;
+        while next < clusters.len() && is_space(&clusters[next]) {
+            next += 1;
+        }
+        next < clusters.len() && starts_ltr(&clusters[next])
+    };
+
+    let mut k = 0;
+    while k < clusters.len() {
+        if starts_ltr(&clusters[k]) {
+            let mut end = k + 1;
+            while end < clusters.len() {
+                let head = clusters[end].first().copied();
+                if head.is_some_and(ltr_run_char)
+                    || (is_space(&clusters[end]) && ltr_after_space(&clusters, end))
+                {
+                    end += 1;
+                } else {
+                    break;
+                }
+            }
+            clusters[k..end].reverse();
+            k = end;
+        } else {
+            k += 1;
+        }
+    }
+
+    clusters.into_iter().flatten().collect()
+}
+
+/// Settle the lines that carry no order evidence of their own, using the producer.
+///
+/// `pending` names exactly those lines: a right-to-left run of two or more units
+/// that the producer did **not** wrap in `/ReversedChars`. Every other line on the
+/// page is already settled, and by one of two page-local facts:
+///
+/// * the producer marked the run as mirrored (`/ReversedChars`) — `recover_line`
+///   inverted the UNIT order and verified the result against UAX #9;
+/// * the line is a single unit — one element has exactly one order, so there is no
+///   ordering decision left for anyone to get wrong (this is what the synthetic
+///   `/ActualText` fixture is: one marked sequence per line).
+///
+/// Consulting the fingerprint for the whole page instead — the previous behaviour —
+/// both refused pages that were already settled and re-inverted lines that were
+/// already settled. The fingerprint is the LAST rung of the ladder, not the first
+/// (ADR 0004).
+fn settle_rtl_order(page: &mut PageText, fingerprint: &str, pending: &[usize]) {
+    if pending.is_empty() {
+        return;
+    }
+    if stores_visual_order(fingerprint) {
+        let mut lines: Vec<String> = page.text.split('\n').map(str::to_string).collect();
+        for &index in pending {
+            if let Some(line) = lines.get_mut(index) {
+                if has_rtl_run(line) {
+                    *line = visual_to_logical(line);
+                }
+            }
+        }
+        page.text = lines.join("\n");
+        page.reasons
+            .retain(|reason| !matches!(reason, Reason::ToUnicodeLogical));
+        if !page.reasons.contains(&Reason::ProducerVisualOrderKnown) {
+            page.reasons.push(Reason::ProducerVisualOrderKnown);
+        }
+    } else if stores_logical_order(fingerprint) {
+        return;
+    } else {
+        page.reasons
+            .retain(|reason| !matches!(reason, Reason::ToUnicodeLogical | Reason::BidiReordered));
+        page.reasons.push(Reason::UnsupportedVisualOrder);
+    }
+    page.reasons.sort_by_key(|reason| *reason as u32);
 }
 
 // --- the walk -------------------------------------------------------------
@@ -86,7 +391,9 @@ struct Walk {
     units: Vec<Unit>,
     used_actual_text: bool,
     used_to_unicode: bool,
+    used_encoding: bool,
     undecodable: bool,
+    refused_encoding: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -130,7 +437,7 @@ struct Mark {
 }
 
 struct Walker<'a> {
-    fonts: &'a HashMap<Vec<u8>, ToUnicode>,
+    fonts: &'a HashMap<Vec<u8>, Font>,
     marks: Vec<Mark>,
     font: Option<Vec<u8>>,
     line: Mat,
@@ -139,7 +446,9 @@ struct Walker<'a> {
     units: Vec<Unit>,
     used_actual_text: bool,
     used_to_unicode: bool,
+    used_encoding: bool,
     undecodable: bool,
+    refused_encoding: bool,
 }
 
 fn num(ops: &[Value], index: usize) -> Option<f64> {
@@ -150,7 +459,7 @@ fn num(ops: &[Value], index: usize) -> Option<f64> {
 }
 
 impl<'a> Walker<'a> {
-    fn new(fonts: &'a HashMap<Vec<u8>, ToUnicode>) -> Walker<'a> {
+    fn new(fonts: &'a HashMap<Vec<u8>, Font>) -> Walker<'a> {
         Walker {
             fonts,
             marks: Vec::new(),
@@ -161,7 +470,9 @@ impl<'a> Walker<'a> {
             units: Vec::new(),
             used_actual_text: false,
             used_to_unicode: false,
+            used_encoding: false,
             undecodable: false,
+            refused_encoding: false,
         }
     }
 
@@ -274,43 +585,71 @@ impl<'a> Walker<'a> {
             self.push_unit(text);
             return;
         }
-        let cmap = match self.font.as_ref().and_then(|name| self.fonts.get(name)) {
-            Some(cmap) => cmap,
+        let fonts = self.fonts;
+        let font = match self.font.as_ref().and_then(|name| fonts.get(name)) {
+            Some(font) => font,
             None => {
+                // No entry for this font name: either the resource is missing or the
+                // font has no decodable mapping at all (a CID font without `/ToUnicode`).
                 self.undecodable = true;
                 return;
             }
         };
-        let width = cmap.code_len();
-        if width == 0 || width > 2 {
-            self.undecodable = true;
-            return;
-        }
-        let mut i = 0usize;
-        while i < bytes.len() {
-            if i + width > bytes.len() {
-                // A trailing half-code is not decodable; say so instead of inventing.
-                self.undecodable = true;
-                break;
-            }
-            let code = match &bytes[i..i + width] {
-                [b] => u16::from(*b),
-                [hi, lo] => u16::from_be_bytes([*hi, *lo]),
-                _ => {
-                    self.undecodable = true;
-                    break;
-                }
-            };
-            match cmap.get(code) {
-                Some(text) => {
-                    self.used_to_unicode = true;
-                    if !text.is_empty() {
-                        self.push_unit(text.to_string());
+        match font {
+            // Encoding we refuse to interpret: `/Symbol`, `/ZapfDingbats`,
+            // `/MacExpertEncoding`, an unknown name, or no `/Encoding` at all.
+            // Their byte maps are not Unicode — say so instead of inventing text.
+            Font::Refused => self.refused_encoding = true,
+            Font::Simple(encoding) => {
+                for &code in bytes {
+                    match encoding.decode(code) {
+                        Some(text) => {
+                            self.used_encoding = true;
+                            if !text.is_empty() {
+                                self.push_unit(text);
+                            }
+                        }
+                        // Undefined slot or a `/Differences` name with no Unicode
+                        // mapping we can justify: an explicit refusal, per code.
+                        None => self.refused_encoding = true,
                     }
                 }
-                None => self.undecodable = true,
             }
-            i += width;
+            Font::ToUnicode(cmap) => {
+                let width = cmap.code_len();
+                if width == 0 || width > 2 {
+                    self.undecodable = true;
+                    return;
+                }
+                let mut i = 0usize;
+                while i < bytes.len() {
+                    if i + width > bytes.len() {
+                        // A trailing half-code is not decodable; say so instead of inventing.
+                        self.undecodable = true;
+                        break;
+                    }
+                    let code = match &bytes[i..i + width] {
+                        [b] => u16::from(*b),
+                        [hi, lo] => u16::from_be_bytes([*hi, *lo]),
+                        _ => {
+                            self.undecodable = true;
+                            break;
+                        }
+                    };
+                    match cmap.get(code) {
+                        Some(text) => {
+                            self.used_to_unicode = true;
+                            if !text.is_empty() {
+                                self.push_unit(text.to_string());
+                            }
+                        }
+                        None => {
+                            self.undecodable = true;
+                        }
+                    }
+                    i += width;
+                }
+            }
         }
     }
 
@@ -330,7 +669,9 @@ impl<'a> Walker<'a> {
             units: self.units,
             used_actual_text: self.used_actual_text,
             used_to_unicode: self.used_to_unicode,
+            used_encoding: self.used_encoding,
             undecodable: self.undecodable,
+            refused_encoding: self.refused_encoding,
         }
     }
 }
@@ -423,7 +764,7 @@ fn flatten(tokens: &[Token]) -> Vec<Item> {
     items
 }
 
-fn walk(stream: &[u8], fonts: &HashMap<Vec<u8>, ToUnicode>) -> Walk {
+fn walk(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Walk {
     let tokens = tokenize(stream);
     let items = flatten(&tokens);
     let mut walker = Walker::new(fonts);
@@ -445,20 +786,24 @@ fn walk(stream: &[u8], fonts: &HashMap<Vec<u8>, ToUnicode>) -> Walk {
 struct Flags {
     actual_text: bool,
     to_unicode: bool,
+    encoded: bool,
     producer_visual: bool,
     reconstructed: bool,
     refused: bool,
     undecodable: bool,
+    refused_encoding: bool,
 }
 
-fn assemble(walk: Walk) -> (String, Vec<Reason>) {
+fn assemble(walk: Walk) -> Recovered {
     let mut flags = Flags {
         actual_text: walk.used_actual_text,
         to_unicode: walk.used_to_unicode,
+        encoded: walk.used_encoding,
         producer_visual: walk.units.iter().any(|unit| unit.reversed),
         reconstructed: false,
         refused: false,
         undecodable: walk.undecodable,
+        refused_encoding: walk.refused_encoding,
     };
 
     // Group units onto visual lines by text-line origin, keeping first-appearance order.
@@ -476,12 +821,23 @@ fn assemble(walk: Walk) -> (String, Vec<Reason>) {
     }
 
     let mut lines: Vec<String> = Vec::new();
+    let mut pending: Vec<usize> = Vec::new();
     for group in &groups {
         let slice: Vec<Unit> = group.iter().map(|&i| units[i].clone()).collect();
+        // Does this line still owe the ladder an order justification?
+        //   * one unit  → one element, one order: nothing to decide;
+        //   * `/ReversedChars` → the producer told us, `recover_line` verified it;
+        //   * two or more units in an unmarked RTL line → ONLY the producer
+        //     fingerprint can say whether the producer mirrored them.
+        let marked = slice.iter().any(|unit| unit.reversed);
+        let undecided = slice.len() > 1 && !marked;
         match recover_line(&slice) {
             Some((text, rebuilt)) => {
                 if rebuilt {
                     flags.reconstructed = true;
+                }
+                if undecided && has_rtl_run(&text) {
+                    pending.push(lines.len());
                 }
                 lines.push(text);
             }
@@ -491,7 +847,11 @@ fn assemble(walk: Walk) -> (String, Vec<Reason>) {
             }
         }
     }
-    (lines.join("\n"), build_reasons(flags))
+    Recovered {
+        text: lines.join("\n"),
+        reasons: build_reasons(flags),
+        pending,
+    }
 }
 
 fn build_reasons(flags: Flags) -> Vec<Reason> {
@@ -506,11 +866,18 @@ fn build_reasons(flags: Flags) -> Vec<Reason> {
     } else if flags.to_unicode {
         reasons.push(Reason::ToUnicodeLogical);
     }
+    if flags.encoded {
+        // Codes came from the font's own /Encoding, not from a ToUnicode CMap.
+        reasons.push(Reason::EncodingMapped);
+    }
     if flags.producer_visual {
         reasons.push(Reason::ProducerVisualOrderKnown);
     }
     if flags.refused {
         reasons.push(Reason::UnsupportedNoEvidence);
+    }
+    if flags.refused_encoding {
+        reasons.push(Reason::UnsupportedFontEncoding);
     }
     if flags.undecodable {
         reasons.push(Reason::UnsupportedBrokenToUnicode);
@@ -733,8 +1100,10 @@ fn proxy_char(text: &str) -> char {
 
 // --- document plumbing ----------------------------------------------------
 
-/// Per-page `/ToUnicode` maps, following inherited `/Resources`.
-fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, ToUnicode> {
+/// Per-page fonts, following inherited `/Resources`: `/ToUnicode` when the producer
+/// gave us one, otherwise the `/Encoding` of a simple font — and an explicit
+/// [`Font::Refused`] when neither can be turned into Unicode.
+fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, Font> {
     let mut fonts = HashMap::new();
     let resources = match find_resources(doc, page_id) {
         Some(resources) => resources,
@@ -757,19 +1126,119 @@ fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, ToUnicod
             Ok(dict) => dict,
             Err(_) => continue,
         };
-        let unicode = match dict.get_deref(b"ToUnicode", doc) {
-            Ok(value) => value,
-            Err(_) => continue,
-        };
-        let stream = match unicode.as_stream() {
-            Ok(stream) => stream,
-            Err(_) => continue,
-        };
-        if let Ok(bytes) = stream.decompressed_content() {
-            fonts.insert(name.clone(), ToUnicode::parse(&bytes));
+        // `/ToUnicode` wins when it is readable and maps anything.
+        if let Some(cmap) = to_unicode(doc, dict) {
+            fonts.insert(name.clone(), Font::ToUnicode(cmap));
+            continue;
         }
+        // Only simple fonts have a byte-level `/Encoding`. A CID font without a
+        // usable `/ToUnicode` has no mapping we could read — it stays out of the
+        // map and its codes surface as `unsupported_broken_to_unicode`.
+        let is_simple = dict
+            .get_deref(b"Subtype", doc)
+            .ok()
+            .and_then(|value| match value {
+                Object::Name(subtype) => Some(subtype.as_slice()),
+                _ => None,
+            })
+            .is_some_and(|subtype| SIMPLE_FONT_SUBTYPES.contains(&subtype));
+        if !is_simple {
+            continue;
+        }
+        let font = match simple_font_encoding(doc, dict) {
+            Some(encoding) => Font::Simple(encoding),
+            None => Font::Refused,
+        };
+        fonts.insert(name.clone(), font);
     }
     fonts
+}
+
+/// A page's `/ToUnicode`, decoded and non-empty — `None` when it is absent,
+/// unreadable or maps nothing (we then fall back to the font's encoding).
+fn to_unicode(doc: &Document, font: &Dictionary) -> Option<ToUnicode> {
+    let value = font.get_deref(b"ToUnicode", doc).ok()?;
+    let stream = value.as_stream().ok()?;
+    let bytes = stream.decompressed_content().ok()?;
+    let cmap = ToUnicode::parse(&bytes);
+    if cmap.is_empty() {
+        None
+    } else {
+        Some(cmap)
+    }
+}
+
+/// Decode a simple font's `/Encoding` into a byte→Unicode table.
+///
+/// Returns `None` — meaning "refuse this font" — for every encoding whose byte map
+/// is not Unicode and that we therefore must not guess: `/Symbol`, `/ZapfDingbats`
+/// and `/MacExpertEncoding` by name, a font with no `/Encoding` at all (its
+/// built-in encoding lives in the font program we do not parse), and symbolic
+/// fonts that omit `/BaseEncoding`.
+fn simple_font_encoding(doc: &Document, font: &Dictionary) -> Option<SimpleEncoding> {
+    let encoding = resolve(doc, font.get(b"Encoding").ok()?)?;
+    match encoding {
+        Object::Name(name) => BaseEncoding::by_name(name).map(SimpleEncoding::new),
+        Object::Dictionary(entries) => {
+            let base = match entries.get(b"BaseEncoding") {
+                // An explicitly named base we do not know → refuse, do not fall back.
+                Ok(value) => match resolve(doc, value) {
+                    Some(Object::Name(name)) => BaseEncoding::by_name(name)?,
+                    _ => return None,
+                },
+                // Absent: ISO 32000-1 §9.6.6.1 says StandardEncoding for a
+                // non-symbolic font and the font's built-in encoding for a symbolic
+                // one — and the symbolic built-ins are exactly `/Symbol` and
+                // `/ZapfDingbats`, whose maps are not Unicode.
+                Err(_) => {
+                    if looks_symbolic(doc, font) {
+                        return None;
+                    }
+                    BaseEncoding::Standard
+                }
+            };
+            let mut decoded = SimpleEncoding::new(base);
+            decoded.apply_differences(differences(doc, entries));
+            Some(decoded)
+        }
+        _ => None,
+    }
+}
+
+/// `/Differences [code /glyph /glyph … code /glyph …]` as `(code, glyph name)` pairs.
+fn differences(doc: &Document, entries: &Dictionary) -> Vec<(u8, String)> {
+    let mut pairs = Vec::new();
+    let array = match entries.get_deref(b"Differences", doc) {
+        Ok(Object::Array(array)) => array,
+        _ => return pairs,
+    };
+    let mut code: Option<u8> = None;
+    for item in array {
+        match item {
+            Object::Integer(value) => code = u8::try_from(*value).ok(),
+            Object::Name(name) => {
+                if let Some(current) = code {
+                    pairs.push((current, String::from_utf8_lossy(name).into_owned()));
+                    code = current.checked_add(1);
+                }
+            }
+            _ => {}
+        }
+    }
+    pairs
+}
+
+/// Cheap symbolic-font check: `/Symbol` and `/ZapfDingbats` (and their subset
+/// variants) in `/BaseFont`. We do not read the font program's `OS/2` flags, so
+/// this is a name heuristic — it only ever decides between decoding and refusing,
+/// and refusing is the safe side.
+fn looks_symbolic(doc: &Document, font: &Dictionary) -> bool {
+    let base_font = match font.get_deref(b"BaseFont", doc) {
+        Ok(Object::Name(name)) => name.clone(),
+        _ => return false,
+    };
+    let lower: Vec<u8> = base_font.iter().map(u8::to_ascii_lowercase).collect();
+    lower.windows(6).any(|w| w == b"symbol") || lower.windows(4).any(|w| w == b"zapf")
 }
 
 /// `/Resources` on the page, or the nearest ancestor's (PDF inheritance).
@@ -799,7 +1268,45 @@ fn resolve<'a>(doc: &'a Document, value: &'a Object) -> Option<&'a Object> {
 
 #[cfg(test)]
 mod tests {
-    use super::decode_text_string;
+    use super::{decode_text_string, stores_logical_order, stores_visual_order};
+
+    /// The producer allow-lists ARE the last rung of the ladder (ADR 0004), so a
+    /// fingerprint family only counts as order evidence while a test pins it.
+    /// Strings are the lowercased `/Producer` + `/Creator` concatenation the
+    /// extractor actually sees.
+    #[test]
+    fn producer_fingerprint_allow_lists_are_pinned() {
+        // Visual-order families, measured on this corpus: InDesign (via /Creator)
+        // and Word.
+        assert!(stores_visual_order(
+            "adobe pdf library 17.0 adobe indesign 19.4 (windows)"
+        ));
+        assert!(stores_visual_order(
+            "adobe pdf library 16.0.7 adobe indesign 17.3 (macintosh)"
+        ));
+        assert!(stores_visual_order(
+            "microsoft® word 2021 microsoft® word 2021"
+        ));
+        assert!(stores_visual_order(
+            "microsoft® word ltsc microsoft® word ltsc"
+        ));
+
+        // Logical-order family: Chromium/Skia fixtures extract byte-exact.
+        assert!(stores_logical_order("skia pdfium skia"));
+        assert!(stores_logical_order("chromium chromium"));
+
+        // Unknown producers must fall through to a refusal, never to a guess —
+        // note `Microsoft: Print To PDF`, which carries "microsoft" but not "word".
+        for unknown in [
+            "adobe acrobat pro 11.0.0 adobe acrobat pro 11.0.0",
+            "adobe pdf library 17.0",
+            "pdfrtl-gen pdfrtl-gen",
+            "microsoft: print to pdf ",
+        ] {
+            assert!(!stores_visual_order(unknown), "visual: {unknown}");
+            assert!(!stores_logical_order(unknown), "logical: {unknown}");
+        }
+    }
 
     /// UTF-16BE with a BOM and a trailing odd byte: complete pairs decode, the odd
     /// byte is dropped — never mis-paired with a neighbour (that would shift the

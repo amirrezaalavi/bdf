@@ -20,15 +20,19 @@ use std::collections::HashMap;
 use std::path::Path;
 
 pub mod cmap;
+pub mod encoding;
 pub mod recover;
+mod tables;
 pub mod tokenizer;
 
 pub use cmap::ToUnicode;
+pub use encoding::{BaseEncoding, Font, SimpleEncoding};
 pub use recover::{recover_text, stream_units, PageText};
 
 /// Recover logical text from a PDF file. Never guesses: every page comes back with the
 /// [`crate::Reason`]s that justify its order, including an `unsupported_*` reason when
-/// no trustworthy path exists (a correct outcome, not an error).
+/// no trustworthy path exists (a correct outcome, not an error). Pages fail
+/// individually: a page we cannot decode never costs us the other pages.
 pub fn extract(path: &Path) -> Result<Vec<PageText>> {
     let doc = Document::load(path).with_context(|| format!("loading {}", path.display()))?;
     extract_document(&doc)
@@ -39,5 +43,5 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
     recover::extract_document(doc)
 }
 
-/// Font name → `ToUnicode` map for one page's resources.
-pub type FontMap = HashMap<Vec<u8>, ToUnicode>;
+/// Font name → decoded font for one page's resources.
+pub type FontMap = HashMap<Vec<u8>, Font>;

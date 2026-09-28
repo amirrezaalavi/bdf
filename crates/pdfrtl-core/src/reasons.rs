@@ -22,6 +22,21 @@ pub enum Reason {
     UnsupportedNoEvidence,
     /// `ToUnicode` is missing or maps to C0 control characters.
     UnsupportedBrokenToUnicode,
+    /// Codes were decoded through the font's own `/Encoding` (a predefined base
+    /// encoding plus `/Differences` glyph names) — no `/ToUnicode` was needed.
+    /// The archive's Word/LibreOffice/LaTeX Latin text decodes this way.
+    EncodingMapped,
+    /// The font's byte map is not Unicode-mappable and there is no `/ToUnicode`:
+    /// `/Symbol`, `/ZapfDingbats`, `/MacExpertEncoding`, an unknown or missing
+    /// `/Encoding`, or a `/Differences` glyph name we cannot resolve.
+    UnsupportedFontEncoding,
+    /// The page's content stream could not be read. This page contributes no text;
+    /// every other page is unaffected (ADR 0004).
+    UnsupportedPageContent,
+    /// The page is right-to-left dominant and the producer is one that stores
+    /// *visual* order: the characters come back, the order does not count as
+    /// logical (ADR 0004).
+    UnsupportedVisualOrder,
 }
 
 impl Reason {
@@ -29,7 +44,11 @@ impl Reason {
     pub fn is_unsupported(self) -> bool {
         matches!(
             self,
-            Reason::UnsupportedNoEvidence | Reason::UnsupportedBrokenToUnicode
+            Reason::UnsupportedNoEvidence
+                | Reason::UnsupportedBrokenToUnicode
+                | Reason::UnsupportedFontEncoding
+                | Reason::UnsupportedPageContent
+                | Reason::UnsupportedVisualOrder
         )
     }
 
@@ -42,6 +61,10 @@ impl Reason {
             Reason::ProducerVisualOrderKnown => "producer_visual_order_known",
             Reason::UnsupportedNoEvidence => "unsupported_no_evidence",
             Reason::UnsupportedBrokenToUnicode => "unsupported_broken_to_unicode",
+            Reason::EncodingMapped => "encoding_mapped",
+            Reason::UnsupportedFontEncoding => "unsupported_font_encoding",
+            Reason::UnsupportedPageContent => "unsupported_page_content",
+            Reason::UnsupportedVisualOrder => "unsupported_visual_order",
         }
     }
 }
