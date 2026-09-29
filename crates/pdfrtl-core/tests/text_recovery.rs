@@ -272,10 +272,28 @@ end";
 /// The font is deliberately absent: `/ActualText` short-circuits decoding
 /// (ISO 32000-1 §14.9.4), so nothing else in the file can decide the outcome.
 fn write_probe_pdf(name: &str, producer: &str, content: &str) -> std::path::PathBuf {
-    let objects = [
+    write_probe(name, producer, content, false)
+}
+
+/// The same page, but WITH a font resource: `/F1` is a simple font that declares a width
+/// for code 46, so showing a cluster ADVANCES the pen and a multi-cluster line has
+/// measured positions. Without it every cluster ties at the text origin and the line must
+/// be refused (docs/problems/0007) — the pair of builders is what keeps "measured" and
+/// "assumed" distinguishable in CI.
+fn write_probe_pdf_with_font(name: &str, producer: &str, content: &str) -> std::path::PathBuf {
+    write_probe(name, producer, content, true)
+}
+
+fn write_probe(name: &str, producer: &str, content: &str, with_font: bool) -> std::path::PathBuf {
+    let page = if with_font {
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 120] /Resources << /Font << /F1 6 0 R >> >> /Contents 4 0 R >>"
+    } else {
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 120] /Contents 4 0 R >>"
+    };
+    let mut objects = vec![
         "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 120] /Contents 4 0 R >>".to_string(),
+        page.to_string(),
         format!(
             "<< /Length {} >>\nstream\n{}\nendstream",
             content.len(),
@@ -283,6 +301,12 @@ fn write_probe_pdf(name: &str, producer: &str, content: &str) -> std::path::Path
         ),
         format!("<< /Producer ({producer}) /Creator ({producer}) >>"),
     ];
+    if with_font {
+        objects.push(
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 46 /LastChar 46 /Widths [500] >>"
+                .to_string(),
+        );
+    }
     let mut pdf: Vec<u8> = b"%PDF-1.4\n".to_vec();
     let mut offsets = Vec::new();
     for (index, object) in objects.iter().enumerate() {
@@ -319,6 +343,46 @@ const MIRRORED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
 /Span<</ActualText <FEFF0646> >> BDC (.) Tj EMC\n\
 /Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
 EMC\nET";
+
+/// The SAME four clusters, no marker, and the whole line positioned by ONE `Td`: the only
+/// thing that orders the clusters is the width the font declares for code 46, applied by
+/// the pen. This is the fixture that could not exist before widths were modelled — with an
+/// origin-only position model every cluster ties at one x, and a line whose painting was
+/// never measured must be refused (docs/problems/0007), which is what `write_probe_pdf`
+/// (no font at all) still produces. Same text, two files: one refused, one established.
+const DONYA_WIDTHS: &str = "BT /F1 12 Tf 20 80 Td\n\
+/Span<</ActualText <FEFF0627> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF06CC> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF0646> >> BDC (.) Tj EMC\n\
+/Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
+ET";
+
+/// The pen advance is what makes a single-origin line measurable: rung 3 settles it
+/// (`Invert` — the stored order IS the painting, so the logical text is its reverse) with
+/// no marker and no fingerprint involved.
+#[test]
+fn pen_advance_makes_a_single_origin_line_measurable() {
+    let path = write_probe_pdf_with_font("donya-widths", "pdfrtl-test", DONYA_WIDTHS);
+    let pages = pdfrtl_core::extract(&path).expect("loads");
+    let _ = std::fs::remove_file(&path);
+    assert_eq!(
+        pages[0].reasons,
+        vec![
+            Reason::ActualText,
+            Reason::BidiReordered,
+            Reason::BidiVerified
+        ],
+        "the declared widths order the clusters; nothing else in the file does"
+    );
+    assert_eq!(
+        pages[0].text, "دنیا",
+        "stored order is the painting, so the logical text is its reverse"
+    );
+    assert!(
+        pages[0].is_ordered(),
+        "the comparison established the order"
+    );
+}
 
 /// The SAME four clusters with the marker deleted, each one placed by its own ABSOLUTE
 /// text matrix. Placement is what rung 3 reads: the painted order must be measured, and an

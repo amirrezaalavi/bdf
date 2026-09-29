@@ -20,11 +20,15 @@ outcome is refusal — `exit 3`, `data.text ""`, `unordered_chars 2`, a page rea
 
 ## Why it existed
 
-`settle_line_by_bidi` builds the painted order by sorting the units on their painted `x`, breaking
-ties by stream index. Ties are not a corner case: a unit's `x` comes from its **text origin**
-(`Td`/`Tm`) — `pdfrtl` does not model glyph advance widths — so any page that leaves several
-clusters at one origin ties. And when it ties, `painted` **is** stream order: the hypothesis is fed
-the very thing the rung exists to interrogate.
+`settle_line_by_bidi` builds the painted order by sorting the units on their painted position, breaking
+ties by stream index. Ties are not a corner case: at the time of this bug a unit's position came from
+its **text origin** (`Td`/`Tm`) and `pdfrtl` modelled no glyph advance widths, so every page that left
+several clusters at one origin tied. And when it ties, `painted` **is** stream order: the hypothesis is
+fed the very thing the rung exists to interrogate.
+
+Widths are modelled now (`2936662` — the pen is tracked in text space and rung 3 reads `paint_x`,
+see [`0008`](0008-a-measurement-must-not-move-what-it-measures.md)), so a tie now means the file
+itself declares nothing about how wide its glyphs are — which is exactly when refusing is right.
 
 For a pure-RTL line that makes `keeps` unreachable (the bidi algorithm reverses an RTL run) and
 `inverts` free: `Invert` by elimination, reported to the caller as `bidi_verified`. The rung's whole
@@ -66,10 +70,11 @@ construction instead of assumed.
 - **A measurement must be measured.** Deriving the evidence a check tests from the data under test is
   circular *by construction*; the only fixes are an independent signal or a refusal. Same family as
   `0006` (a control that cannot see its input) — that one is about inputs, this one about evidence.
-- **`pdfrtl` does not model advance widths.** `x` is the text origin only, so a page that positions
-  clusters by pen advance alone has no measured painting and is refused by rung 3. Honest, but it
-  means rung 3 is blind to a whole class of real files until widths are modelled, and the producer
-  fingerprint will carry those. Follow-up, not silently accepted.
+- **`pdfrtl` had to model advance widths to see a whole class of real files — and now does.** Fixed in
+  `2936662`: `/Widths`+`/MissingWidth`, `/W`+`/DW`, `Tc`/`Tw`/`Tz` and `TJ` numbers feed a pen tracked
+  in text space; rung 3 sorts and ties on that pen, and the line matrix itself is never moved. A file
+  that still declares no widths leaves the pen at the origin, so the tie refusal is unchanged and
+  stays the safe answer. The perturbation the first attempt caused is `0008`.
 - **Operators with the wrong operand count are ignored silently.** Writing `20 80 Tm` (two operands
   instead of six) split a line in two instead of being flagged: the operand reader returns `None` and
   the operator is skipped. A file we cannot parse fully is not a file whose order we established, so
