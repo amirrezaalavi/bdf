@@ -77,7 +77,7 @@ impl PageText {
 /// content-stream ladder. The producer rung is consulted by
 /// [`extract_document`], which is where `/Producer` is known.
 pub fn recover_text(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> (String, Vec<Reason>) {
-    let recovered = recover(stream, fonts);
+    let recovered = recover(stream, fonts, &HashMap::new());
     (recovered.text, recovered.reasons)
 }
 
@@ -91,14 +91,22 @@ struct Recovered {
     pending: Vec<usize>,
 }
 
-fn recover(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Recovered {
-    assemble(walk(stream, fonts))
+/// Widths are not available here — this entry point sees a stream and a font map, not the
+/// document they came from — so the pen never moves and multi-glyph lines tie. That is the
+/// safe direction (a tie is refused; a guessed advance would order the line silently
+/// wrong), and [`extract_document`] is the path that has the document and the widths.
+fn recover(
+    stream: &[u8],
+    fonts: &HashMap<Vec<u8>, Font>,
+    metrics: &HashMap<Vec<u8>, Metrics>,
+) -> Recovered {
+    assemble(walk(stream, fonts, metrics))
 }
 
 /// The units a producer wrote for one stream, in STREAM (visual) order — before any
 /// recovery. Exposed so tests can pin the unit model itself.
 pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Vec<String> {
-    walk(stream, fonts)
+    walk(stream, fonts, &HashMap::new())
         .units
         .into_iter()
         .map(|unit| unit.text)
@@ -115,8 +123,8 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
     for (page_num, page_id) in doc.get_pages() {
         let page = match doc.get_page_content_with_limit(page_id, MAX_PAGE_CONTENT) {
             Ok(content) => {
-                let fonts = collect_fonts(doc, page_id);
-                let recovered = recover(&content, &fonts);
+                let (fonts, metrics) = collect_fonts(doc, page_id);
+                let recovered = recover(&content, &fonts, &metrics);
                 let mut page = PageText {
                     page: page_num,
                     text: recovered.text,
@@ -446,8 +454,8 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     let mut painted: Vec<usize> = (0..count).collect();
     painted.sort_by(|&left, &right| {
         units[left]
-            .x
-            .total_cmp(&units[right].x)
+            .paint_x
+            .total_cmp(&units[right].paint_x)
             .then(left.cmp(&right))
     });
 
@@ -462,7 +470,7 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     // family, and otherwise the line is withheld.
     if painted
         .windows(2)
-        .any(|pair| units[pair[0]].x == units[pair[1]].x)
+        .any(|pair| units[pair[0]].paint_x == units[pair[1]].paint_x)
     {
         return LineOrder::Ambiguous;
     }
@@ -635,12 +643,15 @@ struct Unit {
     text: String,
     /// Quantised text-line origin (the matrix `f`), grouping units onto one line.
     line: i64,
-    /// Painted x of this unit's text origin (CTM ∘ text matrix), the position the
-    /// glyphs are actually drawn from. The UAX #9 rung reads the painted run order
-    /// from it — see [`settle_line_by_bidi`].
-    x: f64,
-    /// False when the composed matrix does not run left-to-right (`a ≤ 0`): then x
-    /// no longer orders the glyphs the way they paint, and the rung must not read it.
+    /// Where the PEN was when this unit was painted (CTM ∘ the advanced text matrix): the
+    /// text-line origin plus every advance before it. The UAX #9 rung reads the painted run
+    /// order from this — see [`settle_line_by_bidi`] — because a run whose glyphs share one
+    /// origin is ordered only by what the file declares each glyph to be wide. It is the
+    /// only position a unit carries: line assembly groups on the line key, not on x.
+    paint_x: f64,
+    /// False when the composed matrix does not run left-to-right (`a ≤ 0`): then the
+    /// painted positions no longer order the glyphs the way they paint, and the rung
+    /// must not read them.
     x_ok: bool,
     /// Inside `/ReversedChars`: the producer stored this run in visual order.
     reversed: bool,
@@ -712,17 +723,62 @@ struct Mark {
     actual_text: Option<String>,
 }
 
+/// What the file says each code is WIDE, in text-space units (already divided by 1000).
+///
+/// Widths are what turn a list of codes into a *painting*. Without them every unit of a
+/// show operator sits at the same text origin, they all tie, and rung 3 has to refuse
+/// (docs/problems/0007). Only what the file declares is used: a simple font with no
+/// `/Widths`, or a CID font with no `/W`, leaves `known` false and the pen still — a
+/// guessed advance orders the line silently wrong, and a tie is merely refused.
+#[derive(Debug, Clone, Default)]
+struct Metrics {
+    widths: HashMap<u16, f64>,
+    missing: f64,
+    known: bool,
+    two_byte: bool,
+}
+
+impl Metrics {
+    /// Width of one code in text-space units, or `None` when the file does not say.
+    fn width(&self, code: u16) -> Option<f64> {
+        if !self.known {
+            return None;
+        }
+        self.widths.get(&code).copied().or(Some(self.missing))
+    }
+}
+
+fn as_number(value: &Object) -> Option<f64> {
+    match value {
+        Object::Integer(number) => Some(*number as f64),
+        Object::Real(number) => Some(f64::from(*number)),
+        _ => None,
+    }
+}
+
 struct Walker<'a> {
     fonts: &'a HashMap<Vec<u8>, Font>,
     marks: Vec<Mark>,
     font: Option<Vec<u8>>,
     line: Mat,
+    /// Text-space advance accumulated since the last positioning operator, projected to
+    /// device x only when a unit is recorded. The line matrix itself is left alone: moving
+    /// it shifts `line.f` too when the text matrix is skewed, which re-groups the
+    /// assembler's lines and shredded real pages into one glyph per line.
+    pen: f64,
     /// Graphics-state matrix (`q`/`Q`/`cm`). Only its x-direction is used: to read
     /// the painted order of a line's runs from their positions, the composed
     /// mapping from text space to device space has to be the real one.
     ctm: Mat,
     ctm_stack: Vec<Mat>,
     leading: f64,
+    /// Text state that decides how far the pen moves after a show operator
+    /// (ISO 32000-1 §9.4.4): the measured painting rung 3 compares against.
+    metrics: &'a HashMap<Vec<u8>, Metrics>,
+    font_size: f64,
+    char_spacing: f64,
+    word_spacing: f64,
+    h_scale: f64,
     epoch: u64,
     units: Vec<Unit>,
     used_actual_text: bool,
@@ -740,12 +796,21 @@ fn num(ops: &[Value], index: usize) -> Option<f64> {
 }
 
 impl<'a> Walker<'a> {
-    fn new(fonts: &'a HashMap<Vec<u8>, Font>) -> Walker<'a> {
+    fn new(
+        fonts: &'a HashMap<Vec<u8>, Font>,
+        metrics: &'a HashMap<Vec<u8>, Metrics>,
+    ) -> Walker<'a> {
         Walker {
             fonts,
+            metrics,
+            font_size: 0.0,
+            char_spacing: 0.0,
+            word_spacing: 0.0,
+            h_scale: 1.0,
             marks: Vec::new(),
             font: None,
             line: Mat::identity(),
+            pen: 0.0,
             ctm: Mat::identity(),
             ctm_stack: Vec::new(),
             leading: 0.0,
@@ -759,9 +824,62 @@ impl<'a> Walker<'a> {
         }
     }
 
+    /// A `TJ` number moves the pen **back** by that many thousandths of an em.
+    fn kern(&mut self, number: f64) {
+        self.pen -= number / 1000.0 * self.font_size * self.h_scale;
+    }
+
+    /// Move the pen past one shown code, using only what the file declares.
+    fn advance(&mut self, code: u16) {
+        let tx = {
+            let Some(name) = self.font.as_ref() else {
+                return;
+            };
+            let Some(metrics) = self.metrics.get(name) else {
+                return;
+            };
+            let Some(width) = metrics.width(code) else {
+                return;
+            };
+            let mut tx = (width * self.font_size + self.char_spacing) * self.h_scale;
+            // Word spacing applies to code 32 of a simple font (ISO 32000-1 §9.3.3).
+            if !metrics.two_byte && code == 32 {
+                tx += self.word_spacing * self.h_scale;
+            }
+            tx
+        };
+        if tx != 0.0 {
+            self.pen += tx;
+        }
+    }
+
+    /// Move the pen past every code of a shown string. The `/ActualText` path knows the
+    /// text but the glyphs were still painted, so the next cluster needs its own x.
+    fn advance_over(&mut self, bytes: &[u8]) {
+        let two_byte = self
+            .font
+            .as_ref()
+            .and_then(|name| self.metrics.get(name))
+            .is_some_and(|metrics| metrics.two_byte);
+        let stride = if two_byte { 2 } else { 1 };
+        let mut index = 0usize;
+        while index + stride <= bytes.len() {
+            let code = if two_byte {
+                u16::from_be_bytes([bytes[index], bytes[index + 1]])
+            } else {
+                u16::from(bytes[index])
+            };
+            self.advance(code);
+            index += stride;
+        }
+    }
+
     fn op(&mut self, op: &[u8], ops: &[Value]) {
         match op {
-            b"BT" => self.line = Mat::identity(),
+            b"BT" => {
+                self.line = Mat::identity();
+                self.pen = 0.0;
+            }
             b"q" => self.ctm_stack.push(self.ctm),
             b"Q" => {
                 if let Some(saved) = self.ctm_stack.pop() {
@@ -791,21 +909,27 @@ impl<'a> Walker<'a> {
                     num(ops, 5),
                 ) {
                     self.line = Mat { a, b, c, d, e, f };
+                    self.pen = 0.0;
                     self.epoch += 1;
                 }
             }
             b"Td" => {
                 if let (Some(tx), Some(ty)) = (num(ops, 0), num(ops, 1)) {
                     self.line = self.line.translated(tx, ty);
+                    self.pen = 0.0;
                 }
             }
             b"TD" => {
                 if let (Some(tx), Some(ty)) = (num(ops, 0), num(ops, 1)) {
                     self.leading = -ty;
                     self.line = self.line.translated(tx, ty);
+                    self.pen = 0.0;
                 }
             }
-            b"T*" => self.line = self.line.translated(0.0, -self.leading),
+            b"T*" => {
+                self.line = self.line.translated(0.0, -self.leading);
+                self.pen = 0.0;
+            }
             b"TL" => {
                 if let Some(value) = num(ops, 0) {
                     self.leading = value;
@@ -816,7 +940,12 @@ impl<'a> Walker<'a> {
                     Some(Value::Name(name)) => Some(name.clone()),
                     _ => None,
                 };
+                // The size is half of the advance equation: without it there is no em.
+                self.font_size = num(ops, 1).unwrap_or(0.0);
             }
+            b"Tc" => self.char_spacing = num(ops, 0).unwrap_or(0.0),
+            b"Tw" => self.word_spacing = num(ops, 0).unwrap_or(0.0),
+            b"Tz" => self.h_scale = num(ops, 0).unwrap_or(100.0) / 100.0,
             b"Tj" => {
                 if let Some(Value::Str(bytes)) = ops.first() {
                     self.show(bytes);
@@ -825,8 +954,11 @@ impl<'a> Walker<'a> {
             b"TJ" => {
                 if let Some(Value::Arr(items)) = ops.first() {
                     for item in items {
-                        if let Value::Str(bytes) = item {
-                            self.show(bytes);
+                        match item {
+                            Value::Str(bytes) => self.show(bytes),
+                            // Kerning is part of where the glyphs sit.
+                            Value::Num(number) => self.kern(*number),
+                            _ => {}
                         }
                     }
                 }
@@ -885,6 +1017,7 @@ impl<'a> Walker<'a> {
         if let Some(text) = actual.filter(|text| !text.is_empty()) {
             self.used_actual_text = true;
             self.push_unit(text);
+            self.advance_over(bytes);
             return;
         }
         let fonts = self.fonts;
@@ -915,6 +1048,8 @@ impl<'a> Walker<'a> {
                         // mapping we can justify: an explicit refusal, per code.
                         None => self.refused_encoding = true,
                     }
+                    // The glyph was painted whether or not we could decode it.
+                    self.advance(u16::from(code));
                 }
             }
             Font::ToUnicode(cmap) => {
@@ -950,6 +1085,7 @@ impl<'a> Walker<'a> {
                         }
                     }
                     i += width;
+                    self.advance(code);
                 }
             }
         }
@@ -958,15 +1094,19 @@ impl<'a> Walker<'a> {
     fn push_unit(&mut self, text: String) {
         let reversed = self.marks.iter().any(|mark| mark.tag == b"ReversedChars");
         let line = (self.line.f * 1000.0).round() as i64;
-        // Painted x of this text origin, plus whether the composed matrix still runs
-        // left-to-right (a <= 0 mirrors the line, so x would order it backwards).
-        let x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
+        // The pen is tracked in text space and projected exactly once, here. `line` itself
+        // is never moved: doing that shifts `line.f` too when the text matrix is skewed,
+        // which re-groups the assembler's lines, and a real page shredded into one glyph
+        // per line is what that looks like. `paint_x` is the only position a unit carries
+        // and the only thing that can order a run whose glyphs share one origin.
+        let origin_x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
+        let paint_x = origin_x + self.ctm.a * self.pen;
         let x_scale = self.ctm.a * self.line.a + self.ctm.c * self.line.b;
         self.units.push(Unit {
             text,
             line,
-            x,
-            x_ok: x_scale > 0.0 && x.is_finite(),
+            paint_x,
+            x_ok: x_scale > 0.0 && origin_x.is_finite(),
             reversed,
             epoch: self.epoch,
         });
@@ -1072,10 +1212,14 @@ fn flatten(tokens: &[Token]) -> Vec<Item> {
     items
 }
 
-fn walk(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Walk {
+fn walk(
+    stream: &[u8],
+    fonts: &HashMap<Vec<u8>, Font>,
+    metrics: &HashMap<Vec<u8>, Metrics>,
+) -> Walk {
     let tokens = tokenize(stream);
     let items = flatten(&tokens);
-    let mut walker = Walker::new(fonts);
+    let mut walker = Walker::new(fonts, metrics);
     let mut pending: Vec<Value> = Vec::new();
     for item in &items {
         match item {
@@ -1434,14 +1578,118 @@ fn proxy_char(text: &str) -> char {
 
 // --- document plumbing ----------------------------------------------------
 
+/// Read the widths a font declares: `/Widths` (+ `/MissingWidth`) for a simple font,
+/// `/W` (+ `/DW`) for a CID font. Nothing is inferred — a font that declares no widths
+/// leaves the pen where it is, and the line that needed them is refused.
+fn metrics_of(doc: &Document, dict: &lopdf::Dictionary) -> Metrics {
+    let subtype = dict
+        .get(b"Subtype")
+        .ok()
+        .and_then(|value| value.as_name().ok())
+        .map(|name| name.to_vec())
+        .unwrap_or_default();
+    let is_simple = SIMPLE_FONT_SUBTYPES.contains(&subtype.as_slice());
+    let mut metrics = Metrics {
+        two_byte: !is_simple,
+        ..Metrics::default()
+    };
+    if is_simple {
+        let first = dict
+            .get(b"FirstChar")
+            .ok()
+            .and_then(as_number)
+            .unwrap_or(0.0) as i64;
+        if let Ok(Object::Array(widths)) = dict.get(b"Widths") {
+            for (index, value) in widths.iter().enumerate() {
+                if let Some(width) = as_number(value) {
+                    let code = first + index as i64;
+                    if (0..=u16::MAX as i64).contains(&code) {
+                        metrics.widths.insert(code as u16, width / 1000.0);
+                        metrics.known = true;
+                    }
+                }
+            }
+        }
+        metrics.missing = dict
+            .get(b"MissingWidth")
+            .ok()
+            .and_then(as_number)
+            .unwrap_or(0.0)
+            / 1000.0;
+        return metrics;
+    }
+    // A CID font keeps its widths on the descendant font. `/W` is a mixed array of
+    // `c [w …]` runs and `cfirst clast w` ranges; `/DW` is the default.
+    // `resolve` and `get_deref` both borrow, so this stays a reference chain into `dict`.
+    let descendant = dict
+        .get_deref(b"DescendantFonts", doc)
+        .ok()
+        .and_then(|value| match value {
+            Object::Array(items) => items.first(),
+            other => Some(other),
+        });
+    let cid = descendant
+        .and_then(|value| resolve(doc, value))
+        .and_then(|font| font.as_dict().ok().cloned());
+    let Some(cid) = cid else {
+        return metrics;
+    };
+    metrics.missing = cid.get(b"DW").ok().and_then(as_number).unwrap_or(1000.0) / 1000.0;
+    let Ok(Object::Array(w)) = cid.get(b"W") else {
+        return metrics;
+    };
+    let mut index = 0usize;
+    while index + 1 < w.len() {
+        let Some(first) = as_number(&w[index]) else {
+            break;
+        };
+        match w.get(index + 1) {
+            // `cfirst clast w`: one width for a whole range.
+            Some(next) if as_number(next).is_some() => {
+                let Some(width) = w.get(index + 2).and_then(as_number) else {
+                    break;
+                };
+                let last = as_number(next).unwrap_or(first);
+                let mut code = first as i64;
+                while code <= last as i64 && code <= u16::MAX as i64 {
+                    metrics.widths.insert(code as u16, width / 1000.0);
+                    metrics.known = true;
+                    code += 1;
+                }
+                index += 3;
+            }
+            // `c [w …]`: consecutive codes starting at `c`.
+            Some(Object::Array(run)) => {
+                for (offset, value) in run.iter().enumerate() {
+                    if let Some(width) = as_number(value) {
+                        let code = first as i64 + offset as i64;
+                        if (0..=u16::MAX as i64).contains(&code) {
+                            metrics.widths.insert(code as u16, width / 1000.0);
+                            metrics.known = true;
+                        }
+                    }
+                }
+                index += 2;
+            }
+            _ => break,
+        }
+    }
+    metrics
+}
+
 /// Per-page fonts, following inherited `/Resources`: `/ToUnicode` when the producer
 /// gave us one, otherwise the `/Encoding` of a simple font — and an explicit
-/// [`Font::Refused`] when neither can be turned into Unicode.
-fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, Font> {
+/// [`Font::Refused`] when neither can be turned into Unicode. The widths each font
+/// declares come back in the second map, keyed by the same resource name.
+fn collect_fonts(
+    doc: &Document,
+    page_id: ObjectId,
+) -> (HashMap<Vec<u8>, Font>, HashMap<Vec<u8>, Metrics>) {
     let mut fonts = HashMap::new();
+    let mut metrics = HashMap::new();
     let resources = match find_resources(doc, page_id) {
         Some(resources) => resources,
-        None => return fonts,
+        None => return (fonts, metrics),
     };
     let font_dict = match resources
         .get_deref(b"Font", doc)
@@ -1449,7 +1697,7 @@ fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, Font> {
         .and_then(|value| value.as_dict().ok())
     {
         Some(dict) => dict,
-        None => return fonts,
+        None => return (fonts, metrics),
     };
     for (name, value) in font_dict.iter() {
         let font = match resolve(doc, value) {
@@ -1460,6 +1708,7 @@ fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, Font> {
             Ok(dict) => dict,
             Err(_) => continue,
         };
+        metrics.insert(name.clone(), metrics_of(doc, dict));
         // `/ToUnicode` wins when it is readable and maps anything.
         if let Some(cmap) = to_unicode(doc, dict) {
             fonts.insert(name.clone(), Font::ToUnicode(cmap));
@@ -1485,7 +1734,7 @@ fn collect_fonts(doc: &Document, page_id: ObjectId) -> HashMap<Vec<u8>, Font> {
         };
         fonts.insert(name.clone(), font);
     }
-    fonts
+    (fonts, metrics)
 }
 
 /// A page's `/ToUnicode`, decoded and non-empty — `None` when it is absent,
@@ -1614,7 +1863,9 @@ mod tests {
             .map(|&(text, x)| Unit {
                 text: text.to_string(),
                 line: 80_000,
-                x,
+                // These probes build units straight from positions: no advances are
+                // involved, so the pen is still where the origin is.
+                paint_x: x,
                 x_ok: true,
                 reversed: false,
                 epoch: 0,
@@ -1644,8 +1895,8 @@ mod tests {
         let mut painted = identity.clone();
         painted.sort_by(|&left, &right| {
             units[left]
-                .x
-                .total_cmp(&units[right].x)
+                .paint_x
+                .total_cmp(&units[right].paint_x)
                 .then(left.cmp(&right))
         });
         let inverted = invert_units(&units);
