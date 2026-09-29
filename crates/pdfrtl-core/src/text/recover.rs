@@ -442,8 +442,10 @@ enum LineOrder {
 /// and units that share one text origin keep stream order — showing a string is a
 /// single operation that advances the pen through the glyphs in emission order
 /// (ISO 32000-1 §9.4.4), so there is nothing else for the origin to disagree with.
-/// When the composed matrix runs right-to-left (`x_ok` is false) x orders the line
-/// backwards and the rung reports no opinion instead of a wrong one.
+/// A line whose horizontal scale is degenerate or non-finite (`x_ok` is false) has no usable
+/// position at all, so the rung reports no opinion instead of a wrong one. A MIRRORED scale is
+/// not that case: it is the ordinary way a right-to-left producer paints, and the sign cancels
+/// out of every comparison made below.
 fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     let count = units.len();
     if count < 2 || units.iter().any(|unit| !unit.x_ok) {
@@ -1100,13 +1102,20 @@ impl<'a> Walker<'a> {
         // per line is what that looks like. `paint_x` is the only position a unit carries
         // and the only thing that can order a run whose glyphs share one origin.
         let origin_x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
-        let paint_x = origin_x + self.ctm.a * self.pen;
+        // Project the pen with the COMPOSED horizontal scale, never with the CTM's `a` alone.
+        // A right-to-left producer mirrors the text matrix (`-1 0 0 -1 … Tm`); `a` then points
+        // the wrong way and a run's own advance would order it backwards — the measurement
+        // would be wrong, not missing.
         let x_scale = self.ctm.a * self.line.a + self.ctm.c * self.line.b;
+        let paint_x = origin_x + x_scale * self.pen;
         self.units.push(Unit {
             text,
             line,
             paint_x,
-            x_ok: x_scale > 0.0 && origin_x.is_finite(),
+            // A mirrored run measures perfectly well: the sign cancels out of every
+            // comparison made against it. Only a degenerate or non-finite scale leaves the
+            // line with no usable position at all (docs/problems/0010).
+            x_ok: x_scale != 0.0 && x_scale.is_finite() && origin_x.is_finite(),
             reversed,
             epoch: self.epoch,
         });

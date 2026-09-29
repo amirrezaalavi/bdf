@@ -1,6 +1,6 @@
 # Archive validation — `pdfrtl extract` over the private corpus
 
-* generated: `2026-09-29T100257Z`
+* generated: `2026-09-29T115928Z`
 * command: `python3 scripts/validate-archive.py --binary /home/netcon/target-bdf/debug/pdfrtl`
 * input: `corpus/raw/private/desktop-pdfs/*.pdf` — 51 files, read only (never modified, never copied)
 
@@ -130,7 +130,7 @@ For a pure-RTL word, correct logical output contains the logical form and **zero
 
 | file | word | raw logical | raw reversed | word-boundary logical | word-boundary reversed | verdict |
 |---|---|---|---|---|---|---|
-| `arabic-1.pdf` | منظمة | 94 | 0 | 52 | 0 | logical only |
+| `arabic-1.pdf` | منظمة | 92 | 0 | 52 | 0 | logical only |
 | `arabic-1.pdf` | الصحة | 146 | 0 | 142 | 0 | logical only |
 | `arabic-1.pdf` | إطار | 21 | 0 | 12 | 0 | logical only |
 | `arabic-2.pdf` | منظمة | 530 | 0 | 28 | 0 | logical only |

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T100257Z",
+  "generated": "2026-09-29T115928Z",
   "binary": "/home/netcon/target-bdf/debug/pdfrtl",
   "archive": "corpus/raw/private/desktop-pdfs",
   "summary": {
@@ -148,7 +148,7 @@
           },
           {
             "word": "منظمة",
-            "raw_logical": 94,
+            "raw_logical": 92,
             "raw_reversed": 0,
             "word_logical": 52,
             "word_reversed": 0,
