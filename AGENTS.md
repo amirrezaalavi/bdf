@@ -75,8 +75,11 @@ Exact toolchain: **rustc/cargo 1.98.1**, pinned identically in `rust-toolchain.t
 `.github/workflows/ci.yml`. Never `channel = "stable"` — a floating channel on either side is
 two toolchains waiting to disagree, and it already cost three red CI runs
 (`docs/problems/0003-toolchain-drift-made-the-gate-lie.md`). Artifacts go to
-`$CARGO_TARGET_DIR=$HOME/target-pdfrtl` (ext4) because cargo over `/mnt/c` is slow; sources
-stay on the Windows checkout so Windows-side tooling can see them.
+`$CARGO_TARGET_DIR=$HOME/target-bdf` (ext4). **Sources live in WSL too**: the dev root is
+`~/playground/ai/bdf`, and the Windows checkout `C:/Users/netcon/playground/ai/pdfrtl` is a
+read-only mirror. Cargo over `/mnt/c` was the bottleneck (the same workspace builds in 14 s on
+ext4), and a target directory belongs to exactly one tree — the gate refuses artifacts built
+elsewhere rather than reusing them (exit 5).
 
 **A gate may not pass vacuously.** If a check can skip itself because its input is missing, it
 must first assert that the input exists, and it must report how much it examined

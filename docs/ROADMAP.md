@@ -92,6 +92,14 @@ Phase 2 runs in this order, planned in detail in
    redistributable fixtures that exercise *inversion*) → re-run the 51-file validation and
    report two numbers. `Q-R1` is the blocking knowledge gap; where no rule exists we keep
    refusing and document why.
+   **Status 2026-09-29:** rung 3 landed and then had to be fixed — it settled lines it could
+   not decide and silently reversed them. The invariant control caught it; the fix makes a
+   *tie* in the painted order unanswerable (`docs/problems/0007` records the mechanism). The
+   re-validation is done and both numbers exist: **38 fully decoded / 37 order-verified**, and
+   **rung 3 recovers none of the 14 refusals yet** — on those files the decision comes from the
+   producer fingerprint or not at all. Remaining inside W1.7: width-aware positioning (rung 3
+   is blind to pages that position text purely by pen advance) and one allow-list entry with a
+   test behind it per producer family (`Microsoft: Print To PDF` is 6 of the 14).
 2. **W1.6 font-aware recovery** (`hebrew-1.pdf`) — `Q-R4` supplies the procedure.
 3. **W2 reading order** (line/run assembly, mixed scripts, digits inside RTL) + merge W2.4
    search normalization.
