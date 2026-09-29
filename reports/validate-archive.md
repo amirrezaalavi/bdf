@@ -1,7 +1,7 @@
 # Archive validation — `pdfrtl extract` over the private corpus
 
-* generated: `2026-09-29T071505Z`
-* command: `python3 scripts/validate-archive.py --binary /home/netcon/target-pdfrtl/debug/pdfrtl`
+* generated: `2026-09-29T091509Z`
+* command: `python3 scripts/validate-archive.py --binary /home/netcon/target-bdf/debug/pdfrtl`
 * input: `corpus/raw/private/desktop-pdfs/*.pdf` — 51 files, read only (never modified, never copied)
 
 ## Headline — two claims, counted separately (ADR 0004)
@@ -72,10 +72,10 @@ Characters emitted (order-established): **1,035,606**. Characters decoded but wi
 
 | file | status | decoded pages | ordered pages | emitted chars | withheld chars | order rule | reasons | first 60 chars |
 |---|---|---|---|---|---|---|---|---|
-| `arabic-1.pdf` | partial | 4/91 | 91/91 | 171266 | 0 | yes — actual_text, producer_visual_order_known | actual_text, producer_visual_order_known, unsupported_broken_to_unicode | املبادئ التوجيهيّة ملنظّمة  ⏎ ّ ⏎ ّ ⏎ الصحّة العامليّة بشأن  ⏎ ّ ⏎ ّ ⏎ م |
-| `arabic-2.pdf` | partial | 20/62 | 62/62 | 200299 | 0 | yes — actual_text, producer_visual_order_known | actual_text, producer_visual_order_known, unsupported_broken_to_unicode |  إطار منظمة الصحة ⏎  العالمية لإلستجابة ⏎ ئ ⏎ للطوار ⏎ اإلجراءات الد |
-| `arabic-3.pdf` | partial | 228/321 | 2/321 | 5 | 1187033 | no — unsupported_visual_order | unsupported_broken_to_unicode, encoding_mapped, unsupported_font_encoding, unsupported_visual_order |    ⏎    |
-| `arabic-4.pdf` | partial | 10/185 | 185/185 | 116762 | 0 | yes — actual_text, to_unicode_logical, producer_visual_order_known | actual_text, to_unicode_logical, producer_visual_order_known, unsupported_broken_to_unicode, encoding_mapped, unsupported_font_encoding | تقرير التنمية االنسانية العربية للعام   ⏎  يشمل الجميع ويعزز ا |
+| `arabic-1.pdf` | partial | 4/91 | 91/91 | 171266 | 0 | yes — actual_text, bidi_reordered, producer_visual_order_known | actual_text, bidi_reordered, bidi_verified, producer_visual_order_known, unsupported_broken_to_unicode | املبادئ التوجيهيّة ملنظّمة  ⏎ ّ ⏎ ّ ⏎ الصحّة العامليّة بشأن  ⏎ ّ ⏎ ّ ⏎ م |
+| `arabic-2.pdf` | partial | 20/62 | 62/62 | 200299 | 0 | yes — actual_text, bidi_reordered, producer_visual_order_known | actual_text, bidi_reordered, bidi_verified, producer_visual_order_known, unsupported_broken_to_unicode |  إطار منظمة الصحة ⏎  العالمية لإلستجابة ⏎ ئ ⏎ للطوار ⏎ اإلجراءات الد |
+| `arabic-3.pdf` | partial | 228/321 | 2/321 | 5 | 1187033 | no — unsupported_visual_order | bidi_verified, unsupported_broken_to_unicode, encoding_mapped, unsupported_font_encoding, unsupported_visual_order |    ⏎    |
+| `arabic-4.pdf` | partial | 10/185 | 185/185 | 116762 | 0 | yes — actual_text, to_unicode_logical, bidi_reordered, producer_visual_order_known | actual_text, to_unicode_logical, bidi_reordered, bidi_verified, producer_visual_order_known, unsupported_broken_to_unicode, encoding_mapped, unsupported_font_encoding | تقرير التنمية االنسانية العربية للعام   ⏎  يشمل الجميع ويعزز ا |
 | `english-1.pdf` | partial | 3/3 | 2/3 | 3832 | 2784 | no — unsupported_visual_order | encoding_mapped, unsupported_visual_order | No. : ⏎ 12345 ⏎ kA : ⏎ 65KA50KA36KA36KA25kA ⏎ IP : ⏎ 4242424242 ⏎ QTY : ⏎  |
 | `english-asnad-9-32.pdf` | full | 1/1 | 1/1 | 1642 | 0 | yes — producer_visual_order_known | producer_visual_order_known, encoding_mapped |    ⏎   ⏎   ⏎   ⏎   ⏎ الزامات مربوطه در عملیات فیبرکشی و نیز فیوژن و چی |
 | `english-asnad-9-39.pdf` | full | 1/1 | 1/1 | 2576 | 0 | yes — producer_visual_order_known | producer_visual_order_known, encoding_mapped |    ⏎   ⏎   ⏎   ⏎   ⏎  . دیواره لوله را نیز در فواصل مختلف سوراخ خواهد  |
@@ -94,7 +94,7 @@ Characters emitted (order-established): **1,035,606**. Characters decoded but wi
 | `persian-1.pdf` | refused | 12/13 | 0/13 | 0 | 8475 | no — unsupported_visual_order | unsupported_broken_to_unicode, unsupported_visual_order |  |
 | `persian-2.pdf` | refused | 1/2 | 0/2 | 0 | 2076 | no — unsupported_visual_order | unsupported_broken_to_unicode, unsupported_visual_order |  |
 | `persian-3.pdf` | refused | 2/2 | 0/2 | 0 | 1981 | no — unsupported_visual_order | unsupported_visual_order |  |
-| `persian-4.pdf` | refused | 1/1 | 0/1 | 0 | 1488 | no — unsupported_visual_order | encoding_mapped, unsupported_visual_order |  |
+| `persian-4.pdf` | refused | 1/1 | 0/1 | 0 | 1488 | no — unsupported_visual_order | bidi_verified, encoding_mapped, unsupported_visual_order |  |
 | `persian-5.pdf` | full | 1/1 | 1/1 | 38 | 0 | yes — to_unicode_logical | to_unicode_logical | 24000 Btu/Hr ⏎ 24000 Btu/Hr ⏎ 24000 Btu/Hr |
 | `persian-6.pdf` | refused | 1/1 | 0/1 | 0 | 759 | no — unsupported_visual_order | unsupported_visual_order |  |
 | `persian-7.pdf` | full | 10/10 | 10/10 | 29046 | 0 | yes — producer_visual_order_known | producer_visual_order_known, encoding_mapped |   ⏎  طرف دوم  طرف اول  ⏎  های نوین توسعه امن و پویایی سامانه گرو |
