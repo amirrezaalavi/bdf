@@ -61,19 +61,40 @@ tar -cf - -C "$REPO" \
     --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.bak-*' . \
   | tar -xf - -C "$STAGE"
 
-STAGE_NATIVE="$STAGE"
+STAGE_NATIVE="$(cd "$STAGE" && pwd -W 2>/dev/null || printf '%s' "$STAGE")"
 "$PY" - "$REPO_NATIVE" "$STAGE_NATIVE" <<'PY'
 import json, pathlib, re, sys
 repo, stage = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 
-# 1. private fixtures describe files that are not published: drop their manifest rows
+# 0. The control must be able to SEE what it is checking. A native Windows Python handed an
+#    MSYS path sees nothing at all, and then every check below passes vacuously: "manifest
+#    not found -> skip the strip", "scan visited 0 files -> no hits". That is exactly how a
+#    61-row private manifest (customer hashes, page counts, embedded titles) reached the
+#    public remote while the log said "deny-list clean (70 private identities checked)" and
+#    nothing was stripped. A control that cannot find its input must refuse, not pass.
+if not stage.is_dir():
+    print(f"FATAL: the control cannot see the staging dir: {stage}", file=sys.stderr)
+    print("       (MSYS path handed to a native interpreter? refusing to publish blind)",
+          file=sys.stderr)
+    sys.exit(2)
 mp = stage / "corpus/manifest.json"
-if mp.exists():
-    m = json.loads(mp.read_text(encoding="utf-8"))
-    before = len(m["fixtures"])
-    m["fixtures"] = [r for r in m["fixtures"] if not r["path"].startswith("corpus/raw/private/")]
-    mp.write_text(json.dumps(m, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"manifest: {before} -> {len(m['fixtures'])} public rows")
+if not mp.is_file():
+    print(f"FATAL: {mp} is missing, so the manifest strip cannot run.", file=sys.stderr)
+    print("       Refusing to publish: an unstripped manifest leaks private identities.",
+          file=sys.stderr)
+    sys.exit(2)
+
+# 1. private fixtures describe files that are not published: drop their manifest rows
+m = json.loads(mp.read_text(encoding="utf-8"))
+before = len(m["fixtures"])
+m["fixtures"] = [r for r in m["fixtures"] if not r["path"].startswith("corpus/raw/private/")]
+left = [r for r in m["fixtures"] if "raw/private" in r["path"]]
+if left or not m["fixtures"]:
+    print(f"FATAL: manifest strip left {len(left)} private row(s) (or emptied the manifest): "
+          f"{[r['path'] for r in left][:5]}", file=sys.stderr)
+    sys.exit(2)
+mp.write_text(json.dumps(m, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print(f"manifest: {before} -> {len(m['fixtures'])} public rows")
 
 # 2. deny-list = the real private identities, so the check cannot be talked around
 deny = set()
@@ -90,22 +111,31 @@ if lmp.exists():
             if len(title.strip()) >= 8:
                 deny.add(title.strip())
 
+scanned = 0
 hits = []
 for path in stage.rglob("*"):
     if not path.is_file() or ".git" in path.parts:
         continue
+    scanned += 1
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         continue
     hits += [(path.relative_to(stage).as_posix(), needle[:70]) for needle in deny if needle in text]
 
+# A scan that read nothing proves nothing. The staged tree is ~100+ files; anything tiny
+# means the control is pointed at the wrong place.
+if scanned < 20:
+    print(f"FATAL: deny-list scan saw only {scanned} file(s) - it is not reading the staged "
+          f"tree, so a clean verdict would be meaningless.", file=sys.stderr)
+    sys.exit(2)
+
 if hits:
     print("REFUSING TO PUBLISH - private material found:")
     for path, needle in hits[:20]:
         print(f"   {path}  <-  {needle!r}")
     sys.exit(1)
-print(f"deny-list clean ({len(deny)} private identities checked)")
+print(f"deny-list clean ({len(deny)} private identities checked across {scanned} files)")
 PY
 
 echo "== pre-flight: CI gate on the staged snapshot =="
