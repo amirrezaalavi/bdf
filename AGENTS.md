@@ -64,12 +64,16 @@ Build and test run in **WSL Ubuntu-26.04** (the Windows host has no Rust toolcha
 
 ```bash
 # from WSL
-bash /mnt/c/Users/netcon/playground/ai/pdfrtl/scripts/wsl-build.sh
+bash ~/playground/ai/bdf/scripts/wsl-build.sh
 # = fmt --check, clippy -D warnings, cargo test --workspace --locked,
 #   the CI slop greps (unwrap/expect in core, todo!/dbg!, prints in core),
 #   gen-deps.py --check, cargo deny check
-bash /mnt/c/Users/netcon/playground/ai/pdfrtl/scripts/wsl-build.sh --quick   # skip cargo-deny
+bash ~/playground/ai/bdf/scripts/wsl-build.sh --quick   # skip cargo-deny
 ```
+
+The script derives the repo root from its own location, so the path above is a convenience, not a
+requirement (`PDFRTL_ROOT` still overrides it). The Windows checkout
+`C:/Users/netcon/playground/ai/pdfrtl` is a read-only mirror — never build in it.
 
 Exact toolchain: **rustc/cargo 1.98.1**, pinned identically in `rust-toolchain.toml` and
 `.github/workflows/ci.yml`. Never `channel = "stable"` — a floating channel on either side is
