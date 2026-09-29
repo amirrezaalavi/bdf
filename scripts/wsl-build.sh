@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Full local gate for pdfrtl. Sources live on the Windows checkout; build artifacts
-# go to ext4 ($CARGO_TARGET_DIR) because cargo over /mnt/c is dramatically slower.
+# Full local gate for pdfrtl. Sources and artifacts both live on WSL ext4 now
+# (the checkout was moved off /mnt/c because cargo over the 9p mount is slow).
 #
 # This script mirrors .github/workflows/ci.yml command for command — CI is the
 # authority, never the other way round. Same compiler (rust-toolchain.toml pins
@@ -16,7 +16,11 @@
 #             conditions (no corpus/raw/private) before anything is pushed.
 set -euo pipefail
 
-REPO="${PDFRTL_ROOT:-/mnt/c/Users/netcon/playground/ai/pdfrtl}"
+# Default to THIS checkout, wherever it lives. The tree moved off the Windows filesystem
+# onto WSL ext4 (cargo over /mnt/c is slow), and a hardcoded path would silently gate the
+# wrong tree — or nothing at all. PDFRTL_ROOT still overrides it: publish-public.sh uses
+# that to gate a staged snapshot.
+REPO="${PDFRTL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # The target dir is keyed to the tree being gated. Test binaries bake in their source
 # tree (`env!("CARGO_MANIFEST_DIR")` is the corpus root the tests read), and cargo reuses
 # artifacts across checkouts that share a relative layout and file mtimes — so gating a
@@ -25,9 +29,9 @@ REPO="${PDFRTL_ROOT:-/mnt/c/Users/netcon/playground/ai/pdfrtl}"
 # passes while CI fails is worse than no gate. Foreign tree => its own target dir, and a
 # stale pairing is a hard error rather than a silent pass.
 if [ -n "${PDFRTL_ROOT:-}" ]; then
-  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/target-pdfrtl-preflight}"
+  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/target-bdf-preflight}"
 else
-  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/target-pdfrtl}"
+  export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$HOME/target-bdf}"
 fi
 # Non-login shells do not get ~/.cargo/bin on PATH; source rustup's env like rustup tells you to.
 if [ -f "$HOME/.cargo/env" ]; then . "$HOME/.cargo/env"; fi

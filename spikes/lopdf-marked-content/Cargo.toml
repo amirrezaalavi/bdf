@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Spike crate: standalone on purpose. The empty [workspace] table keeps it out of the
+# root workspace so `cargo build/test --workspace` never sees it and it never ships.
+[package]
+name = "spike-lopdf-marked-content"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "AGPL-3.0-or-later"
+
+[workspace]
+
+[dependencies]
+lopdf = "0.45"
