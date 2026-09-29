@@ -1,0 +1,20 @@
+{
+  "id": "synthetic-actualtext-ar-001",
+  "language": "ar",
+  "script": "Arab",
+  "direction": "rtl",
+  "source": "tools/gen_actualtext_fixture.py",
+  "text": "السلام عليكم\nمرحبا بالعالم",
+  "verified_by": null,
+  "verified_at": null,
+  "status": "unverified",
+  "notes": [
+    "Expected text is the /ActualText payload the generator wrote, which is authoritative",
+    "per ISO 32000-1 §14.9.4 — but per corpus/AGENT.md rule 5 an agent may not flip it to",
+    "verified: a human must confirm that this is the text a correct reader should return.",
+    "Contains lam-alef inside السلام.",
+    "Public Arabic half of the no-silent-reversal control (crates/pdfrtl-core/tests/",
+    "no_silent_reversal.rs asserts السلام and مرحبا).",
+    "Oracle warning: pdftotext drops RTL /ActualText text entirely — see docs/problems/0001."
+  ]
+}

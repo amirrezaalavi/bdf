@@ -5,7 +5,7 @@ Small, single-purpose tools. No frameworks, stdlib only, `python`/`python3` agno
 
 | script | purpose | when to run |
 |---|---|---|
-| `wsl-build.sh` | the full gate: fmt → clippy `-D warnings` → tests → `cargo deny` | before every commit |
+| `wsl-build.sh` | the full gate, mirroring CI: fmt → clippy `-D warnings` → `cargo test --workspace --locked` → slop greps → DEPS drift → `cargo deny` | before every commit |
 | `gen-deps.py` | regenerates `docs/DEPS.md` from `cargo metadata` | after any dependency change (CI fails on drift) |
 | `run-corpus.py` | runs every fixture through the CLI, writes `reports/*-corpus.md` | after any change that touches text handling |
 | `db.py` | SQLite+FTS5 knowledge base: tasks, findings, pitfalls | while working — record the *why* as you go |

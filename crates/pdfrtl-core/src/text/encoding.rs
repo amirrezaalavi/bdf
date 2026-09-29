@@ -167,10 +167,14 @@ fn uni_form(name: &str) -> Option<String> {
     if !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         return None;
     }
-    let units: Vec<u16> = (0..hex.len())
-        .step_by(4)
-        .map(|at| u16::from_str_radix(&hex[at..at + 4], 16).expect("checked hex"))
-        .collect();
+    let mut units = Vec::with_capacity(hex.len() / 4);
+    for at in (0..hex.len()).step_by(4) {
+        // Cannot fail after the checks above, but the library refuses (None) rather than panics.
+        let Ok(unit) = u16::from_str_radix(&hex[at..at + 4], 16) else {
+            return None;
+        };
+        units.push(unit);
+    }
     utf16_to_string(&units)
 }
 
