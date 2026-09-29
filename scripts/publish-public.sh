@@ -150,16 +150,24 @@ to_wsl_path() {
 if [ "$SKIP_PREFLIGHT" -eq 1 ]; then
   echo "== pre-flight SKIPPED by --skip-preflight: publishing WITHOUT the local public-conditions gate =="
 else
-  STAGE_WSL="$(to_wsl_path "$STAGE")"
   PRE_LOG="$(mktemp)"
+  # Run the CI gate on the staged tree. Inside WSL that is a direct call; from git-bash it
+  # needs wsl.exe plus a Windows->WSL path translation. Hardcoding either side breaks the
+  # other machine, and a preflight that cannot run must fail rather than pass.
+  run_preflight() {
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+      PDFRTL_ROOT="$STAGE" bash "$STAGE/scripts/wsl-build.sh" --quick
+    else
+      local stage_wsl; stage_wsl="$(to_wsl_path "$STAGE")"
+      wsl -d "${WSL_DISTRO:-Ubuntu-26.04}" -e bash -c \n        "PDFRTL_ROOT='$stage_wsl' bash '$stage_wsl/scripts/wsl-build.sh' --quick"
+    fi
+  }
   # Reuses the gate script (same commands as .github/workflows/ci.yml) against the
   # staged tree via PDFRTL_ROOT; --quick keeps it to fmt + clippy + test + slop + deps.
   # wsl-build.sh gives a foreign tree its OWN target dir on purpose: this checkout's
   # artifacts bake in this checkout's CARGO_MANIFEST_DIR, so reusing them would make the
   # control read corpus/raw/private again and the gate would no longer be public.
-  if wsl -d "$WSL_DISTRO" -e bash -c \
-      "PDFRTL_ROOT='$STAGE_WSL' bash '$STAGE_WSL/scripts/wsl-build.sh' --quick" \
-      2>&1 | tee "$PRE_LOG"; then
+  if run_preflight 2>&1 | tee "$PRE_LOG"; then
     echo "== pre-flight green: the staged snapshot passes the CI gate under public conditions =="
     rm -f "$PRE_LOG"
   else
