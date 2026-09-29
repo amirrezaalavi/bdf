@@ -403,19 +403,21 @@ fn visual_to_logical(line: &str) -> String {
 /// sequence the producer actually painted:
 ///
 /// * `Keep`    — the computation reproduces the painting from the stored order, so
-///               the stored order **is** logical: no inversion.
+///   the stored order **is** logical: no inversion.
 /// * `Invert`  — only the mirrored reading reproduces it, so the producer stored
-///               the painted (visual) sequence: invert, once, and the result is
-///               verified the same way.
-/// * `Ambiguous` — both readings reproduce the painting. That is a coin flip, and
-///               a coin flip is banned: the answer is REFUSE (the line falls
-///               through to the producer fingerprint, and is refused outright when
-///               the fingerprint does not know the family). It happens because one
-///               line does not say which base direction it was written in — an
-///               English line with an Arabic word and an Arabic line with an
-///               English word paint identically.
+///   the painted (visual) sequence: invert, once, and the result is
+///   verified the same way.
+/// * `Ambiguous` — both readings reproduce the painting, or the painting was never
+///   measured in the first place (units tied at one x, so `painted` is stream
+///   order by assumption). Either way it is a coin flip, and
+///   a coin flip is banned: the answer is REFUSE (the line falls
+///   through to the producer fingerprint, and is refused outright when
+///   the fingerprint does not know the family). It happens because one
+///   line does not say which base direction it was written in — an
+///   English line with an Arabic word and an Arabic line with an
+///   English word paint identically.
 /// * `Unexplained` — neither reading reproduces the painting: the file contradicts
-///               the model, so we refuse instead of picking a side.
+///   the model, so we refuse instead of picking a side.
 ///
 /// Both outcomes are `false` in the ladder — no third outcome exists (ADR 0002).
 #[derive(Debug)]
@@ -448,6 +450,22 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
             .total_cmp(&units[right].x)
             .then(left.cmp(&right))
     });
+
+    // A tie at equal x means the painted order was never MEASURED: `painted` fell back to
+    // stream order for those units, and stream order is exactly what this rung is trying to
+    // interrogate. Judging a sequence against an assumption derived from itself proves
+    // nothing, and on a pure-RTL pair it proves `Invert` by elimination — the bidi algorithm
+    // reverses an RTL run, so `keeps` is unreachable, `inverts` is "true" for free, and the
+    // line would be silently mirrored while the run reported `bidi_verified`. Measured on a
+    // two-cluster fixture with no font widths, which the invariant control refuses
+    // (docs/problems/0007). Refuse here instead: the fingerprint rung may still know the
+    // family, and otherwise the line is withheld.
+    if painted
+        .windows(2)
+        .any(|pair| units[pair[0]].x == units[pair[1]].x)
+    {
+        return LineOrder::Ambiguous;
+    }
 
     let identity: Vec<usize> = (0..count).collect();
     let inverted = invert_units(units);

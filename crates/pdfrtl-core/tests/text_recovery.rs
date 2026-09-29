@@ -320,17 +320,18 @@ const MIRRORED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
 /Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
 EMC\nET";
 
-/// The SAME four clusters with the marker deleted. The marker is gone, the layout
-/// is not: nothing repositions these clusters, so the producer painted them in
-/// stream order (a `Tj` advances the pen through the glyphs it shows), and rung 3 —
-/// the UAX #9 comparison against that painted order — finds exactly one reading
-/// that reproduces the painting. The marker changes which RULE settles the line,
-/// not whether the line can be settled: same text, named differently.
-const UNMARKED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
+/// The SAME four clusters with the marker deleted, each one placed by its own ABSOLUTE
+/// text matrix. Placement is what rung 3 reads: the painted order must be measured, and an
+/// extractor reads it from the text origins, not from a font's advance widths — so a page
+/// that leaves every cluster at one origin is refused rather than compared against its own
+/// stream order (docs/problems/0007). With the positions measured, one reading reproduces
+/// the painting, so the marker changes which RULE settles the line and not whether the
+/// line can be settled: same text, named differently.
+const UNMARKED_DONYA: &str = "BT /F1 12 Tf 1 0 0 1 20 80 Tm\n\
 /Span<</ActualText <FEFF0627> >> BDC (.) Tj EMC\n\
-/Span<</ActualText <FEFF06CC> >> BDC (.) Tj EMC\n\
-/Span<</ActualText <FEFF0646> >> BDC (.) Tj EMC\n\
-/Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
+1 0 0 1 24 80 Tm /Span<</ActualText <FEFF06CC> >> BDC (.) Tj EMC\n\
+1 0 0 1 28 80 Tm /Span<</ActualText <FEFF0646> >> BDC (.) Tj EMC\n\
+1 0 0 1 32 80 Tm /Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
 ET";
 
 /// `/ReversedChars` is page-local order evidence; lines that carry none go to
