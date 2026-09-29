@@ -10,7 +10,7 @@ This is triage, not extraction: it never claims what the text *is*, only what th
 made of. `pdfinfo` is used for pages/producer metadata (an oracle tool, never shipped).
 
 Usage:
-    python tools/triage_pdfs.py "C:/Users/netcon/Desktop/pdfs"
+    python tools/triage_pdfs.py [DIR]  # defaults to corpus/raw/private/desktop-pdfs
     python tools/triage_pdfs.py DIR --json reports/triage.json
     python tools/triage_pdfs.py DIR --markdown reports/triage.md
     python tools/triage_pdfs.py DIR --max-mb 5      # only files up to 5 MB
@@ -231,7 +231,8 @@ def triage(path: pathlib.Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("directory")
+    parser.add_argument("directory", nargs="?", default="corpus/raw/private/desktop-pdfs",
+                        help="PDF folder (default: corpus/raw/private/desktop-pdfs)")
     parser.add_argument("--json")
     parser.add_argument("--markdown")
     parser.add_argument("--max-mb", type=float, default=None)
