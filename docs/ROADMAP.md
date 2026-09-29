@@ -1,21 +1,21 @@
 # pdfrtl — what's left
 
-Status 2026-09-27. Every claim here has an artifact behind it; the evidence is named.
+Status **2026-09-29**. Every claim here has an artifact behind it; the evidence is named.
+Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
 
 ## Where we actually are
 
 | area | state | evidence |
 |---|---|---|
-| Workspace, gates, CI | **done** | `cargo fmt`/`clippy -D warnings`/tests/`cargo deny` (advisories, bans, licenses, sources all ok); `.github/workflows/ci.yml` |
-| Public repo | **live** | `github.com/amirrezaalavi/bdf` — public, throwaway by your call. Private-corpus fixtures are **not** published: not their names, not their hashes, not their metadata |
-| Licence posture (Option A) | **decided, deferred** | ADR 0001–0003; permissive-only shipped features gated by `cargo deny`; final choice deferred per your "POC first" |
-| Corpus | **59 fixtures** | 8 own-work/generated + 51 real archive (local-only, hashes committed locally) |
-| Real-archive profile | **measured** | 27 Type0 fonts, 21 `CIDToGIDMap`, 19 with no text layer, 2 with `/ActualText`, **0** with `/ReversedChars` |
-| Producer coverage | **broad** | Chrome (generated) + InDesign ×4, Acrobat Pro, Word 2013, Nitro PrimoPDF, macOS Quartz (real, from your archive) |
-| Extraction (P1) | **in flight** | `text/tokenizer.rs` (378 lines, total lexer), `text/cmap.rs` (235 lines, `ToUnicode` parser just landed) and `tests/text_recovery.rs` (226 lines) are real; `text/recover.rs` is still the red-phase stub |
-| Search/index normalization (W2.4) | **in flight** | agent on branch `feat/search-normalizer` in its own clone of the public repo; delivers `search/normalize.rs` + tests + `docs/SEARCH-NORMALIZATION.md` |
-| Oracles | **partial** | `pdftotext` proven to drop Persian on real Chrome output; `pypdf` for structure; PDFium/`pypdfium2` being wired now |
-| Human verification | **3 open** | 4 Persian fixtures' expected text; `hebrew-1.pdf` reclassified (see fact 3) |
+| Workspace, gates, CI | **done, and hardened** | CI jobs `gate · deny · slop · deps-drift · oracle`, green on the published SHA; toolchain pinned `1.98.1` on both sides (`docs/problems/0003`) |
+| Order invariant | **enforced end to end** | ADR 0002 + 0004; a page whose order is unproven is withheld and counted (`unordered_chars`), never emitted as text |
+| Extraction | **real-world capable** | simple-font encodings land, per-page granularity, order inversion for fingerprinted producers |
+| Archive validation | **measured, honestly** | **37 / 51** files order-verified; **14 refuse** (`unsupported_visual_order`); 23 of the 51 have no text layer at all |
+| Public mirror | **clean, scratch** | 10 redistributable manifest rows, 0 private; the deny-list reads 104 files; history reset deferred (ADR 0005, `docs/problems/0006`) |
+| Verification lane | **landed** | PDFium pixels + vision review + the oracle matrix (`docs/problems/0004`); `scripts/render_pages.py` |
+| Search normalization | **landed on a lane branch** | `feat/search-normalizer` on the mirror — needs a merge plus the recall/precision calls only you can make |
+| Generation / editing | **not started** | writer needs W4.1; editor gated on the `lopdf` spike (W5.1) |
+| Knowledge gaps | **queued** | `docs/RESEARCH-QUESTIONS.md` — 8 questions for an outside research agent |
 
 ## The three facts that shape everything left
 
@@ -83,19 +83,23 @@ Status 2026-09-27. Every claim here has an artifact behind it; the evidence is n
 | W9.2 | `AGENTS.md` per crate, `HANDOFF.md` at milestones | exists | refresh after W1 lands |
 | W9.3 | Publishing: `scripts/publish-public.sh` snapshots the tree to the public mirror (private material excluded by construction) | **exists** | code-writing subagents push their own branch instead; a bare `git add -A` is forbidden for them |
 
-## Recommended sequence
+## Sequence
 
-1. **Now, in parallel (no file overlap):** W1 completion (Rust, local lab) ∥ W2.4 search
-   normalizer (own clone of the public repo) ∥ W3 render/oracle lane.
-2. **Next:** W1.5 validation across the 51-file archive. This is where the POC either holds or
-   teaches us something that changes the estimate. Report per file: extracted / refused, with
-   the reason, and a hand-checkable sample.
-3. **Then:** W5.1 spike (hours, not days) — it gates whether W5 is a patch or a rewrite, and the
-   answer belongs in the estimate before any editor code is written.
-4. **Then:** W2 proper (line/run assembly, mixed-script reading order) — **your call: this is the
-   critical path**, ahead of the writer, because "correct reading and search" is the product's
-   reason to exist and the thing no existing tool does for RTL.
-5. **Then:** W4 (writer) → W6 → W8.
+Phase 2 runs in this order, planned in detail in
+`docs/plans/2026-09-29-phase2-order-recovery.md`:
+
+1. **W1.7 order recovery** (rung 3 done properly, allow-list entries with tests behind them,
+   redistributable fixtures that exercise *inversion*) → re-run the 51-file validation and
+   report two numbers. `Q-R1` is the blocking knowledge gap; where no rule exists we keep
+   refusing and document why.
+2. **W1.6 font-aware recovery** (`hebrew-1.pdf`) — `Q-R4` supplies the procedure.
+3. **W2 reading order** (line/run assembly, mixed scripts, digits inside RTL) + merge W2.4
+   search normalization.
+4. **W5.1 spike** (`lopdf` marked-content survival) in parallel — it decides patch vs rewrite
+   for the editor before any editor code exists.
+5. **Then** W4 (writer) → W6 → W8.
+
+A red gate never moves on; `main` only receives CI-passing snapshots.
 
 ## What only you can settle
 
