@@ -11,11 +11,11 @@ Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
 | Order invariant | **enforced end to end** | ADR 0002 + 0004; a page whose order is unproven is withheld and counted (`unordered_chars`), never emitted as text |
 | Extraction | **real-world capable** | simple-font encodings land, per-page granularity, order inversion for fingerprinted producers |
 | Archive validation | **measured, honestly** | **37 / 51** files order-verified; **14 refuse** (`unsupported_visual_order`); 23 of the 51 have no text layer at all |
-| Public mirror | **clean, scratch** | 10 redistributable manifest rows, 0 private; the deny-list reads 104 files; history reset deferred (ADR 0005, `docs/problems/0006`) |
+| Public mirror | **clean, published** | `main` = `eb029f9c`; 14 redistributable manifest rows, 0 private; deny-list clean (70 identities / 859 files); `reports/` excluded; history reset still deferred (ADR 0005, `docs/problems/0006`) |
 | Verification lane | **landed** | PDFium pixels + vision review + the oracle matrix (`docs/problems/0004`); `scripts/render_pages.py` |
 | Search normalization | **landed on a lane branch** | `feat/search-normalizer` on the mirror — needs a merge plus the recall/precision calls only you can make |
-| Generation / editing | **not started** | writer needs W4.1; editor gated on the `lopdf` spike (W5.1) |
-| Knowledge gaps | **queued** | `docs/RESEARCH-QUESTIONS.md` — 8 questions for an outside research agent |
+| Generation / editing | **not started** | writer stack chosen for W4: `harfrust` (MIT) + `krilla`/`pdf-writer`; editor gated on W5, and its spike is done (incremental-only) |
+| Knowledge gaps | **round 1 consumed** | `docs/RESEARCH-QUESTIONS.md` — queue empty; the answers and our accept/reject decisions are in `docs/research/2026-09-29-external-answers.md` (ADR 0006) |
 
 ## The three facts that shape everything left
 
@@ -48,7 +48,7 @@ Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
 | W1.3 | Reasons + exit-code-3 refusal path wired end-to-end | pending | `Reason` vocabulary already exists; tests already assert it |
 | W1.4 | `pdfrtl extract --json` CLI verb | pending | envelope shape fixed in the plan; `main.rs` already touched |
 | W1.5 | Validate against the 51-file archive | not started | classify every file as *extracted with reason* or *refused with reason*; the Arabic docs (91/62/321/185 pages) and the 5 Hebrew files are the real test |
-| W1.6 | **Font-aware recovery where `ToUnicode` is absent** | scoped, new | `hebrew-1.pdf` is the fixture (9 fonts, 0 `ToUnicode`, `Identity-H`, no `CIDToGIDMap`): parse the embedded font cmap, reverse GID→Unicode, refuse loudly when a glyph cannot be placed |
+| W1.6 | **Font-aware recovery where `ToUnicode` is absent** | scoped, new | `hebrew-1.pdf` is the fixture (9 fonts, 0 `ToUnicode`, `Identity-H`, no `CIDToGIDMap`): parse the embedded font cmap, reverse GID→Unicode, refuse loudly when a glyph cannot be placed — procedure and tooling fixed in `docs/research/2026-09-29-external-answers.md` (cmap inversion via `ttf-parser`, `post` names as fallback, NFKC base letters) |
 | W2 | **Bidi, mixed script, correct reading (P2)** | **started — your priority** | your call 2026-09-27: "implementing the correct search and reading is more critical" |
 | W2.1 | Line/run assembly, UAX #9 levels, BD16 brackets, mirroring | not started | |
 | W2.2 | Digits, dates and Latin runs inside RTL text | not started | covered by fixtures already |
@@ -65,7 +65,7 @@ Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
 | W4.2 | Layout API that *cannot* split a shaping run across styles | not started | design constraint from the pipeline skill; retrofitting it later is expensive |
 | W4.3 | Round-trip proof: generate → our extractor → PDFium pixels → human eyes | not started | |
 | W5 | **Editing (P4)** | blocked on a spike | |
-| W5.1 | Spike: does `lopdf` carry `BDC`/`EMC` through load→save? | not started | **decides patch vs rewrite** for the whole editor; cheapest high-value question left |
+| W5.1 | Spike: does `lopdf` carry `BDC`/`EMC` through load→save? | **done** (`7086526`) | **decides patch vs rewrite**: incremental-only — `IncrementalDocument::create_from` + save preserves untouched bytes (27282→28209 B); a plain `Document::save` re-serialised 24/25 objects and degraded `Object::Real(f32)`; never mutate `Stream::content` with a stale `/Length` |
 | W5.2 | Text replacement preserving `/ActualText` spans | not started | |
 | W5.3 | Redaction, asserted via pixels (never extract-after-redact) | not started | |
 | W6 | **Enterprise features** | not started | |
@@ -97,10 +97,12 @@ Phase 2 runs in this order, planned in detail in
    *tie* in the painted order unanswerable (`docs/problems/0007` records the mechanism). The
    re-validation is done and both numbers exist: **38 fully decoded / 37 order-verified**, and
    **rung 3 recovers none of the 14 refusals yet** — on those files the decision comes from the
-   producer fingerprint or not at all. Remaining inside W1.7: width-aware positioning (rung 3
-   is blind to pages that position text purely by pen advance) and one allow-list entry with a
-   test behind it per producer family (`Microsoft: Print To PDF` is 6 of the 14).
-2. **W1.6 font-aware recovery** (`hebrew-1.pdf`) — `Q-R4` supplies the procedure.
+   producer fingerprint or not at all. Width-aware positioning landed (`2936662`): rung 3 now
+   sorts and ties on a measured pen — and it still recovers none of the 14, so the remaining work
+   is to make the geometry *decide* (ADR 0006) and, where it refuses, to name the two hypotheses
+   it compared. One allow-list entry with a test behind it per producer family
+   (`Microsoft: Print To PDF` is 7 of the 14) is the fallback, not the first move.
+2. **W1.6 font-aware recovery** (`hebrew-1.pdf`) — procedure in `docs/research/2026-09-29-external-answers.md`.
 3. **W2 reading order** (line/run assembly, mixed scripts, digits inside RTL) + merge W2.4
    search normalization.
 4. **W5.1 spike** (`lopdf` marked-content survival) in parallel — it decides patch vs rewrite
