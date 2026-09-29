@@ -39,11 +39,16 @@ fn actual_text(text: &str) -> String {
 /// One line: each unit on its own text matrix at its own x, all on one baseline.
 /// Equal x is legal and means "one origin, painted in stream order" — a whole
 /// class of producers writes exactly that.
-fn content(units: &[Placed]) -> String {
+///
+/// `a` is the horizontal scale of the text matrix. Right-to-left producers mirror it to
+/// `-1` and paint their runs leftwards; keeping it a parameter is what lets a test state
+/// that a mirrored matrix is a measurement, not a missing one.
+fn content_scaled(units: &[Placed], a: f64) -> String {
     let mut stream = String::from("BT\n/F1 12 Tf\n");
     for unit in units {
         stream.push_str(&format!(
-            "1 0 0 -1 {} 80 Tm\n/Span<</ActualText <{}> >> BDC (.) Tj EMC\n",
+            "{} 0 0 -1 {} 80 Tm\n/Span<</ActualText <{}> >> BDC (.) Tj EMC\n",
+            a,
             unit.x,
             actual_text(unit.text)
         ));
@@ -55,8 +60,8 @@ fn content(units: &[Placed]) -> String {
 /// Build a one-page PDF around a content stream, with a fixed `/Producer`.
 /// No font resource: `/ActualText` short-circuits decoding, so nothing but the
 /// positions and the order can decide the outcome.
-fn probe(name: &str, producer: &str, units: &[Placed]) -> PathBuf {
-    let text = content(units);
+fn probe_scaled(name: &str, producer: &str, units: &[Placed], a: f64) -> PathBuf {
+    let text = content_scaled(units, a);
     let objects = [
         "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
@@ -90,7 +95,11 @@ fn probe(name: &str, producer: &str, units: &[Placed]) -> PathBuf {
 }
 
 fn extract(name: &str, units: &[Placed]) -> pdfrtl_core::PageText {
-    let path = probe(name, "pdfrtl-test", units);
+    extract_scaled(name, units, 1.0)
+}
+
+fn extract_scaled(name: &str, units: &[Placed], a: f64) -> pdfrtl_core::PageText {
+    let path = probe_scaled(name, "pdfrtl-test", units, a);
     let pages = pdfrtl_core::extract(&path).expect("loads");
     let _ = std::fs::remove_file(&path);
     pages.into_iter().next().expect("one page")
@@ -246,4 +255,40 @@ fn line_contradicted_by_its_own_positions_is_refused() {
     );
     assert_eq!(page.text, "");
     assert_eq!(page.unordered_chars, 3);
+}
+
+/// A mirrored text matrix is not missing evidence — it is the same measurement with a
+/// different sign, and refusing it costs whole producer families.
+///
+/// Right-to-left producers mirror the horizontal scale (`-1 0 0 -1 x y Tm`) and paint their
+/// runs leftwards: that IS the page expressing right-to-left order. The rung treated the sign
+/// of the composed scale as "x cannot order this line" and refused every such line, while the
+/// position it actually compares (`paint_x`) is projected with that same scale — so the sign
+/// cancels out and the comparison is sound. Measured on this corpus, the Microsoft
+/// print/Excel files refuse every page, and `hebrew-3.pdf` carries 169 such lines.
+///
+/// The line below is stored in LOGICAL order under a mirrored matrix: the stream runs from
+/// the largest x to the smallest, i.e. the reading order, and painting it left to right
+/// gives the reverse.
+#[test]
+fn a_mirrored_text_matrix_still_orders_its_line() {
+    let page = extract_scaled(
+        "mirrored",
+        &[
+            Placed::new("سلام", 300.0),
+            Placed::new(" ", 200.0),
+            Placed::new("pdfrtl", 100.0),
+        ],
+        -1.0,
+    );
+    assert_eq!(
+        page.text, "سلام pdfrtl",
+        "the mirrored line is decided, not refused: {:?}",
+        page.text
+    );
+    assert!(
+        page.is_ordered(),
+        "the sign of the scale is not an absence of evidence"
+    );
+    assert!(page.reasons.contains(&Reason::BidiVerified));
 }
