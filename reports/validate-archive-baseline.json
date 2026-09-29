@@ -1,6 +1,6 @@
 {
-  "generated": "2026-09-29T091509Z",
-  "binary": "/home/netcon/target-bdf/debug/pdfrtl",
+  "generated": "2026-09-29T071505Z",
+  "binary": "/home/netcon/target-pdfrtl/debug/pdfrtl",
   "archive": "corpus/raw/private/desktop-pdfs",
   "summary": {
     "files": 51,
@@ -71,7 +71,7 @@
       "rtl_chars": 124875,
       "fully_decoded": false,
       "order_verified": true,
-      "order_rule": "yes — actual_text, bidi_reordered, producer_visual_order_known",
+      "order_rule": "yes — actual_text, producer_visual_order_known",
       "bytes": 1736064,
       "producer": "Adobe PDF Library 17.0",
       "pages": 91,
@@ -86,8 +86,6 @@
       "decoded_chars": 171266,
       "reasons": [
         "actual_text",
-        "bidi_reordered",
-        "bidi_verified",
         "producer_visual_order_known",
         "unsupported_broken_to_unicode"
       ],
@@ -189,7 +187,7 @@
         ]
       },
       "text_head": "املبادئ التوجيهيّة ملنظّمة \nّ\nّ\nالصحّة العامليّة بشأن \nّ\nّ\nم",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/arabic-1.pdf: text from 89 of 91 pages; 87 page(s) refused (unsupported_broken_to_unicode)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-1.pdf: text from 89 of 91 pages; 87 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
     {
@@ -197,7 +195,7 @@
       "rtl_chars": 156676,
       "fully_decoded": false,
       "order_verified": true,
-      "order_rule": "yes — actual_text, bidi_reordered, producer_visual_order_known",
+      "order_rule": "yes — actual_text, producer_visual_order_known",
       "bytes": 1095362,
       "producer": "Adobe PDF Library 17.0",
       "pages": 62,
@@ -212,8 +210,6 @@
       "decoded_chars": 200299,
       "reasons": [
         "actual_text",
-        "bidi_reordered",
-        "bidi_verified",
         "producer_visual_order_known",
         "unsupported_broken_to_unicode"
       ],
@@ -315,7 +311,7 @@
         ]
       },
       "text_head": " إطار منظمة الصحة\n العالمية لإلستجابة\nئ\nللطوار\nاإلجراءات الد",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/arabic-2.pdf: text from 61 of 62 pages; 42 page(s) refused (unsupported_broken_to_unicode)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-2.pdf: text from 61 of 62 pages; 42 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
     {
@@ -337,7 +333,6 @@
       "unordered_chars": 1187033,
       "decoded_chars": 1187038,
       "reasons": [
-        "bidi_verified",
         "unsupported_broken_to_unicode",
         "encoding_mapped",
         "unsupported_font_encoding",
@@ -446,7 +441,7 @@
         ]
       },
       "text_head": "  \n  ",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/arabic-3.pdf: text from 2 of 321 pages; 319 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding, unsupported_visual_order); 1187033 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-3.pdf: text from 2 of 321 pages; 319 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding, unsupported_visual_order); 1187033 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -454,7 +449,7 @@
       "rtl_chars": 85428,
       "fully_decoded": false,
       "order_verified": true,
-      "order_rule": "yes — actual_text, to_unicode_logical, bidi_reordered, producer_visual_order_known",
+      "order_rule": "yes — actual_text, to_unicode_logical, producer_visual_order_known",
       "bytes": 3072269,
       "producer": "Adobe PDF Library 16.0.7",
       "pages": 185,
@@ -470,8 +465,6 @@
       "reasons": [
         "actual_text",
         "to_unicode_logical",
-        "bidi_reordered",
-        "bidi_verified",
         "producer_visual_order_known",
         "unsupported_broken_to_unicode",
         "encoding_mapped",
@@ -577,7 +570,7 @@
         ]
       },
       "text_head": "تقرير التنمية االنسانية العربية للعام  \n يشمل الجميع ويعزز ا",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/arabic-4.pdf: text from 177 of 185 pages; 175 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-4.pdf: text from 177 of 185 pages; 175 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
       "inspect_exit": 0
     },
     {
@@ -681,7 +674,7 @@
         ]
       },
       "text_head": "No. :\n12345\nkA :\n65KA50KA36KA36KA25kA\nIP :\n4242424242\nQTY :\n",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/english-1.pdf: text from 2 of 3 pages; 1 page(s) refused (unsupported_visual_order); 2784 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/english-1.pdf: text from 2 of 3 pages; 1 page(s) refused (unsupported_visual_order); 2784 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -1666,7 +1659,7 @@
         ]
       },
       "text_head": "Proceedings of the Human Language Technology Conference (HLT",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/he-eng-ar.pdf: text from 1 of 3 pages; 2 page(s) refused (unsupported_visual_order); 7604 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/he-eng-ar.pdf: text from 1 of 3 pages; 2 page(s) refused (unsupported_visual_order); 7604 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -1789,7 +1782,7 @@
         ]
       },
       "text_head": " \nORA (RODRIGUE) SCHWARZWALD \nOFRA TIROSH\n-\nMizmor Le-David:",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/hebrew-1.pdf: text from 29 of 29 pages; 29 page(s) refused (unsupported_broken_to_unicode)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-1.pdf: text from 29 of 29 pages; 29 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
     {
@@ -1896,7 +1889,7 @@
         ]
       },
       "text_head": " \n  \n  \n \n \n  \n  \n ",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/hebrew-2.pdf: text from 4 of 4 pages; 4 page(s) refused (unsupported_broken_to_unicode)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-2.pdf: text from 4 of 4 pages; 4 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
     {
@@ -2024,7 +2017,7 @@
         ]
       },
       "text_head": "אגף בכיר לביקורת פנים ולתלונות הציבור\nדין וחשבון שנתי\nמספר 1",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/hebrew-3.pdf: text from 44 of 44 pages; 44 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-3.pdf: text from 44 of 44 pages; 44 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
       "inspect_exit": 0
     },
     {
@@ -2152,7 +2145,7 @@
         ]
       },
       "text_head": " \n \n \n מדינת ישראל\n קליטת העלייההמשרד ל\n ת הפנימית ופניות הצ",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/hebrew-4.pdf: text from 55 of 56 pages; 54 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-4.pdf: text from 55 of 56 pages; 54 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
       "inspect_exit": 0
     },
     {
@@ -2271,7 +2264,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-1.pdf: refused to guess text order (unsupported_broken_to_unicode); 8475 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-1.pdf: refused to guess text order (unsupported_broken_to_unicode); 8475 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -2379,7 +2372,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-2.pdf: refused to guess text order (unsupported_broken_to_unicode); 2076 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-2.pdf: refused to guess text order (unsupported_broken_to_unicode); 2076 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -2483,7 +2476,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-3.pdf: refused to guess text order (unsupported_visual_order); 1981 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-3.pdf: refused to guess text order (unsupported_visual_order); 1981 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -2505,7 +2498,6 @@
       "unordered_chars": 1488,
       "decoded_chars": 1488,
       "reasons": [
-        "bidi_verified",
         "encoding_mapped",
         "unsupported_visual_order"
       ],
@@ -2588,7 +2580,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-4.pdf: refused to guess text order (unsupported_visual_order); 1488 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-4.pdf: refused to guess text order (unsupported_visual_order); 1488 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -2788,7 +2780,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-6.pdf: refused to guess text order (unsupported_visual_order); 759 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-6.pdf: refused to guess text order (unsupported_visual_order); 759 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -2989,7 +2981,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-8.pdf: refused to guess text order (unsupported_page_content)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-8.pdf: refused to guess text order (unsupported_page_content)",
       "inspect_exit": 0
     },
     {
@@ -3482,7 +3474,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-hld-7-summary-fa.pdf: refused to guess text order (unsupported_visual_order); 6333 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-hld-7-summary-fa.pdf: refused to guess text order (unsupported_visual_order); 6333 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -3586,7 +3578,7 @@
         ]
       },
       "text_head": "·Multiple MPPTs and battery input\n·Support DG input and smar",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-inverter-hybrid-growatt-30kw.pdf: text from 2 of 2 pages; 1 page(s) refused (unsupported_broken_to_unicode)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-inverter-hybrid-growatt-30kw.pdf: text from 2 of 2 pages; 1 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
     {
@@ -3689,7 +3681,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-irancell-expansion-layout.pdf: refused to guess text order (unsupported_page_content)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-irancell-expansion-layout.pdf: refused to guess text order (unsupported_page_content)",
       "inspect_exit": 0
     },
     {
@@ -3887,7 +3879,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-panel1.pdf: refused to guess text order (unsupported_visual_order); 1629 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-panel1.pdf: refused to guess text order (unsupported_visual_order); 1629 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -4009,7 +4001,7 @@
         ]
       },
       "text_head": "16  *   21\nFortinet FortiWeb 600F + 1*(FG-TRAN-SX)\n17  *   2",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-payvast1-2.pdf: text from 2 of 21 pages; 19 page(s) refused (unsupported_visual_order); 8436 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-payvast1-2.pdf: text from 2 of 21 pages; 19 page(s) refused (unsupported_visual_order); 8436 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -4423,7 +4415,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-report-noc-revision.pdf: refused to guess text order (unsupported_visual_order); 42107 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-report-noc-revision.pdf: refused to guess text order (unsupported_visual_order); 42107 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -5202,7 +5194,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/unknown-resume-devops-1.pdf: refused to guess text order (unsupported_visual_order); 2636 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/unknown-resume-devops-1.pdf: refused to guess text order (unsupported_visual_order); 2636 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -5404,7 +5396,7 @@
         ]
       },
       "text_head": "",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/unknown-solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf: refused to guess text order (unsupported_visual_order); 1842 characters decoded but withheld (order unestablished)",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/unknown-solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf: refused to guess text order (unsupported_visual_order); 1842 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     }
   ]

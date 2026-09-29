@@ -1,0 +1,16 @@
+{
+  "id": "synthetic-family-indesign-visual-001",
+  "language": "ar",
+  "script": "Arab",
+  "direction": "rtl",
+  "source": "tools/gen_order_fixtures.py",
+  "text": "مرحبا بالعالم\nمنظومة pdfrtl",
+  "verified_by": null,
+  "verified_at": null,
+  "status": "unverified",
+  "notes": [
+    "Expected text is the LOGICAL line the generator built the stored (painted) sequence",
+    "from. SIMULATED producer family: the /Producer string is Adobe InDesign's, the bytes",
+    "are ours. Unverified by a human (corpus/AGENT.md rule 5)."
+  ]
+}

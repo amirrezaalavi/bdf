@@ -1,0 +1,16 @@
+{
+  "id": "synthetic-family-chrome-logical-001",
+  "language": "fa",
+  "script": "Arab",
+  "direction": "rtl",
+  "source": "tools/gen_order_fixtures.py",
+  "text": "گزارش pdfrtl",
+  "verified_by": null,
+  "verified_at": null,
+  "status": "unverified",
+  "notes": [
+    "Expected text equals what the file STORES: this family's convention is logical order,",
+    "so extraction must not invert it. SIMULATED producer family: the /Producer string is",
+    "Skia's, the bytes are ours. Unverified by a human (corpus/AGENT.md rule 5)."
+  ]
+}

@@ -16,6 +16,11 @@ pub enum Reason {
     ToUnicodeLogical,
     /// `ToUnicode` mapped cleanly; run order was reconstructed from UAX #9 levels.
     BidiReordered,
+    /// Rung 3 established the order: the stored sequence was compared with the
+    /// sequence the producer actually painted, and UAX #9 run over both readings
+    /// picked exactly one — kept as logical, or inverted when the comparison proved
+    /// the mirror. Two readings, one answer, or no answer (ADR 0002).
+    BidiVerified,
     /// Producer is allow-listed as storing visual order (recorded per producer, never guessed).
     ProducerVisualOrderKnown,
     /// No reliable recovery path exists — refuse rather than emit reversed text.
@@ -58,6 +63,7 @@ impl Reason {
             Reason::ActualText => "actual_text",
             Reason::ToUnicodeLogical => "to_unicode_logical",
             Reason::BidiReordered => "bidi_reordered",
+            Reason::BidiVerified => "bidi_verified",
             Reason::ProducerVisualOrderKnown => "producer_visual_order_known",
             Reason::UnsupportedNoEvidence => "unsupported_no_evidence",
             Reason::UnsupportedBrokenToUnicode => "unsupported_broken_to_unicode",
