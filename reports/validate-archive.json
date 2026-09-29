@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T091509Z",
+  "generated": "2026-09-29T100257Z",
   "binary": "/home/netcon/target-bdf/debug/pdfrtl",
   "archive": "corpus/raw/private/desktop-pdfs",
   "summary": {
@@ -8,13 +8,13 @@
     "fully_decoded": 38,
     "order_verified": 37,
     "order_verified_rtl": 14,
-    "rtl_text_files": 14,
+    "rtl_text_files": 15,
     "partial": 12,
     "refused": 12,
     "no_text": 4,
     "emitted": 35,
-    "chars_emitted": 1035606,
-    "chars_withheld": 1275183,
+    "chars_emitted": 1038880,
+    "chars_withheld": 1271919,
     "files_by_decode_refusal": {
       "unsupported_broken_to_unicode": 11,
       "unsupported_font_encoding": 4,
@@ -148,7 +148,7 @@
           },
           {
             "word": "منظمة",
-            "raw_logical": 61,
+            "raw_logical": 94,
             "raw_reversed": 0,
             "word_logical": 52,
             "word_reversed": 0,
@@ -164,7 +164,7 @@
           },
           {
             "word": "إطار",
-            "raw_logical": 13,
+            "raw_logical": 21,
             "raw_reversed": 0,
             "word_logical": 12,
             "word_reversed": 0,
@@ -188,7 +188,7 @@
           }
         ]
       },
-      "text_head": "املبادئ التوجيهيّة ملنظّمة \nّ\nّ\nالصحّة العامليّة بشأن \nّ\nّ\nم",
+      "text_head": "المبادئ التوجيهيّة لمنظّمة \nّ\nّ\nالصحّة العالميّة بشأن \nّ\nّ\nم",
       "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/arabic-1.pdf: text from 89 of 91 pages; 87 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
@@ -290,7 +290,7 @@
           },
           {
             "word": "إطار",
-            "raw_logical": 47,
+            "raw_logical": 53,
             "raw_reversed": 0,
             "word_logical": 45,
             "word_reversed": 0,
@@ -314,7 +314,7 @@
           }
         ]
       },
-      "text_head": " إطار منظمة الصحة\n العالمية لإلستجابة\nئ\nللطوار\nاإلجراءات الد",
+      "text_head": " إطار منظمة الصحة\n العالمية للإستجابة\nئ\nللطوار\nاإلجراءات الد",
       "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/arabic-2.pdf: text from 61 of 62 pages; 42 page(s) refused (unsupported_broken_to_unicode)",
       "inspect_exit": 0
     },
@@ -552,7 +552,7 @@
           },
           {
             "word": "إطار",
-            "raw_logical": 10,
+            "raw_logical": 20,
             "raw_reversed": 0,
             "word_logical": 9,
             "word_reversed": 0,
@@ -689,7 +689,7 @@
       "rtl_chars": 1139,
       "fully_decoded": true,
       "order_verified": true,
-      "order_rule": "yes — producer_visual_order_known",
+      "order_rule": "yes — bidi_reordered, producer_visual_order_known",
       "bytes": 210359,
       "producer": "Microsoft® Word LTSC",
       "pages": 1,
@@ -703,6 +703,8 @@
       "unordered_chars": 0,
       "decoded_chars": 1642,
       "reasons": [
+        "bidi_reordered",
+        "bidi_verified",
         "producer_visual_order_known",
         "encoding_mapped"
       ],
@@ -983,7 +985,7 @@
       "rtl_chars": 1139,
       "fully_decoded": true,
       "order_verified": true,
-      "order_rule": "yes — producer_visual_order_known",
+      "order_rule": "yes — bidi_reordered, producer_visual_order_known",
       "bytes": 210359,
       "producer": "Microsoft® Word LTSC",
       "pages": 1,
@@ -997,6 +999,8 @@
       "unordered_chars": 0,
       "decoded_chars": 1642,
       "reasons": [
+        "bidi_reordered",
+        "bidi_verified",
         "producer_visual_order_known",
         "encoding_mapped"
       ],
@@ -1904,7 +1908,7 @@
       "rtl_chars": 34260,
       "fully_decoded": false,
       "order_verified": true,
-      "order_rule": "yes — actual_text, producer_visual_order_known",
+      "order_rule": "yes — actual_text, bidi_reordered, producer_visual_order_known",
       "bytes": 3195580,
       "producer": "Adobe PDF Library 17.0",
       "pages": 44,
@@ -1919,6 +1923,8 @@
       "decoded_chars": 46608,
       "reasons": [
         "actual_text",
+        "bidi_reordered",
+        "bidi_verified",
         "producer_visual_order_known",
         "unsupported_broken_to_unicode",
         "encoding_mapped",
@@ -2174,6 +2180,7 @@
       "unordered_chars": 8475,
       "decoded_chars": 8475,
       "reasons": [
+        "bidi_verified",
         "unsupported_broken_to_unicode",
         "unsupported_visual_order"
       ],
@@ -2401,6 +2408,7 @@
       "unordered_chars": 1981,
       "decoded_chars": 1981,
       "reasons": [
+        "bidi_verified",
         "unsupported_visual_order"
       ],
       "decode_refusals": [],
@@ -2707,6 +2715,7 @@
       "unordered_chars": 759,
       "decoded_chars": 759,
       "reasons": [
+        "bidi_verified",
         "unsupported_visual_order"
       ],
       "decode_refusals": [],
@@ -3399,6 +3408,7 @@
       "unordered_chars": 6333,
       "decoded_chars": 6333,
       "reasons": [
+        "bidi_verified",
         "unsupported_visual_order"
       ],
       "decode_refusals": [],
@@ -3892,7 +3902,7 @@
     },
     {
       "file": "persian-payvast1-2.pdf",
-      "rtl_chars": 0,
+      "rtl_chars": 296,
       "fully_decoded": true,
       "order_verified": false,
       "order_rule": "no — unsupported_visual_order",
@@ -3900,16 +3910,18 @@
       "producer": "Foxit Reader PDF Printer Version 9.4.0.1491",
       "pages": 21,
       "pages_decoded": 21,
-      "pages_ordered": 2,
-      "pages_failed": 19,
+      "pages_ordered": 12,
+      "pages_failed": 9,
       "status": "partial",
       "exit_code": 3,
       "ok": false,
-      "chars": 61,
-      "unordered_chars": 8436,
-      "decoded_chars": 8497,
+      "chars": 3335,
+      "unordered_chars": 5172,
+      "decoded_chars": 8507,
       "reasons": [
         "to_unicode_logical",
+        "bidi_reordered",
+        "bidi_verified",
         "unsupported_visual_order"
       ],
       "decode_refusals": [],
@@ -3919,20 +3931,10 @@
       "failed_page_numbers": [
         1,
         2,
-        3,
         4,
-        5,
         6,
-        7,
-        8,
-        9,
         10,
         11,
-        12,
-        13,
-        14,
-        15,
-        18,
         19,
         20,
         21
@@ -4008,8 +4010,8 @@
           }
         ]
       },
-      "text_head": "16  *   21\nFortinet FortiWeb 600F + 1*(FG-TRAN-SX)\n17  *   2",
-      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-payvast1-2.pdf: text from 2 of 21 pages; 19 page(s) refused (unsupported_visual_order); 8436 characters decoded but withheld (order unestablished)",
+      "text_head": "QTY\nP52534-B21HPE DL380 Gen11 8SFF NC CTO Svr1\nP48813-B21HPE",
+      "error": "/home/netcon/playground/ai/bdf/corpus/raw/private/desktop-pdfs/persian-payvast1-2.pdf: text from 12 of 21 pages; 9 page(s) refused (unsupported_visual_order); 5172 characters decoded but withheld (order unestablished)",
       "inspect_exit": 0
     },
     {
@@ -5121,6 +5123,7 @@
       "unordered_chars": 2636,
       "decoded_chars": 2636,
       "reasons": [
+        "bidi_verified",
         "unsupported_visual_order"
       ],
       "decode_refusals": [],
