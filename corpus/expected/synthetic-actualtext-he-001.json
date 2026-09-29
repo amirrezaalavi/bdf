@@ -1,0 +1,21 @@
+{
+  "id": "synthetic-actualtext-he-001",
+  "language": "he",
+  "script": "Hebr",
+  "direction": "rtl",
+  "source": "tools/gen_actualtext_fixture.py",
+  "text": "שלום עולם\nתודה רבה על העזרה",
+  "verified_by": null,
+  "verified_at": null,
+  "status": "unverified",
+  "notes": [
+    "Expected text is the /ActualText payload the generator wrote, which is authoritative",
+    "per ISO 32000-1 §14.9.4 — but per corpus/AGENT.md rule 5 an agent may not flip it to",
+    "verified: a human must confirm that this is the text a correct reader should return.",
+    "Niqqud-free; every asserted word is four letters or more so the word-boundary check",
+    "cannot match by coincidence (דוח inside חודש is the known trap).",
+    "Public Hebrew half of the no-silent-reversal control (crates/pdfrtl-core/tests/",
+    "no_silent_reversal.rs asserts שלום, עולם and תודה).",
+    "Oracle warning: pdftotext drops RTL /ActualText text entirely — see docs/problems/0001."
+  ]
+}

@@ -7,11 +7,35 @@
 # fixture rows out of the manifest, runs an explicit deny-list check against the ORIGINAL filenames,
 # and refuses to publish if anything matches.
 #
-# Usage:  bash scripts/publish-public.sh ["commit message"]
+# Usage:  bash scripts/publish-public.sh ["commit message"] [--skip-preflight]
 # Env:    MIRROR=<path to the public clone>   (default ~/playground/ai/bdf-snapshot)
+#         WSL_DISTRO=<wsl distro>             (default Ubuntu-26.04)
+# Exit:   2 not a mirror clone · 3 CI did not pass · 4 pre-flight gate failed
+#
+# Pre-flight (the hole that let a red snapshot reach CI, docs/problems/0003-era): after
+# the staged tree is built and the deny-list passes, the CI gate is run INSIDE THE STAGED
+# TREE — which has no corpus/raw/private — with the exact commands .github/workflows/ci.yml
+# runs. That is a PUBLIC-CONDITIONS gate: it fails the same way the public mirror's CI
+# would, before a single byte leaves this machine. A failure aborts here, naming the
+# failing command; main and the remote are untouched.
+#
+# `--skip-preflight` opts out of that gate. Emergency use only (e.g. the WSL build
+# environment itself is broken and a publish must go out): the snapshot branch is still
+# pushed, CI still has to pass before main moves, but you have deliberately given up the
+# local proof. Say so in the commit message when you use it.
 #
 # The mirror clone holds the public repo's git history; only its working tree is rebuilt here.
 set -euo pipefail
+
+SKIP_PREFLIGHT=0
+_ARGS=()
+for _arg in "$@"; do
+  case "$_arg" in
+    --skip-preflight) SKIP_PREFLIGHT=1 ;;
+    *) _ARGS+=("$_arg") ;;
+  esac
+done
+set -- ${_ARGS[@]+"${_ARGS[@]}"}
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 MIRROR="${MIRROR:-$HOME/playground/ai/bdf-snapshot}"
@@ -83,6 +107,45 @@ if hits:
     sys.exit(1)
 print(f"deny-list clean ({len(deny)} private identities checked)")
 PY
+
+echo "== pre-flight: CI gate on the staged snapshot =="
+# The staged tree has no corpus/raw/private, so this is exactly what the public mirror
+# runs: the CI commands, under PUBLIC conditions, on the bytes that are about to be
+# pushed. Running it here is what stops a red snapshot from reaching CI at all.
+WSL_DISTRO="${WSL_DISTRO:-Ubuntu-26.04}"
+# MSYS/Windows path -> WSL path; wsl.exe does not translate its arguments.
+to_wsl_path() {
+  printf '%s' "$1" | sed -e 's#\\#/#g' -e 's#^/\([A-Za-z]\)/#/mnt/\1/#' -e 's#^\([A-Za-z]\):/#/mnt/\1/#'
+}
+if [ "$SKIP_PREFLIGHT" -eq 1 ]; then
+  echo "== pre-flight SKIPPED by --skip-preflight: publishing WITHOUT the local public-conditions gate =="
+else
+  STAGE_WSL="$(to_wsl_path "$STAGE")"
+  PRE_LOG="$(mktemp)"
+  # Reuses the gate script (same commands as .github/workflows/ci.yml) against the
+  # staged tree via PDFRTL_ROOT; --quick keeps it to fmt + clippy + test + slop + deps.
+  # wsl-build.sh gives a foreign tree its OWN target dir on purpose: this checkout's
+  # artifacts bake in this checkout's CARGO_MANIFEST_DIR, so reusing them would make the
+  # control read corpus/raw/private again and the gate would no longer be public.
+  if wsl -d "$WSL_DISTRO" -e bash -c \
+      "PDFRTL_ROOT='$STAGE_WSL' bash '$STAGE_WSL/scripts/wsl-build.sh' --quick" \
+      2>&1 | tee "$PRE_LOG"; then
+    echo "== pre-flight green: the staged snapshot passes the CI gate under public conditions =="
+    rm -f "$PRE_LOG"
+  else
+    step="$(grep -E '^-- ' "$PRE_LOG" | tail -1 | sed -e 's/^-- //' -e 's/ --$//')"
+    {
+      echo "PREFLIGHT FAILED - the staged snapshot is NOT publishable, nothing was pushed."
+      echo "  failing command: ${step:-<unknown; full log below>}"
+      echo "  This was a PUBLIC-CONDITIONS gate: it ran on the staged tree, which has NO"
+      echo "  corpus/raw/private, using the exact commands from .github/workflows/ci.yml."
+      echo "  main and the remote are untouched. Log tail:"
+      tail -n 30 "$PRE_LOG"
+    } >&2
+    rm -f "$PRE_LOG"
+    exit 4
+  fi
+fi
 
 echo "== replacing mirror working tree =="
 find "$MIRROR" -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.stage' -exec rm -rf {} +
