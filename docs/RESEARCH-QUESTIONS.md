@@ -8,6 +8,12 @@ and deleted by the project agent.
 **Who answers.** An external research agent with web/library/code access. You are not
 asked to agree with our design; you are asked to establish **facts with sources**.
 
+**Status 2026-09-29: the queue is empty.** Round 1 (Q-R1…Q-R10) was answered externally; the raw
+answers, our accept/reject decisions and what they changed are recorded in
+[`docs/research/2026-09-29-external-answers.md`](../research/2026-09-29-external-answers.md).
+The questions were consumed and deleted, as designed. `Q-R6` is kept below as a tombstone only so
+the numbering stays stable and nobody re-asks it. New questions are appended near the bottom.
+
 ---
 
 ## Ground rules for answering
@@ -31,234 +37,60 @@ asked to agree with our design; you are asked to establish **facts with sources*
 `pdfrtl` is a headless RTL-first PDF library (Rust) for Arabic/Persian/Hebrew alongside
 Latin. Its single invariant: *extraction returns logical order, or it fails with an explicit
 reason — silent reversal is a bug, there is no third outcome.* Order recovery is a ladder:
-`/ActualText` → `ToUnicode` + UAX #9 levels → allow-listed producer fingerprint → refuse
+`/ActualText` → `ToUnicode` + a measured painting compared against UAX #9 levels →
+allow-listed producer fingerprint (each entry backed by a test we ran) → refuse
 (`unsupported_*`, exit 3). A page whose order cannot be established is **withheld** from the
 text output and counted instead. Measured so far, on our own fixtures: Chrome/Skia writes
 per-cluster `/ActualText` + `/ReversedChars`; poppler flips every lam-alef pair
 (`سلام` → `سالم`); Xpdf returns visual order; PDFium drops ZWNJ and returns per-cluster
-visual order. Passed page level, after modelling glyph advance widths, over our 51-file real-world archive:
-37 files fully order-verified, 14 refused. Those 14 span **8 producer families**:
-`Microsoft: Print To PDF` (4), `Microsoft® Excel® LTSC / 2016 / 2013` (3), `cairo` (2),
-`Foxit Reader PDF Printer` (1), `Mac OS X … Quartz PDFContext` (1), `Adobe Acrobat Pro 11`
-(1), `ReportLab` (1), and one file with no producer string at all. Structurally they are
-alike: `/Type0` + `/Identity-H`, a `/W` array **is** present, `/ToUnicode` **is** present and
-maps to base Arabic letters, and there is **no** `/ActualText` and **no** `/ReversedChars`
-anywhere — the painting is the only evidence in the file. Page behaviour differs: most refuse
-on *every* page, one 321-page file order-refuses 319 of 321 pages (228 of which decode), and
-three refuse only a minority (1/3, 2/3, 9/21).
+visual order.
 
-Measured this week, and the reason Q-R1 and Q-R2 are sharper than they look: for these files
-poppler's `pdftotext -layout -enc UTF-8` returns coherent **logical** Persian, while `-raw`
-returns the same words in **reversed** order — i.e. something out there does recover logical
-order from this family, and the stored order is painted-visual. We will not copy an
-unexplained rule, but it proves the information is present in the files and points at where to
-look. Details and definitions: `docs/problems/0001…0008`, `docs/ROADMAP.md`.
+Our 51-file real-world archive, passed at page level after modelling glyph advance widths: 37
+files fully order-verified, 14 refused. Those 14 span **8 producer families**: `Microsoft: Print
+To PDF` (4), `Microsoft® Excel® LTSC / 2016 / 2013` (3), `cairo` (2), `Foxit Reader PDF Printer`
+(1), `Mac OS X … Quartz PDFContext` (1), `Adobe Acrobat Pro 11` (1), `ReportLab` (1), and one
+file with no producer string at all. Structurally they are alike: `/Type0` + `/Identity-H`, a
+`/W` array **is** present, `/ToUnicode` **is** present and maps to base Arabic letters, and there
+is **no** `/ActualText` and **no** `/ReversedChars` anywhere — the painting is the only evidence
+in the file. Page behaviour differs: most refuse on *every* page, one 321-page file order-refuses
+319 of 321 pages (228 of which decode), and three refuse only a minority (1/3, 2/3, 9/21).
 
----
-
-## Q-R1 — Deciding "visual or logical" for RTL runs whose producer is unknown or generic
-
-**Blocking:** 14 of our 51 real files. They carry `/ToUnicode` that maps codes to **base**
-Arabic letters (no presentation forms), no `/ActualText`, no `/ReversedChars`, and a producer
-string that is either generic (`Adobe PDF Library …`, `Microsoft® Word 2013`) or absent. We
-have no evidence to name their stored order, so we withhold them rather than risk a silent
-reversal.
-
-**Need:** any *reliable* in-file signal or algorithm that decides whether a stored RTL
-sequence is painted-visual or logical, specifically:
-
-- Is GID order in `/CIDToGIDMap` (or the CID→GID assignment for an `Identity-H` font)
-  correlated with logical order, and does any implementation rely on that?
-- Do the glyph **advance widths** (`/W` array) or the placement operators (`Td`/`TJ`
-  offsets) reveal reversed ordering for a run?
-- Does the font's `cmap` (when present) or subset ordering carry the signal?
-- What do `poppler`, `pdf.js`, `PDFium`, `MuPDF` actually do with such a file — do any of
-  them ever *reorder* RTL runs, and by what rule? Give `file:line` references.
-- Same question for Acrobat itself: what does Acrobat's copy-paste return for such files?
-  If there is a documented statement (or a reproducible report) about its RTL handling of
-  Adobe-produced PDFs, that is the benchmark we care about.
-- **What rule does poppler use?** `pdftotext -layout -enc UTF-8` returns coherent logical
-  Persian for the Microsoft-family files described above, while `-raw` returns the same words
-  reversed. Give us `file:line` in poppler's `TextOutputDev` (and in any bidi pass it calls)
-  for the step that produces logical order there, the paragraph-direction rule it uses, and
-  what it does to a lam-alef cluster and to digits in the same line (we observe a ligature
-  expansion and separated digits) — including whether it is doing `visual → logical` or
-  `logical → visual` internally.
-
-**Acceptable evidence:** implementation source references, spec clauses, or a documented
-producer behaviour with a version. A decision rule we can encode **with its failure modes**
-is the ideal answer. "There is no such signal for producer family X" is equally valuable —
-it tells us to keep refusing and to say so in our docs.
-
-**Impact line required.** e.g. `Impact: we would implement detection rule R for family F and
-keep refusing F' — 8 of 14 files recovered, 6 still withheld honestly.`
+Measured 2026-09-29, and the reason the round-1 answers sharpened: for these files poppler's
+`pdftotext -layout -enc UTF-8` returns coherent **logical** Persian while `-raw` returns the same
+words **reversed** — the stored order is painted-visual, and the information needed to recover it
+is present in the file. Details and definitions: `docs/problems/0001…0008`,
+`docs/decisions/0002…0006`, `docs/ROADMAP.md`.
 
 ---
 
-## Q-R2 — Inverting a visual-order run to logical order (UAX #9 in reverse)
+## Consumed — do not re-ask
 
-**Blocking:** our rung-3 implementation for mixed content.
-
-**Need:** the accepted algorithm for turning a *painted-visual* RTL run/line back into
-logical order, including: Latin runs and digits inside an RTL line (e.g. `۱۴۰۳/۰۵/۱۲` must
-end up in the right place and unreversed), brackets and BD16 mirroring, ligature clusters
-(lam-alef) that must stay whole, and combining marks. Which implementation should we treat
-as authoritative (ICU `ubidi`, `pdf.js` bidi, poppler `TextOutputDev`, MuPDF), and what are
-the documented traps? Does the standard say anything about recovering logical order from a
-visual stream at all (ISO 32000, UAX #9 scope), or is this entirely implementation-defined?
-
-**Acceptable evidence:** code references plus a worked example on a known string.
-
-**Impact:** the ordering core of the product.
-
----
-
-## Q-R3 — Producer behaviour table, with versions and the reason behind it
-
-**Need:** for each producer/version below, does it store RTL runs **visual** or **logical**,
-what marker (if any) does it emit (`/ReversedChars`, `/ActualText` per cluster, presentation
-forms, nothing), and *why* — which library/engine inside it makes that choice:
-
-Chrome/Skia PDF print · LibreOffice · Microsoft Word 2013–365 PDF export · Adobe InDesign
-17–20 (Win/Mac) · Adobe Acrobat Pro 11 · Adobe Distiller / "Adobe PDF Library" · macOS
-Quartz/Preview · Nitro PrimoPDF · ReportLab · wkhtmltopdf · PDFreactor · mPDF · iTextSharp ·
-LaTeX (pdfTeX/LuaTeX/XeTeX, with and without `bidi`/`arabxetex`) · Ghostscript (ps2pdf).
-
-**Acceptable evidence:** reproducible reports, maintainer statements, issue trackers, source
-code. We have our own measurements for a few of these and will cross-check — an independent
-source that contradicts us is exactly what we want.
-
-**Impact:** the allow-list we ship (each entry must be backed by a test).
+| id | question | outcome | where it landed |
+|---|---|---|---|
+| Q-R1 | decide visual-vs-logical for unknown producers | accepted: the measured painting decides; poppler's rule is a run-level reversal (`TextOutputDev::reorderText`) | research digest, ADR 0006 |
+| Q-R2 | inverting a visual run (UAX #9 in reverse) | accepted: level-based L2 applied to the visual stream + 4 traps; the standard defines no inverse | ADR 0006, tests to come |
+| Q-R3 | producer behaviour table | **hypotheses only** — rows marked "None known"/"UNVERIFIED" cannot become allow-list entries | ADR 0006 |
+| Q-R4 | font-aware recovery without `/ToUnicode` | accepted: cmap inversion + `post` names + NFKC base letters + fail loudly, via `ttf-parser`; the invented tie-break rejected | W1.6 in ROADMAP |
+| Q-R5 | presentation forms in extraction output | accepted: base letters in output, NFKC for search | reason vocabulary |
+| Q-R6 | `lopdf` and incremental editing | answered by our own spike (`7086526`) — tombstone below | spike, ADR at W5 |
+| Q-R7 | writer stack for RTL shaping in Rust | accepted: `harfrust` + `krilla`/`pdf-writer`, all permissive | ROADMAP W4 |
+| Q-R8 | standards obligations for logical order | accepted: PDF/UA-1 §7.2/§8.2.3, ISO 32000 §14.9.4, WCAG PDF3 | product claims |
+| Q-R9 | the Microsoft print/export family | partial: visual storage, no marker, never emits `/ActualText`; its "refuse forever" recommendation rejected | ADR 0006 |
+| Q-R10 | independent measurement / lexical scoring | accepted: PDFium per-glyph boxes (BSD-3); lexical scoring rejected (no prior art, no margin) | ADR 0006 |
 
 ---
 
-## Q-R4 — Font-aware recovery when `ToUnicode` is absent
-
-**Blocking:** `hebrew-1.pdf` (29 pages; 9 fonts, **0** `/ToUnicode`, `Identity-H`, no
-`/CIDToGIDMap`) is the fixture; the case is common in older/consumer-produced files.
-
-**Need:** the correct, deterministic procedure to parse an embedded TrueType/OpenType font
-and map **GID → Unicode** for Arabic/Hebrew, including: which table to trust (`cmap` subtable
-format 4 vs 12, `post` names, the subset's ordering), how to resolve the ambiguity when many
-GIDs map to one or several presentation forms, what to do when the subset's `cmap` is
-stripped/empty, and how to fail loudly instead of guessing. Tooling that already does this
-(`fontTools`, `harfbuzz` GID→Unicode, `ttf-parser`) with version-specific caveats.
-
-**Acceptable evidence:** spec clauses (OpenType `cmap`/`post`, ISO 32000 §9.6–9.10) plus
-working references.
-
-**Impact:** decides whether we can read a whole class of files or must refuse them.
-
----
-
-## Q-R5 — Presentation forms (U+FE70–FEFF) in extraction output
-
-**Need:** when a file's `/ToUnicode` maps glyphs to Arabic presentation forms, what is the
-correct behaviour for an extractor that promises *logical text* — keep the forms, fold to
-base letters (NFKC), or keep both? What do Acrobat, PDFium, poppler and `pdf.js` emit, with
-references? Is there a documented reason any of them chooses as it does? Does folding change
-offset/cursor semantics for search-and-replace, and is there a known convention (e.g. in
-PDF/UA or accessibility tooling) for which form should be *stored*?
-
-**Impact:** our reason vocabulary, and the split between extraction output and search
-normalization.
-
----
-
-## Q-R6 — Incremental editing in Rust: does `lopdf` survive marked content? *(RESOLVED LOCALLY — kept only as a record)*
+## Q-R6 — tombstone (resolved locally, do not spend effort)
 
 **Answered by our own spike, not by research** (commit `7086526`, `spikes/lopdf-marked-content/`):
 marked content *does* survive both save paths, but only an **incremental** save
 (`IncrementalDocument::create_from` + save) preserves untouched bytes — a plain `Document::save`
 re-serialised 24 of 25 objects, collapsed object streams and degraded `Object::Real(f32)`
 precision. Never mutate `Stream::content` with a stale `/Length`. This stops blocking W5; the
-verdict becomes an ADR when W5 starts. No answer needed here — do not spend effort on it.
+verdict becomes an ADR when W5 starts.
 
 ---
 
-## Q-R7 — Writer stack for RTL shaping in Rust (state of the art, 2026)
+## Open
 
-**Need:** for generating Arabic/Persian/Hebrew PDFs in Rust: `harfrust` vs `rustybuzz`
-(cluster API, RTL run output order, maturity, licence, maintenance), plus `krilla` /
-`pdf-writer` readiness for Type0/`Identity-H` fonts, `/ToUnicode`, 65536-entry
-`/CIDToGIDMap` and `/ActualText` spans — with version numbers and any open issues that would
-bite us. What combination would you pick, and what is known to be broken?
-
-**Impact:** the generation phase's dependency choice (must stay permissive-licensed).
-
----
-
-## Q-R8 — Standards: what is actually *required* about logical order and `/ActualText`
-
-**Need:** PDF/UA-1 (ISO 14289-1), PDF 2.0 (ISO 32000-2, esp. §14.8 marked content /
-`/ActualText`, and the 2.0 changes to `ActualText` and structure), and WCAG's PDF guidance:
-what is **normatively required** about logical reading order, tag structure and `/ActualText`
-for RTL documents, with clause numbers? What do accessibility checkers (PAC, Adobe's checker)
-flag on a Persian document whose text is visual-order or splits ligatures? Is there any
-requirement that makes *our* invariant a conformance obligation rather than a nicety?
-
-**Impact:** the enterprise/accessibility tier's requirement list, and citable language for
-the product's claims.
-
----
-
-## Q-R9 — The Microsoft print/export family: 7 of our 14 refusals *(top priority)*
-
-**Blocking:** 7 of the 14 refused files — `Microsoft: Print To PDF` (4 files) and
-`Microsoft® Excel® LTSC / 2016 / 2013` (3 files). All are `/Type0` + `/Identity-H`, carry a
-`/W` array and a `/ToUnicode` mapping to base Arabic letters, and carry no `/ActualText` and
-no `/ReversedChars`. This is also the most common family in the real world, so whatever the
-answer is, it is worth more than the 7 files.
-
-**Need:** treated as two producers, not one — the Windows in-box **XPS → PDF** path
-(`Microsoft Print To PDF`) *separately* from **Office's own PDF exporter** (Excel 2013 vs 2016
-vs LTSC):
-
-- In which order does each store RTL runs — painted-visual or logical — and which library
-  inside actually writes the PDF?
-- Does that behaviour change with the Office version or the Windows release, and is there any
-  documented statement either way?
-- Is there a **machine-checkable marker** in the output that distinguishes the two storage
-  orders for this family (producer string plus version, XMP metadata, font subsetting pattern,
-  code ordering, the `/W` array's shape)?
-- Does this family ever emit `/ActualText` or `/ReversedChars`? We have never seen either from
-  it. If that is documented anywhere (or documented as *never*), it decides how much of the
-  ladder can even apply.
-
-**Acceptable evidence:** reproducible reports, Microsoft/Windows release notes or
-documentation, the source of the PDF producer used, issue trackers, or a documented
-third-party investigation. "Nobody documents this" is a valuable answer: it tells us to keep
-refusing this family and to write down that we do.
-
-**Impact:** up to 7 files (plus a very common family) recovered by an allow-list entry with a
-test per entry — or permanently and explicitly refused, with a written reason instead of a
-suspicion.
-
----
-
-## Q-R10 — An independent measurement, and lexical scoring as an admissible reason
-
-**Blocking:** our own measurement of the painting is now as good as the file's declarations
-allow, and it still does not decide these files. Two separate questions, please answer each on
-its own:
-
-1. **Independent painting measurement.** Which implementations expose per-glyph **bounding
-   boxes / origins** for RTL text reliably and at which versions — PDFium
-   (`FPDFText_GetCharBox` / `FPDFText_GetCharOrigin`), MuPDF (`stext`), poppler
-   (`TextOutputDev`)? Under which licence (we ship permissive-only: BSD/MIT/Apache/ISC/Zlib;
-   AGPL may be used as a **CI oracle** and never shipped). Is any of them *correct* about RTL
-   glyph positions, with references — and is its API stable enough to depend on for
-   classification rather than for production extraction?
-2. **Lexical scoring as an admissible reason.** Is there prior art for deciding
-   logical-vs-visual storage by scoring both hypotheses against a word list (essentially what a
-   human does when reading the output)? What documentation, tooling or research exists; which
-   Persian/Arabic/Hebrew word lists are freely licensed for shipping; what margin makes such a
-   verdict defensible; and what are the documented failure modes (transliteration, mixed
-   scripts, proper names, numbers)? If the honest answer is "no prior art and no defensible
-   margin", say so plainly — we would then use such scoring only as an offline research
-   instrument and keep it out of the product.
-
-**Impact:** whether we can ship a second, independent measurement of the painting; and whether
-a conservative named reason (e.g. `dictionary_verified`) may ever join the ladder. Our
-invariant permits an explicit reason with documented failure modes; it does not permit a silent
-heuristic, so a negative answer here is a real and acceptable outcome.
+None. Append new questions here, one `Q-Rn` block each, in the shape described above.
