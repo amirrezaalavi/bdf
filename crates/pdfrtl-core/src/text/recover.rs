@@ -248,10 +248,7 @@ fn producer_convention(fingerprint: &str) -> Option<OrderConvention> {
         .find(|family| {
             family.all.iter().all(|needle| fingerprint.contains(needle))
                 && (family.any.is_empty()
-                    || family
-                        .any
-                        .iter()
-                        .any(|needle| fingerprint.contains(needle)))
+                    || family.any.iter().any(|needle| fingerprint.contains(needle)))
         })
         .map(|family| family.convention)
 }
@@ -460,9 +457,8 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     // painted, so the claim is refuted before any bidi run gets to rescue it.
     let stored_is_painted = painted == identity;
     let keeps = predicts_painted(units, &identity, &painted);
-    let inverts = stored_is_painted
-        && inverted != identity
-        && predicts_painted(units, &inverted, &painted);
+    let inverts =
+        stored_is_painted && inverted != identity && predicts_painted(units, &inverted, &painted);
     match (keeps, inverts) {
         (true, false) => LineOrder::Keep,
         (false, true) => LineOrder::Invert(inverted),
@@ -479,7 +475,10 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
 /// complete paragraph it claims to be. Two readings that each satisfy the standard
 /// this way are the `Ambiguous` case — a coin flip, which is refused.
 fn predicts_painted(units: &[Unit], logical: &[usize], painted: &[usize]) -> bool {
-    let proxy: String = logical.iter().map(|&i| proxy_char(&units[i].text)).collect();
+    let proxy: String = logical
+        .iter()
+        .map(|&i| proxy_char(&units[i].text))
+        .collect();
     painted_map(&proxy, logical) == Some(painted.to_vec())
 }
 
@@ -497,11 +496,7 @@ fn painted_map(proxy: &str, logical: &[usize]) -> Option<Vec<usize>> {
     if map.len() != logical.len() {
         return None;
     }
-    Some(
-        map.into_iter()
-            .map(|position| logical[position])
-            .collect(),
-    )
+    Some(map.into_iter().map(|position| logical[position]).collect())
 }
 
 /// Visual -> logical for one line of base-direction RTL, at UNIT granularity:
@@ -1637,10 +1632,7 @@ mod tests {
         });
         let inverted = invert_units(&units);
         let proxy_of = |order: &[usize]| -> String {
-            order
-                .iter()
-                .map(|&i| proxy_char(&units[i].text))
-                .collect()
+            order.iter().map(|&i| proxy_char(&units[i].text)).collect()
         };
         let diag = format!(
             "painted={painted:?} inverted={inverted:?} keep={:?} inv={:?}",

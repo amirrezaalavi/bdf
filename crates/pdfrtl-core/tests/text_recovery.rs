@@ -354,15 +354,25 @@ fn reversed_chars_marker_is_order_evidence_no_matter_the_producer() {
     let _ = std::fs::remove_file(&unmarked);
     assert_eq!(
         pages[0].reasons,
-        vec![Reason::ActualText, Reason::BidiReordered, Reason::BidiVerified],
+        vec![
+            Reason::ActualText,
+            Reason::BidiReordered,
+            Reason::BidiVerified
+        ],
         "no marker: the painted positions decide, and the answer is the same text"
     );
     assert_eq!(
         pages[0].text, "دنیا",
         "the clusters were painted left to right, so the stored sequence is visual"
     );
-    assert!(pages[0].is_ordered(), "the comparison established the order");
-    assert_eq!(pages[0].unordered_chars, 0, "nothing withheld: it was decidable");
+    assert!(
+        pages[0].is_ordered(),
+        "the comparison established the order"
+    );
+    assert_eq!(
+        pages[0].unordered_chars, 0,
+        "nothing withheld: it was decidable"
+    );
 }
 
 /// The RTL/LTR boundary line: this is where run-order reconstruction earns its keep.

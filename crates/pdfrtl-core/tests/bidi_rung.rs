@@ -61,20 +61,14 @@ fn probe(name: &str, producer: &str, units: &[Placed]) -> PathBuf {
         "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
         "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 140] /Contents 4 0 R >>".to_string(),
-        format!(
-            "<< /Length {} >>\nstream\n{}\nendstream",
-            text.len(),
-            text
-        ),
+        format!("<< /Length {} >>\nstream\n{}\nendstream", text.len(), text),
         format!("<< /Producer ({producer}) /Creator ({producer}) >>"),
     ];
     let mut pdf: Vec<u8> = b"%PDF-1.4\n".to_vec();
     let mut offsets = Vec::new();
     for (index, object) in objects.iter().enumerate() {
         offsets.push(pdf.len());
-        pdf.extend_from_slice(
-            format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes(),
-        );
+        pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes());
     }
     let startxref = pdf.len();
     let mut table = format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1);
@@ -118,7 +112,11 @@ fn rtl_line_with_a_latin_run_is_kept_when_the_positions_say_logical() {
             Placed::new("pdfrtl", 100.0),
         ],
     );
-    assert_eq!(page.text, "سلام pdfrtl", "logical order kept: {:?}", page.text);
+    assert_eq!(
+        page.text, "سلام pdfrtl",
+        "logical order kept: {:?}",
+        page.text
+    );
     assert_eq!(page.reasons, vec![Reason::ActualText, Reason::BidiVerified]);
     assert!(page.is_ordered(), "the comparison established the order");
 }
@@ -169,7 +167,11 @@ fn brackets_keep_their_paired_positions_through_the_inversion() {
             Placed::new("(", 30.0),
         ],
     );
-    assert_eq!(page.text, "(سلام)", "paired, in logical order: {:?}", page.text);
+    assert_eq!(
+        page.text, "(سلام)",
+        "paired, in logical order: {:?}",
+        page.text
+    );
     assert!(page.is_ordered());
     assert!(!page.text.contains(")س"), "no bracket came out backwards");
 }
@@ -190,7 +192,8 @@ fn lam_alef_cluster_stays_whole_when_the_line_is_inverted() {
         ],
     );
     assert_eq!(page.text, "سلام لا", "ligature intact: {:?}", page.text);
-    assert!(page.text.ends_with("لا"),
+    assert!(
+        page.text.ends_with("لا"),
         "one lam-alef, two characters, in that order: {:?}",
         page.text
     );
