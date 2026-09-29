@@ -1,0 +1,411 @@
+[
+  {
+    "file": "arabic-3.pdf",
+    "pages_available": 321,
+    "pages_sampled": 3,
+    "tally": {
+      "undecided": 1,
+      "no_rtl": 2
+    },
+    "overall": "undecided",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 115,
+        "painted_rtl": 117,
+        "bigram_stream_vs_painted": 0.1228,
+        "bigram_stream_vs_reversed": 0.0877,
+        "margin": 0.0351,
+        "verdict": "undecided"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 0,
+        "painted_rtl": 0,
+        "verdict": "no_rtl"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 0,
+        "painted_rtl": 0,
+        "verdict": "no_rtl"
+      }
+    ]
+  },
+  {
+    "file": "english-1.pdf",
+    "pages_available": 3,
+    "pages_sampled": 3,
+    "tally": {
+      "no_rtl": 3
+    },
+    "overall": "undecided",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 0,
+        "painted_rtl": 0,
+        "verdict": "no_rtl"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 5,
+        "painted_rtl": 5,
+        "verdict": "no_rtl"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 0,
+        "painted_rtl": 0,
+        "verdict": "no_rtl"
+      }
+    ]
+  },
+  {
+    "file": "he-eng-ar.pdf",
+    "pages_available": 3,
+    "pages_sampled": 3,
+    "tally": {
+      "logical": 2,
+      "no_rtl": 1
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 26,
+        "painted_rtl": 26,
+        "bigram_stream_vs_painted": 0.12,
+        "bigram_stream_vs_reversed": 0.28,
+        "margin": -0.16,
+        "verdict": "logical"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 403,
+        "painted_rtl": 403,
+        "bigram_stream_vs_painted": 0.3134,
+        "bigram_stream_vs_reversed": 0.592,
+        "margin": -0.2786,
+        "verdict": "logical"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 0,
+        "painted_rtl": 0,
+        "verdict": "no_rtl"
+      }
+    ]
+  },
+  {
+    "file": "persian-1.pdf",
+    "pages_available": 13,
+    "pages_sampled": 3,
+    "tally": {
+      "logical": 3
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 96,
+        "painted_rtl": 96,
+        "bigram_stream_vs_painted": 0.3474,
+        "bigram_stream_vs_reversed": 0.4737,
+        "margin": -0.1263,
+        "verdict": "logical"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 481,
+        "painted_rtl": 487,
+        "bigram_stream_vs_painted": 0.2833,
+        "bigram_stream_vs_reversed": 0.4021,
+        "margin": -0.1188,
+        "verdict": "logical"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 1036,
+        "painted_rtl": 1044,
+        "bigram_stream_vs_painted": 0.4271,
+        "bigram_stream_vs_reversed": 0.6918,
+        "margin": -0.2647,
+        "verdict": "logical"
+      }
+    ]
+  },
+  {
+    "file": "persian-2.pdf",
+    "pages_available": 2,
+    "pages_sampled": 2,
+    "tally": {
+      "logical": 2
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 998,
+        "painted_rtl": 1005,
+        "bigram_stream_vs_painted": 0.4012,
+        "bigram_stream_vs_reversed": 0.4814,
+        "margin": -0.0802,
+        "verdict": "logical"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 583,
+        "painted_rtl": 594,
+        "bigram_stream_vs_painted": 0.3832,
+        "bigram_stream_vs_reversed": 0.4828,
+        "margin": -0.0997,
+        "verdict": "logical"
+      }
+    ]
+  },
+  {
+    "file": "persian-3.pdf",
+    "pages_available": 2,
+    "pages_sampled": 2,
+    "tally": {
+      "undecided": 2
+    },
+    "overall": "undecided",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 743,
+        "painted_rtl": 743,
+        "bigram_stream_vs_painted": 0.0768,
+        "bigram_stream_vs_reversed": 0.0795,
+        "margin": -0.0027,
+        "verdict": "undecided"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 371,
+        "painted_rtl": 371,
+        "bigram_stream_vs_painted": 0.027,
+        "bigram_stream_vs_reversed": 0.0216,
+        "margin": 0.0054,
+        "verdict": "undecided"
+      }
+    ]
+  },
+  {
+    "file": "persian-4.pdf",
+    "pages_available": 1,
+    "pages_sampled": 1,
+    "tally": {
+      "logical": 1
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 629,
+        "painted_rtl": 629,
+        "bigram_stream_vs_painted": 0.4268,
+        "bigram_stream_vs_reversed": 0.5987,
+        "margin": -0.172,
+        "verdict": "logical"
+      }
+    ]
+  },
+  {
+    "file": "persian-6.pdf",
+    "pages_available": 1,
+    "pages_sampled": 1,
+    "tally": {
+      "visual": 1
+    },
+    "overall": "visual",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 565,
+        "painted_rtl": 573,
+        "bigram_stream_vs_painted": 0.1933,
+        "bigram_stream_vs_reversed": 0.1294,
+        "margin": 0.0638,
+        "verdict": "visual"
+      }
+    ]
+  },
+  {
+    "file": "persian-hld-7-summary-fa.pdf",
+    "pages_available": 3,
+    "pages_sampled": 3,
+    "tally": {
+      "undecided": 3
+    },
+    "overall": "undecided",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 1265,
+        "painted_rtl": 1272,
+        "bigram_stream_vs_painted": 0.0103,
+        "bigram_stream_vs_reversed": 0.0047,
+        "margin": 0.0055,
+        "verdict": "undecided"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 1274,
+        "painted_rtl": 1279,
+        "bigram_stream_vs_painted": 0.0126,
+        "bigram_stream_vs_reversed": 0.0079,
+        "margin": 0.0047,
+        "verdict": "undecided"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 1592,
+        "painted_rtl": 1598,
+        "bigram_stream_vs_painted": 0.0057,
+        "bigram_stream_vs_reversed": 0.0057,
+        "margin": 0.0,
+        "verdict": "undecided"
+      }
+    ]
+  },
+  {
+    "file": "persian-panel1.pdf",
+    "pages_available": 1,
+    "pages_sampled": 1,
+    "tally": {
+      "logical": 1
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 1138,
+        "painted_rtl": 1148,
+        "bigram_stream_vs_painted": 0.3852,
+        "bigram_stream_vs_reversed": 0.5884,
+        "margin": -0.2032,
+        "verdict": "logical"
+      }
+    ]
+  },
+  {
+    "file": "persian-payvast1-2.pdf",
+    "pages_available": 21,
+    "pages_sampled": 3,
+    "tally": {
+      "logical": 2,
+      "undecided": 1
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 244,
+        "painted_rtl": 245,
+        "bigram_stream_vs_painted": 0.0658,
+        "bigram_stream_vs_reversed": 0.1358,
+        "margin": -0.07,
+        "verdict": "logical"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 40,
+        "painted_rtl": 41,
+        "bigram_stream_vs_painted": 0.0513,
+        "bigram_stream_vs_reversed": 0.1026,
+        "margin": -0.0513,
+        "verdict": "logical"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 25,
+        "painted_rtl": 25,
+        "bigram_stream_vs_painted": 0.0,
+        "bigram_stream_vs_reversed": 0.0417,
+        "margin": -0.0417,
+        "verdict": "undecided"
+      }
+    ]
+  },
+  {
+    "file": "persian-report-noc-revision.pdf",
+    "pages_available": 29,
+    "pages_sampled": 3,
+    "tally": {
+      "logical": 3
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 10,
+        "painted_rtl": 10,
+        "bigram_stream_vs_painted": 0.1111,
+        "bigram_stream_vs_reversed": 0.7778,
+        "margin": -0.6667,
+        "verdict": "logical"
+      },
+      {
+        "page": 2,
+        "stream_rtl": 10,
+        "painted_rtl": 10,
+        "bigram_stream_vs_painted": 0.0,
+        "bigram_stream_vs_reversed": 1.0,
+        "margin": -1.0,
+        "verdict": "logical"
+      },
+      {
+        "page": 3,
+        "stream_rtl": 10,
+        "painted_rtl": 10,
+        "bigram_stream_vs_painted": 0.0,
+        "bigram_stream_vs_reversed": 1.0,
+        "margin": -1.0,
+        "verdict": "logical"
+      }
+    ]
+  },
+  {
+    "file": "unknown-resume-devops-1.pdf",
+    "pages_available": 1,
+    "pages_sampled": 1,
+    "tally": {
+      "undecided": 1
+    },
+    "overall": "undecided",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 1411,
+        "painted_rtl": 1419,
+        "bigram_stream_vs_painted": 0.0901,
+        "bigram_stream_vs_reversed": 0.1021,
+        "margin": -0.0121,
+        "verdict": "undecided"
+      }
+    ]
+  },
+  {
+    "file": "unknown-solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf",
+    "pages_available": 1,
+    "pages_sampled": 1,
+    "tally": {
+      "logical": 1
+    },
+    "overall": "logical",
+    "pages": [
+      {
+        "page": 1,
+        "stream_rtl": 9,
+        "painted_rtl": 9,
+        "bigram_stream_vs_painted": 0.0,
+        "bigram_stream_vs_reversed": 1.0,
+        "margin": -1.0,
+        "verdict": "logical"
+      }
+    ]
+  }
+]
