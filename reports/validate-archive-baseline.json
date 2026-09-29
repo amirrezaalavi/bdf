@@ -1,0 +1,5403 @@
+{
+  "generated": "2026-09-29T071505Z",
+  "binary": "/home/netcon/target-pdfrtl/debug/pdfrtl",
+  "archive": "corpus/raw/private/desktop-pdfs",
+  "summary": {
+    "files": 51,
+    "full": 23,
+    "fully_decoded": 38,
+    "order_verified": 37,
+    "order_verified_rtl": 14,
+    "rtl_text_files": 14,
+    "partial": 12,
+    "refused": 12,
+    "no_text": 4,
+    "emitted": 35,
+    "chars_emitted": 1035606,
+    "chars_withheld": 1275183,
+    "files_by_decode_refusal": {
+      "unsupported_broken_to_unicode": 11,
+      "unsupported_font_encoding": 4,
+      "unsupported_page_content": 2
+    },
+    "files_by_order_refusal": {
+      "unsupported_visual_order": 14
+    },
+    "pages_by_refusal": {
+      "unsupported_visual_order": 14,
+      "unsupported_broken_to_unicode": 11,
+      "unsupported_font_encoding": 4,
+      "unsupported_page_content": 2
+    },
+    "producer_by_status": {
+      "Microsoft® Word LTSC / full": 7,
+      "pdfplot16.hdi 16.01.051.00000 / full": 6,
+      "Microsoft: Print To PDF / refused": 6,
+      "Adobe PDF Library 17.0 / partial": 4,
+      "Microsoft: Print To PDF / full": 2,
+      "Synopse PDF engine 1.18.6395 / full": 2,
+      "Adobe Acrobat Pro 11.0.0 / partial": 1,
+      "Adobe PDF Library 16.0.7 / partial": 1,
+      "Microsoft® Excel® LTSC / partial": 1,
+      "PDFlib+PDI 9.0.2p2 (C++/Win64) / full": 1,
+      "Qt 4.8.7 / full": 1,
+      "Mac OS X 10.10 Quartz PDFContext / partial": 1,
+      "Nitro PDF PrimoPDF / partial": 1,
+      "Microsoft® Word 2013 / partial": 1,
+      "unknown / refused": 1,
+      "Microsoft® Excel® 2016 / refused": 1,
+      "cairo 1.18.4 (https://cairographics.org) / refused": 1,
+      "Microsoft® Word 2021 / full": 1,
+      "Acrobat Distiller 11.0 (Windows) / full": 1,
+      "Stimulsoft Reports / full": 1,
+      "ReportLab PDF Library - (opensource) / refused": 1,
+      "Corel PDF Engine Version 18.1.0.661 / partial": 1,
+      "Nitro PDF Pro 14 (14.39.0.18) / no_text": 1,
+      "Foxit Reader PDF Printer Version 9.4.0.1491 / partial": 1,
+      "Microsoft® Word 2024 / full": 1,
+      "intsig.com pdf producer / no_text": 1,
+      "Adobe Acrobat 21.1 Image Conversion Plug-in / no_text": 1,
+      "Pdftools SDK / no_text": 1,
+      "cairo 1.18.0 (https://cairographics.org) / refused": 1,
+      "Microsoft® Excel® 2013 / refused": 1
+    },
+    "probe_words_matched": 22,
+    "probe_words_logical_only": 22,
+    "probe_mixed": []
+  },
+  "files": [
+    {
+      "file": "arabic-1.pdf",
+      "rtl_chars": 124875,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — actual_text, producer_visual_order_known",
+      "bytes": 1736064,
+      "producer": "Adobe PDF Library 17.0",
+      "pages": 91,
+      "pages_decoded": 4,
+      "pages_ordered": 91,
+      "pages_failed": 87,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 171266,
+      "unordered_chars": 0,
+      "decoded_chars": 171266,
+      "reasons": [
+        "actual_text",
+        "producer_visual_order_known",
+        "unsupported_broken_to_unicode"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 61,
+            "raw_reversed": 0,
+            "word_logical": 52,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 146,
+            "raw_reversed": 0,
+            "word_logical": 142,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 13,
+            "raw_reversed": 0,
+            "word_logical": 12,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "املبادئ التوجيهيّة ملنظّمة \nّ\nّ\nالصحّة العامليّة بشأن \nّ\nّ\nم",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-1.pdf: text from 89 of 91 pages; 87 page(s) refused (unsupported_broken_to_unicode)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "arabic-2.pdf",
+      "rtl_chars": 156676,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — actual_text, producer_visual_order_known",
+      "bytes": 1095362,
+      "producer": "Adobe PDF Library 17.0",
+      "pages": 62,
+      "pages_decoded": 20,
+      "pages_ordered": 62,
+      "pages_failed": 42,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 200299,
+      "unordered_chars": 0,
+      "decoded_chars": 200299,
+      "reasons": [
+        "actual_text",
+        "producer_visual_order_known",
+        "unsupported_broken_to_unicode"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1,
+        3,
+        4,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        33,
+        34,
+        35
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 530,
+            "raw_reversed": 0,
+            "word_logical": 28,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 223,
+            "raw_reversed": 0,
+            "word_logical": 207,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 47,
+            "raw_reversed": 0,
+            "word_logical": 45,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": " إطار منظمة الصحة\n العالمية لإلستجابة\nئ\nللطوار\nاإلجراءات الد",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-2.pdf: text from 61 of 62 pages; 42 page(s) refused (unsupported_broken_to_unicode)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "arabic-3.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 14878046,
+      "producer": "Adobe Acrobat Pro 11.0.0",
+      "pages": 321,
+      "pages_decoded": 228,
+      "pages_ordered": 2,
+      "pages_failed": 319,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 5,
+      "unordered_chars": 1187033,
+      "decoded_chars": 1187038,
+      "reasons": [
+        "unsupported_broken_to_unicode",
+        "encoding_mapped",
+        "unsupported_font_encoding",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding",
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "  \n  ",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-3.pdf: text from 2 of 321 pages; 319 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding, unsupported_visual_order); 1187033 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "arabic-4.pdf",
+      "rtl_chars": 85428,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — actual_text, to_unicode_logical, producer_visual_order_known",
+      "bytes": 3072269,
+      "producer": "Adobe PDF Library 16.0.7",
+      "pages": 185,
+      "pages_decoded": 10,
+      "pages_ordered": 185,
+      "pages_failed": 175,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 116762,
+      "unordered_chars": 0,
+      "decoded_chars": 116762,
+      "reasons": [
+        "actual_text",
+        "to_unicode_logical",
+        "producer_visual_order_known",
+        "unsupported_broken_to_unicode",
+        "encoding_mapped",
+        "unsupported_font_encoding"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 59,
+            "raw_reversed": 0,
+            "word_logical": 42,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 19,
+            "raw_reversed": 0,
+            "word_logical": 14,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 10,
+            "raw_reversed": 0,
+            "word_logical": 9,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "تقرير التنمية االنسانية العربية للعام  \n يشمل الجميع ويعزز ا",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/arabic-4.pdf: text from 177 of 185 pages; 175 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 591850,
+      "producer": "Microsoft® Excel® LTSC",
+      "pages": 3,
+      "pages_decoded": 3,
+      "pages_ordered": 2,
+      "pages_failed": 1,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 3832,
+      "unordered_chars": 2784,
+      "decoded_chars": 6616,
+      "reasons": [
+        "encoding_mapped",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        2
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "No. :\n12345\nkA :\n65KA50KA36KA36KA25kA\nIP :\n4242424242\nQTY :\n",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/english-1.pdf: text from 2 of 3 pages; 1 page(s) refused (unsupported_visual_order); 2784 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-asnad-9-32.pdf",
+      "rtl_chars": 1139,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 210359,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 1642,
+      "unordered_chars": 0,
+      "decoded_chars": 1642,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "  \n \n \n \n \nالزامات مربوطه در عملیات فیبرکشی و نیز فیوژن و چی",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-asnad-9-39.pdf",
+      "rtl_chars": 1887,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 211356,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 2576,
+      "unordered_chars": 0,
+      "decoded_chars": 2576,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "  \n \n \n \n \n . دیواره لوله را نیز در فواصل مختلف سوراخ خواهد ",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-asnad-9-40.pdf",
+      "rtl_chars": 932,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 217108,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 1324,
+      "unordered_chars": 0,
+      "decoded_chars": 1324,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 1,
+            "raw_reversed": 0,
+            "word_logical": 1,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "  \n \n \n \n \n  در محیط باشد توان سیستم خنک کننده ارتباط مستقیم",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-asnad-9-42.pdf",
+      "rtl_chars": 1139,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 210359,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 1642,
+      "unordered_chars": 0,
+      "decoded_chars": 1642,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "  \n \n \n \n \nالزامات مربوطه در عملیات فیبرکشی و نیز فیوژن و چی",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-asnad-9-43.pdf",
+      "rtl_chars": 706,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 212205,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 1098,
+      "unordered_chars": 0,
+      "decoded_chars": 1098,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 1,
+            "raw_reversed": 0,
+            "word_logical": 1,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "  \n \n \n \n \n : سیستمهای کنترل محیطی.1.15.1ِ\n این سیستم از یک ",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-cdid-7jlm9p-r12-en.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 10095419,
+      "producer": "PDFlib+PDI 9.0.2p2 (C++/Win64)",
+      "pages": 75,
+      "pages_decoded": 75,
+      "pages_ordered": 75,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 60897,
+      "unordered_chars": 0,
+      "decoded_chars": 60897,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Galaxy7000250–500kVAUPS03/2018www.schneider-electric.com\nIns",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-nexans-fibre-patch-panels-5.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 126724,
+      "producer": "Qt 4.8.7",
+      "pages": 3,
+      "pages_decoded": 3,
+      "pages_ordered": 3,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 1257,
+      "unordered_chars": 0,
+      "decoded_chars": 1257,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "CONTACT\nUSSUSTAINABILITYNEWSROOMEnglish\n   \nProductsSegments",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-power-room.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 88499,
+      "producer": "pdfplot16.hdi 16.01.051.00000",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 103,
+      "unordered_chars": 0,
+      "decoded_chars": 103,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "POWER ROOM\nSPLIT\nSPLIT\nATS\nMDP\nMDP\n80cm\n80cm100cm\nUDP\nUPS 1\n",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "english-sad-prpoposal.pdf",
+      "rtl_chars": 5265,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 1084754,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 11,
+      "pages_decoded": 11,
+      "pages_ordered": 11,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 8105,
+      "unordered_chars": 0,
+      "decoded_chars": 8105,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 14,
+            "raw_reversed": 0,
+            "word_logical": 14,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": " \n \n \n \nPROJECT: \n شرکت صاد   تاسنتر ید  رساختیز ی سازنهیبه ",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "he-eng-ar.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 159210,
+      "producer": "Mac OS X 10.10 Quartz PDFContext",
+      "pages": 3,
+      "pages_decoded": 3,
+      "pages_ordered": 1,
+      "pages_failed": 2,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 366,
+      "unordered_chars": 7604,
+      "decoded_chars": 7970,
+      "reasons": [
+        "to_unicode_logical",
+        "encoding_mapped",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Proceedings of the Human Language Technology Conference (HLT",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/he-eng-ar.pdf: text from 1 of 3 pages; 2 page(s) refused (unsupported_visual_order); 7604 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "hebrew-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — no RTL text",
+      "bytes": 412482,
+      "producer": "Nitro PDF PrimoPDF",
+      "pages": 29,
+      "pages_decoded": 0,
+      "pages_ordered": 29,
+      "pages_failed": 29,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 47897,
+      "unordered_chars": 0,
+      "decoded_chars": 47897,
+      "reasons": [
+        "unsupported_broken_to_unicode",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": " \nORA (RODRIGUE) SCHWARZWALD \nOFRA TIROSH\n-\nMizmor Le-David:",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-1.pdf: text from 29 of 29 pages; 29 page(s) refused (unsupported_broken_to_unicode)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "hebrew-2.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — actual_text",
+      "bytes": 175813,
+      "producer": "Adobe PDF Library 17.0",
+      "pages": 4,
+      "pages_decoded": 0,
+      "pages_ordered": 4,
+      "pages_failed": 4,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 19,
+      "unordered_chars": 0,
+      "decoded_chars": 19,
+      "reasons": [
+        "actual_text",
+        "unsupported_broken_to_unicode"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": " \n  \n  \n \n \n  \n  \n ",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-2.pdf: text from 4 of 4 pages; 4 page(s) refused (unsupported_broken_to_unicode)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "hebrew-3.pdf",
+      "rtl_chars": 34260,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — actual_text, producer_visual_order_known",
+      "bytes": 3195580,
+      "producer": "Adobe PDF Library 17.0",
+      "pages": 44,
+      "pages_decoded": 0,
+      "pages_ordered": 44,
+      "pages_failed": 44,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 46608,
+      "unordered_chars": 0,
+      "decoded_chars": 46608,
+      "reasons": [
+        "actual_text",
+        "producer_visual_order_known",
+        "unsupported_broken_to_unicode",
+        "encoding_mapped",
+        "unsupported_font_encoding"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 17,
+            "raw_reversed": 0,
+            "word_logical": 12,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 96,
+            "raw_reversed": 0,
+            "word_logical": 7,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          }
+        ]
+      },
+      "text_head": "אגף בכיר לביקורת פנים ולתלונות הציבור\nדין וחשבון שנתי\nמספר 1",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-3.pdf: text from 44 of 44 pages; 44 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "hebrew-4.pdf",
+      "rtl_chars": 21689,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical, producer_visual_order_known",
+      "bytes": 2571218,
+      "producer": "Microsoft® Word 2013",
+      "pages": 56,
+      "pages_decoded": 2,
+      "pages_ordered": 56,
+      "pages_failed": 54,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 35607,
+      "unordered_chars": 0,
+      "decoded_chars": 35607,
+      "reasons": [
+        "to_unicode_logical",
+        "producer_visual_order_known",
+        "unsupported_broken_to_unicode",
+        "encoding_mapped",
+        "unsupported_font_encoding"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_font_encoding"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 131,
+            "raw_reversed": 0,
+            "word_logical": 50,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 83,
+            "raw_reversed": 0,
+            "word_logical": 23,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          }
+        ]
+      },
+      "text_head": " \n \n \n מדינת ישראל\n קליטת העלייההמשרד ל\n ת הפנימית ופניות הצ",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/hebrew-4.pdf: text from 55 of 56 pages; 54 page(s) refused (unsupported_broken_to_unicode, unsupported_font_encoding)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 960265,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 13,
+      "pages_decoded": 12,
+      "pages_ordered": 0,
+      "pages_failed": 13,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 8475,
+      "decoded_chars": 8475,
+      "reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-1.pdf: refused to guess text order (unsupported_broken_to_unicode); 8475 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-2.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 118869,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 2,
+      "pages_decoded": 1,
+      "pages_ordered": 0,
+      "pages_failed": 2,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 2076,
+      "decoded_chars": 2076,
+      "reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode",
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-2.pdf: refused to guess text order (unsupported_broken_to_unicode); 2076 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-3.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 158231,
+      "producer": null,
+      "pages": 2,
+      "pages_decoded": 2,
+      "pages_ordered": 0,
+      "pages_failed": 2,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 1981,
+      "decoded_chars": 1981,
+      "reasons": [
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-3.pdf: refused to guess text order (unsupported_visual_order); 1981 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-4.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 167365,
+      "producer": "Microsoft® Excel® 2016",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 0,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 1488,
+      "decoded_chars": 1488,
+      "reasons": [
+        "encoding_mapped",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-4.pdf: refused to guess text order (unsupported_visual_order); 1488 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-5.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 238970,
+      "producer": "pdfplot16.hdi 16.01.051.00000",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 38,
+      "unordered_chars": 0,
+      "decoded_chars": 38,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "24000 Btu/Hr\n24000 Btu/Hr\n24000 Btu/Hr",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-6.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 65618,
+      "producer": "cairo 1.18.4 (https://cairographics.org)",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 0,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 759,
+      "decoded_chars": 759,
+      "reasons": [
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-6.pdf: refused to guess text order (unsupported_visual_order); 759 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-7.pdf",
+      "rtl_chars": 21596,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 399177,
+      "producer": "Microsoft® Word 2021",
+      "pages": 10,
+      "pages_decoded": 10,
+      "pages_ordered": 10,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 29046,
+      "unordered_chars": 0,
+      "decoded_chars": 29046,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 21,
+            "raw_reversed": 0,
+            "word_logical": 17,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 65,
+            "raw_reversed": 0,
+            "word_logical": 50,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 8,
+            "raw_reversed": 0,
+            "word_logical": 6,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": " \n طرف دوم  طرف اول \n های نوین توسعه امن و پویایی سامانه گرو",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-8.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — no text to order (no text layer)",
+      "bytes": 2747583,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 1,
+      "pages_decoded": 0,
+      "pages_ordered": 1,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 0,
+      "decoded_chars": 0,
+      "reasons": [
+        "unsupported_page_content"
+      ],
+      "decode_refusals": [
+        "unsupported_page_content"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_page_content"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-8.pdf: refused to guess text order (unsupported_page_content)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-archietectural-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 131908,
+      "producer": "pdfplot16.hdi 16.01.051.00000",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 72,
+      "unordered_chars": 0,
+      "decoded_chars": 72,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "112cm\n4cm\n237cm\n7cm\n0.7 THK\n244cm\nmain entrance door install",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-catalog-afsharnejad-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — no RTL text",
+      "bytes": 13210060,
+      "producer": "Acrobat Distiller 11.0 (Windows)",
+      "pages": 31,
+      "pages_decoded": 31,
+      "pages_ordered": 31,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 14,
+      "unordered_chars": 0,
+      "decoded_chars": 14,
+      "reasons": [
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "ØPwj\nØPwj\n5430",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-chasis-roof-it02.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 176086,
+      "producer": "pdfplot16.hdi 16.01.051.00000",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 55,
+      "unordered_chars": 0,
+      "decoded_chars": 55,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "IT-02\nLADDER\nWalk Way\ncondenser & fan box support frame",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-hebrew-report-it011-revision.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 1946488,
+      "producer": "Stimulsoft Reports",
+      "pages": 33,
+      "pages_decoded": 33,
+      "pages_ordered": 33,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 50367,
+      "unordered_chars": 0,
+      "decoded_chars": 50367,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Date7/13/2026\nCreated with DIALux\nBANK SADERAT\nBANK SADERAT\n",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-hld-7-summary-fa.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 111687,
+      "producer": "ReportLab PDF Library - (opensource)",
+      "pages": 3,
+      "pages_decoded": 3,
+      "pages_ordered": 0,
+      "pages_failed": 3,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 6333,
+      "decoded_chars": 6333,
+      "reasons": [
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2,
+        3
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-hld-7-summary-fa.pdf: refused to guess text order (unsupported_visual_order); 6333 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-inverter-hybrid-growatt-30kw.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 616774,
+      "producer": "Corel PDF Engine Version 18.1.0.661",
+      "pages": 2,
+      "pages_decoded": 1,
+      "pages_ordered": 2,
+      "pages_failed": 1,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 3710,
+      "unordered_chars": 0,
+      "decoded_chars": 3710,
+      "reasons": [
+        "to_unicode_logical",
+        "unsupported_broken_to_unicode"
+      ],
+      "decode_refusals": [
+        "unsupported_broken_to_unicode"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        2
+      ],
+      "failed_page_reasons": [
+        "unsupported_broken_to_unicode"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "·Multiple MPPTs and battery input\n·Support DG input and smar",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-inverter-hybrid-growatt-30kw.pdf: text from 2 of 2 pages; 1 page(s) refused (unsupported_broken_to_unicode)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-irancell-expansion-layout.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": false,
+      "order_verified": true,
+      "order_rule": "yes — no text to order (no text layer)",
+      "bytes": 2680179,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 1,
+      "pages_decoded": 0,
+      "pages_ordered": 1,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 0,
+      "decoded_chars": 0,
+      "reasons": [
+        "unsupported_page_content"
+      ],
+      "decode_refusals": [
+        "unsupported_page_content"
+      ],
+      "order_refusals": [],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_page_content"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-irancell-expansion-layout.pdf: refused to guess text order (unsupported_page_content)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-panel-6.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — no text to order (no text layer)",
+      "bytes": 1441488,
+      "producer": "Nitro PDF Pro 14 (14.39.0.18)",
+      "pages": 5,
+      "pages_decoded": 5,
+      "pages_ordered": 5,
+      "pages_failed": 0,
+      "status": "no_text",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 0,
+      "unordered_chars": 0,
+      "decoded_chars": 0,
+      "reasons": [],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-panel1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 434942,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 0,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 1629,
+      "decoded_chars": 1629,
+      "reasons": [
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-panel1.pdf: refused to guess text order (unsupported_visual_order); 1629 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-payvast1-2.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 277183,
+      "producer": "Foxit Reader PDF Printer Version 9.4.0.1491",
+      "pages": 21,
+      "pages_decoded": 21,
+      "pages_ordered": 2,
+      "pages_failed": 19,
+      "status": "partial",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 61,
+      "unordered_chars": 8436,
+      "decoded_chars": 8497,
+      "reasons": [
+        "to_unicode_logical",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        19,
+        20,
+        21
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "16  *   21\nFortinet FortiWeb 600F + 1*(FG-TRAN-SX)\n17  *   2",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-payvast1-2.pdf: text from 2 of 21 pages; 19 page(s) refused (unsupported_visual_order); 8436 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-proposal-vb-revised-fa-office.pdf",
+      "rtl_chars": 9310,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — producer_visual_order_known",
+      "bytes": 326838,
+      "producer": "Microsoft® Word 2024",
+      "pages": 8,
+      "pages_decoded": 8,
+      "pages_ordered": 8,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 12532,
+      "unordered_chars": 0,
+      "decoded_chars": 12532,
+      "reasons": [
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 5,
+            "raw_reversed": 0,
+            "word_logical": 5,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 8,
+            "raw_reversed": 0,
+            "word_logical": 7,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 15,
+            "raw_reversed": 0,
+            "word_logical": 13,
+            "word_reversed": 0,
+            "verdict": "logical only"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "افزاری، مدیریت شبکه و پایش  پروپوزال ارائه خدمات پشتیبانی نر",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-report-dg-revision.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 6006832,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 34,
+      "pages_decoded": 34,
+      "pages_ordered": 34,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 47730,
+      "unordered_chars": 0,
+      "decoded_chars": 47730,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Date\n7/13/2026\nCreated with DIALux\nBANK SADERAT\nBANK SADERAT",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-report-it02-revision.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 8474182,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 44,
+      "pages_decoded": 44,
+      "pages_ordered": 44,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 60403,
+      "unordered_chars": 0,
+      "decoded_chars": 60403,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Date\n7/13/2026\nCreated with DIALux\nBANK SADERAT\nBANK SADERAT",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-report-noc-revision.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 5601936,
+      "producer": "Microsoft: Print To PDF",
+      "pages": 29,
+      "pages_decoded": 29,
+      "pages_ordered": 0,
+      "pages_failed": 29,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 42107,
+      "decoded_chars": 42107,
+      "reasons": [
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/persian-report-noc-revision.pdf: refused to guess text order (unsupported_visual_order); 42107 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-server-room.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 91508,
+      "producer": "pdfplot16.hdi 16.01.051.00000",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 191,
+      "unordered_chars": 0,
+      "decoded_chars": 191,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "SPLIT\nSPLIT\nSERVER ROOM\n400cm\n550cm\nRACKRACKRACKRACK\n    \n88",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-spec.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 173178,
+      "producer": "pdfplot16.hdi 16.01.051.00000",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 334,
+      "unordered_chars": 0,
+      "decoded_chars": 334,
+      "reasons": [
+        "to_unicode_logical"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "SPLIT\nSPLIT\nSERVER ROOM\n200cm\nPOWER ROOM\nSPLIT\nSPLIT\nATS\nMDP",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "persian-tabriz-expansion-data-center.pdf",
+      "rtl_chars": 28964,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical, producer_visual_order_known",
+      "bytes": 867288,
+      "producer": "Microsoft® Word LTSC",
+      "pages": 50,
+      "pages_decoded": 50,
+      "pages_ordered": 50,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 118454,
+      "unordered_chars": 0,
+      "decoded_chars": 118454,
+      "reasons": [
+        "to_unicode_logical",
+        "producer_visual_order_known",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Procurement Request  \nTabriz Expansion Data Center \n  \nConfi",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 1105647,
+      "producer": "Synopse PDF engine 1.18.6395",
+      "pages": 7,
+      "pages_decoded": 7,
+      "pages_ordered": 7,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 5635,
+      "unordered_chars": 0,
+      "decoded_chars": 5635,
+      "reasons": [
+        "to_unicode_logical",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Version 7.4.8\nPVsyst - Simulation report\nGrid-Connected Syst",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-camscanner-18-08-2025-12-45.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — no text to order (no text layer)",
+      "bytes": 225321,
+      "producer": "intsig.com pdf producer",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 1,
+      "pages_failed": 0,
+      "status": "no_text",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 0,
+      "unordered_chars": 0,
+      "decoded_chars": 0,
+      "reasons": [],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-honeywell-cataluge-fire-supression.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — no text to order (no text layer)",
+      "bytes": 3206937,
+      "producer": "Adobe Acrobat 21.1 Image Conversion Plug-in",
+      "pages": 20,
+      "pages_decoded": 20,
+      "pages_ordered": 20,
+      "pages_failed": 0,
+      "status": "no_text",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 0,
+      "unordered_chars": 0,
+      "decoded_chars": 0,
+      "reasons": [],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-ketab.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — no text to order (no text layer)",
+      "bytes": 2809399,
+      "producer": "Pdftools SDK",
+      "pages": 9,
+      "pages_decoded": 9,
+      "pages_ordered": 9,
+      "pages_failed": 0,
+      "status": "no_text",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 0,
+      "unordered_chars": 0,
+      "decoded_chars": 0,
+      "reasons": [],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-resume-devops-1.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 109477,
+      "producer": "cairo 1.18.0 (https://cairographics.org)",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 0,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 2636,
+      "decoded_chars": 2636,
+      "reasons": [
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/unknown-resume-devops-1.pdf: refused to guess text order (unsupported_visual_order); 2636 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-roof2.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": true,
+      "order_rule": "yes — to_unicode_logical",
+      "bytes": 1011351,
+      "producer": "Synopse PDF engine 1.18.6395",
+      "pages": 7,
+      "pages_decoded": 7,
+      "pages_ordered": 7,
+      "pages_failed": 0,
+      "status": "full",
+      "exit_code": 0,
+      "ok": true,
+      "chars": 5659,
+      "unordered_chars": 0,
+      "decoded_chars": 5659,
+      "reasons": [
+        "to_unicode_logical",
+        "encoding_mapped"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [],
+      "failed_page_numbers": [],
+      "failed_page_reasons": [],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "Version 7.4.8\nPVsyst - Simulation report\nGrid-Connected Syst",
+      "error": null,
+      "inspect_exit": 0
+    },
+    {
+      "file": "unknown-solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf",
+      "rtl_chars": 0,
+      "fully_decoded": true,
+      "order_verified": false,
+      "order_rule": "no — unsupported_visual_order",
+      "bytes": 314051,
+      "producer": "Microsoft® Excel® 2013",
+      "pages": 1,
+      "pages_decoded": 1,
+      "pages_ordered": 0,
+      "pages_failed": 1,
+      "status": "refused",
+      "exit_code": 3,
+      "ok": false,
+      "chars": 0,
+      "unordered_chars": 1842,
+      "decoded_chars": 1842,
+      "reasons": [
+        "encoding_mapped",
+        "unsupported_visual_order"
+      ],
+      "decode_refusals": [],
+      "order_refusals": [
+        "unsupported_visual_order"
+      ],
+      "failed_page_numbers": [
+        1
+      ],
+      "failed_page_reasons": [
+        "unsupported_visual_order"
+      ],
+      "probe": {
+        "words": [
+          {
+            "word": "شرکت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "قرارداد",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "مدیریت",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "منظمة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "الصحة",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "إطار",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "פניות",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          },
+          {
+            "word": "ציבור",
+            "raw_logical": 0,
+            "raw_reversed": 0,
+            "word_logical": 0,
+            "word_reversed": 0,
+            "verdict": "absent"
+          }
+        ]
+      },
+      "text_head": "",
+      "error": "/mnt/c/Users/netcon/playground/ai/pdfrtl/corpus/raw/private/desktop-pdfs/unknown-solid-cable-3-50-25-afsharnezhad-khorasan-datasheet.pdf: refused to guess text order (unsupported_visual_order); 1842 characters decoded but withheld (order unestablished)",
+      "inspect_exit": 0
+    }
+  ]
+}

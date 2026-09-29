@@ -189,18 +189,81 @@ fn pdf_text_string(bytes: &[u8]) -> String {
     }
 }
 
-/// Producers that store right-to-left text in *visual* order. Measured on this
-/// corpus (ADR 0004): every Word/InDesign RTL file decodes to the mirror of what
-/// pdftotext and pypdf call logical, and none of them carries `/ReversedChars`.
-fn stores_visual_order(fingerprint: &str) -> bool {
-    (fingerprint.contains("microsoft") && fingerprint.contains("word"))
-        || fingerprint.contains("indesign")
+/// The storage convention a measured producer family writes its text in (ADR 0004).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OrderConvention {
+    /// The stored sequence is the painted one: invert it to reach logical order.
+    Visual,
+    /// The stored sequence is already logical: invert nothing.
+    Logical,
 }
 
-/// Producers measured to store right-to-left text in *logical* order: Chromium's
-/// fixtures extract byte-exact with no inversion at all (ADR 0004).
+/// One measured producer family, keyed by its `/Producer` fingerprint.
+///
+/// Every entry MUST have a fixture in the corpus asserting its convention: the
+/// coverage control in `crates/pdfrtl-core/tests/producer_allowlist.rs` enumerates
+/// this table, so a family added here with no fixture fails the gate, and a fixture
+/// deleted from the corpus fails it too rather than silently dropping out. That is
+/// the rule docs/problems/0005 set for allow-list entries.
+pub struct ProducerFamily {
+    /// Stable id the coverage control matches fixtures against.
+    pub id: &'static str,
+    /// Every needle must appear in the lowercased fingerprint.
+    pub all: &'static [&'static str],
+    /// At least one needle must appear when the list is not empty.
+    pub any: &'static [&'static str],
+    pub convention: OrderConvention,
+}
+
+/// The whole fingerprint allow-list — the last rung of the order ladder.
+pub const PRODUCER_ALLOW_LIST: &[ProducerFamily] = &[
+    // Visual: measured on this corpus (ADR 0004) — every Word/InDesign RTL file
+    // decodes to the mirror of what pdftotext and pypdf call logical, and none of
+    // them carries `/ReversedChars`.
+    ProducerFamily {
+        id: "microsoft-word",
+        all: &["microsoft", "word"],
+        any: &[],
+        convention: OrderConvention::Visual,
+    },
+    ProducerFamily {
+        id: "adobe-indesign",
+        all: &[],
+        any: &["indesign"],
+        convention: OrderConvention::Visual,
+    },
+    // Logical: Chromium's fixtures extract byte-exact with no inversion at all.
+    ProducerFamily {
+        id: "chromium-skia",
+        all: &[],
+        any: &["skia", "chrom"],
+        convention: OrderConvention::Logical,
+    },
+];
+
+/// The allow-listed convention for this fingerprint, if it is allow-listed at all.
+fn producer_convention(fingerprint: &str) -> Option<OrderConvention> {
+    PRODUCER_ALLOW_LIST
+        .iter()
+        .find(|family| {
+            family.all.iter().all(|needle| fingerprint.contains(needle))
+                && (family.any.is_empty()
+                    || family
+                        .any
+                        .iter()
+                        .any(|needle| fingerprint.contains(needle)))
+        })
+        .map(|family| family.convention)
+}
+
+/// Producers that store right-to-left text in *visual* order (ADR 0004).
+fn stores_visual_order(fingerprint: &str) -> bool {
+    producer_convention(fingerprint) == Some(OrderConvention::Visual)
+}
+
+/// Producers measured to store right-to-left text in *logical* order (ADR 0004).
 fn stores_logical_order(fingerprint: &str) -> bool {
-    fingerprint.contains("skia") || fingerprint.contains("chrom")
+    producer_convention(fingerprint) == Some(OrderConvention::Logical)
 }
 
 fn is_rtl(ch: char) -> bool {
@@ -254,6 +317,12 @@ fn is_combining(ch: char) -> bool {
 /// letters and digits (never a right-to-left one).
 fn ltr_start(ch: char) -> bool {
     ch.is_alphanumeric() && !is_rtl(ch) && (ch as u32) < 0x0900
+}
+
+/// A unit whose text begins with a combining/format character: it belongs to the
+/// preceding unit's cluster and has to move with it when the line is inverted.
+fn starts_combining(text: &str) -> bool {
+    text.chars().next().is_some_and(is_combining)
 }
 
 /// Characters allowed *inside* an LTR run: the ASCII punctuation that occurs in
@@ -328,17 +397,189 @@ fn visual_to_logical(line: &str) -> String {
     clusters.into_iter().flatten().collect()
 }
 
+/// Rung 3 of the order ladder — the UAX #9 comparison.
+///
+/// For a line with no order evidence of its own (no `/ReversedChars`, more than one
+/// unit) we do not ask *who* produced the file first; we ask the file itself. Two
+/// readings are possible, and both are checked by running the bidi algorithm
+/// FORWARD over the hypothesised logical order and seeing which one reproduces the
+/// sequence the producer actually painted:
+///
+/// * `Keep`    — the computation reproduces the painting from the stored order, so
+///               the stored order **is** logical: no inversion.
+/// * `Invert`  — only the mirrored reading reproduces it, so the producer stored
+///               the painted (visual) sequence: invert, once, and the result is
+///               verified the same way.
+/// * `Ambiguous` — both readings reproduce the painting. That is a coin flip, and
+///               a coin flip is banned: the answer is REFUSE (the line falls
+///               through to the producer fingerprint, and is refused outright when
+///               the fingerprint does not know the family). It happens because one
+///               line does not say which base direction it was written in — an
+///               English line with an Arabic word and an Arabic line with an
+///               English word paint identically.
+/// * `Unexplained` — neither reading reproduces the painting: the file contradicts
+///               the model, so we refuse instead of picking a side.
+///
+/// Both outcomes are `false` in the ladder — no third outcome exists (ADR 0002).
+#[derive(Debug)]
+enum LineOrder {
+    Keep,
+    Invert(Vec<usize>),
+    Ambiguous,
+    Unexplained,
+}
+
+/// Compare a line's stored sequence with its painted sequence under UAX #9.
+///
+/// The painted order is read from placement: units are ordered by their painted x,
+/// and units that share one text origin keep stream order — showing a string is a
+/// single operation that advances the pen through the glyphs in emission order
+/// (ISO 32000-1 §9.4.4), so there is nothing else for the origin to disagree with.
+/// When the composed matrix runs right-to-left (`x_ok` is false) x orders the line
+/// backwards and the rung reports no opinion instead of a wrong one.
+fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
+    let count = units.len();
+    if count < 2 || units.iter().any(|unit| !unit.x_ok) {
+        return LineOrder::Unexplained;
+    }
+
+    // The painted (visual) order: left to right by position, ties in stream order.
+    let mut painted: Vec<usize> = (0..count).collect();
+    painted.sort_by(|&left, &right| {
+        units[left]
+            .x
+            .total_cmp(&units[right].x)
+            .then(left.cmp(&right))
+    });
+
+    let identity: Vec<usize> = (0..count).collect();
+    let inverted = invert_units(units);
+    // The visual reading is a claim about the FILE: "the producer stored what it
+    // painted". Only the positions can support it — when the painted order and the
+    // stored order disagree, the producer demonstrably did not store what it
+    // painted, so the claim is refuted before any bidi run gets to rescue it.
+    let stored_is_painted = painted == identity;
+    let keeps = predicts_painted(units, &identity, &painted);
+    let inverts = stored_is_painted
+        && inverted != identity
+        && predicts_painted(units, &inverted, &painted);
+    match (keeps, inverts) {
+        (true, false) => LineOrder::Keep,
+        (false, true) => LineOrder::Invert(inverted),
+        (true, true) => LineOrder::Ambiguous,
+        (false, false) => LineOrder::Unexplained,
+    }
+}
+
+/// Run UAX #9 forward over a hypothesised logical order and check that the levels
+/// the algorithm computes paint back into `painted`.
+///
+/// The paragraph direction is NOT ours to pick: UAX #9 P2/P3 derives it from the
+/// hypothesis's own first strong character, so each reading is judged as the
+/// complete paragraph it claims to be. Two readings that each satisfy the standard
+/// this way are the `Ambiguous` case — a coin flip, which is refused.
+fn predicts_painted(units: &[Unit], logical: &[usize], painted: &[usize]) -> bool {
+    let proxy: String = logical.iter().map(|&i| proxy_char(&units[i].text)).collect();
+    painted_map(&proxy, logical) == Some(painted.to_vec())
+}
+
+/// The visual order UAX #9 paints for a hypothesised logical order: `map[j]` is the
+/// logical offset shown at painted position `j`. `None` when the proxy and the
+/// logical order disagree in length (a malformed hypothesis, not an answer).
+fn painted_map(proxy: &str, logical: &[usize]) -> Option<Vec<usize>> {
+    let info = BidiInfo::new(proxy, None);
+    let para = info.paragraphs.first()?;
+    let levels = info.reordered_levels_per_char(para, 0..proxy.len());
+    if levels.len() != logical.len() {
+        return None;
+    }
+    let map = BidiInfo::reorder_visual(&levels);
+    if map.len() != logical.len() {
+        return None;
+    }
+    Some(
+        map.into_iter()
+            .map(|position| logical[position])
+            .collect(),
+    )
+}
+
+/// Visual -> logical for one line of base-direction RTL, at UNIT granularity:
+/// reverse the unit order in clusters (a base unit plus the combining/format units
+/// glued to it), then put embedded left-to-right unit runs back into reading order.
+///
+/// Unit granularity, not character granularity: a lam-alef ligature arrives as ONE
+/// unit (one code, two characters) and has to stay whole — reversing its
+/// characters would turn `سلام` into `سالم`, the silent corruption ADR 0002 bans.
+fn invert_units(units: &[Unit]) -> Vec<usize> {
+    if !units.iter().any(|unit| unit.text.chars().any(is_rtl)) {
+        return (0..units.len()).collect();
+    }
+
+    let mut clusters: Vec<Vec<usize>> = Vec::new();
+    let mut index = 0;
+    while index < units.len() {
+        let mut end = index + 1;
+        while end < units.len() && starts_combining(&units[end].text) {
+            end += 1;
+        }
+        clusters.push((index..end).collect());
+        index = end;
+    }
+    clusters.reverse();
+
+    let first_char = |cluster: &[usize]| {
+        cluster
+            .first()
+            .and_then(|&unit| units[unit].text.chars().next())
+    };
+    let starts_ltr = |cluster: &[usize]| first_char(cluster).is_some_and(ltr_start);
+    let is_space = |cluster: &[usize]| first_char(cluster) == Some(' ');
+    let ltr_after_space = |clusters: &[Vec<usize>], position: usize| {
+        let mut next = position;
+        while next < clusters.len() && is_space(&clusters[next]) {
+            next += 1;
+        }
+        next < clusters.len() && starts_ltr(&clusters[next])
+    };
+
+    let mut at = 0;
+    while at < clusters.len() {
+        if starts_ltr(&clusters[at]) {
+            let mut end = at + 1;
+            while end < clusters.len() {
+                let head = first_char(&clusters[end]);
+                if head.is_some_and(ltr_run_char)
+                    || (is_space(&clusters[end]) && ltr_after_space(&clusters, end))
+                {
+                    end += 1;
+                } else {
+                    break;
+                }
+            }
+            clusters[at..end].reverse();
+            at = end;
+        } else {
+            at += 1;
+        }
+    }
+
+    clusters.into_iter().flatten().collect()
+}
+
 /// Settle the lines that carry no order evidence of their own, using the producer.
 ///
 /// `pending` names exactly those lines: a right-to-left run of two or more units
-/// that the producer did **not** wrap in `/ReversedChars`. Every other line on the
-/// page is already settled, and by one of two page-local facts:
+/// that the producer did **not** wrap in `/ReversedChars`, and for which the UAX #9
+/// comparison (`settle_line_by_bidi`) was not decisive. Every other line on the
+/// page is already settled, and by one of three page-local facts:
 ///
 /// * the producer marked the run as mirrored (`/ReversedChars`) — `recover_line`
 ///   inverted the UNIT order and verified the result against UAX #9;
 /// * the line is a single unit — one element has exactly one order, so there is no
 ///   ordering decision left for anyone to get wrong (this is what the synthetic
-///   `/ActualText` fixture is: one marked sequence per line).
+///   `/ActualText` fixture is: one marked sequence per line);
+/// * rung 3 verified the stored order against the file's own painted positions.
 ///
 /// Consulting the fingerprint for the whole page instead — the previous behaviour —
 /// both refused pages that were already settled and re-inverted lines that were
@@ -381,6 +622,13 @@ struct Unit {
     text: String,
     /// Quantised text-line origin (the matrix `f`), grouping units onto one line.
     line: i64,
+    /// Painted x of this unit's text origin (CTM ∘ text matrix), the position the
+    /// glyphs are actually drawn from. The UAX #9 rung reads the painted run order
+    /// from it — see [`settle_line_by_bidi`].
+    x: f64,
+    /// False when the composed matrix does not run left-to-right (`a ≤ 0`): then x
+    /// no longer orders the glyphs the way they paint, and the rung must not read it.
+    x_ok: bool,
     /// Inside `/ReversedChars`: the producer stored this run in visual order.
     reversed: bool,
     /// Bumped by each `Tm`; a new text matrix starts a new run.
@@ -429,6 +677,21 @@ impl Mat {
             f: tx * self.b + ty * self.d + self.f,
         }
     }
+
+    /// `self × rhs` for row-vector matrices: a point goes through `rhs` first, then
+    /// `self`. `cm` uses this to pre-multiply the CTM (ISO 32000-1 §8.3.3), and the
+    /// painted x of a text origin needs the CTM to be right: a page-level flip or
+    /// scale would otherwise reverse the very run order the UAX #9 rung compares.
+    fn multiplied(&self, rhs: &Mat) -> Mat {
+        Mat {
+            a: self.a * rhs.a + self.b * rhs.c,
+            b: self.a * rhs.b + self.b * rhs.d,
+            c: self.c * rhs.a + self.d * rhs.c,
+            d: self.c * rhs.b + self.d * rhs.d,
+            e: self.e * rhs.a + self.f * rhs.c + rhs.e,
+            f: self.e * rhs.b + self.f * rhs.d + rhs.f,
+        }
+    }
 }
 
 struct Mark {
@@ -441,6 +704,11 @@ struct Walker<'a> {
     marks: Vec<Mark>,
     font: Option<Vec<u8>>,
     line: Mat,
+    /// Graphics-state matrix (`q`/`Q`/`cm`). Only its x-direction is used: to read
+    /// the painted order of a line's runs from their positions, the composed
+    /// mapping from text space to device space has to be the real one.
+    ctm: Mat,
+    ctm_stack: Vec<Mat>,
     leading: f64,
     epoch: u64,
     units: Vec<Unit>,
@@ -465,6 +733,8 @@ impl<'a> Walker<'a> {
             marks: Vec::new(),
             font: None,
             line: Mat::identity(),
+            ctm: Mat::identity(),
+            ctm_stack: Vec::new(),
             leading: 0.0,
             epoch: 0,
             units: Vec::new(),
@@ -479,6 +749,25 @@ impl<'a> Walker<'a> {
     fn op(&mut self, op: &[u8], ops: &[Value]) {
         match op {
             b"BT" => self.line = Mat::identity(),
+            b"q" => self.ctm_stack.push(self.ctm),
+            b"Q" => {
+                if let Some(saved) = self.ctm_stack.pop() {
+                    self.ctm = saved;
+                }
+            }
+            b"cm" => {
+                if let (Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)) = (
+                    num(ops, 0),
+                    num(ops, 1),
+                    num(ops, 2),
+                    num(ops, 3),
+                    num(ops, 4),
+                    num(ops, 5),
+                ) {
+                    // CTM' = cm × CTM (ISO 32000-1 §8.3.3).
+                    self.ctm = Mat { a, b, c, d, e, f }.multiplied(&self.ctm);
+                }
+            }
             b"Tm" => {
                 if let (Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)) = (
                     num(ops, 0),
@@ -656,9 +945,15 @@ impl<'a> Walker<'a> {
     fn push_unit(&mut self, text: String) {
         let reversed = self.marks.iter().any(|mark| mark.tag == b"ReversedChars");
         let line = (self.line.f * 1000.0).round() as i64;
+        // Painted x of this text origin, plus whether the composed matrix still runs
+        // left-to-right (a <= 0 mirrors the line, so x would order it backwards).
+        let x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
+        let x_scale = self.ctm.a * self.line.a + self.ctm.c * self.line.b;
         self.units.push(Unit {
             text,
             line,
+            x,
+            x_ok: x_scale > 0.0 && x.is_finite(),
             reversed,
             epoch: self.epoch,
         });
@@ -788,6 +1083,9 @@ struct Flags {
     to_unicode: bool,
     encoded: bool,
     producer_visual: bool,
+    /// Rung 3 decided this page: the stored order was compared against the order
+    /// the producer painted, with UAX #9 (`settle_line_by_bidi`).
+    bidi_verified: bool,
     reconstructed: bool,
     refused: bool,
     undecodable: bool,
@@ -800,6 +1098,7 @@ fn assemble(walk: Walk) -> Recovered {
         to_unicode: walk.used_to_unicode,
         encoded: walk.used_encoding,
         producer_visual: walk.units.iter().any(|unit| unit.reversed),
+        bidi_verified: false,
         reconstructed: false,
         refused: false,
         undecodable: walk.undecodable,
@@ -827,17 +1126,33 @@ fn assemble(walk: Walk) -> Recovered {
         // Does this line still owe the ladder an order justification?
         //   * one unit  → one element, one order: nothing to decide;
         //   * `/ReversedChars` → the producer told us, `recover_line` verified it;
-        //   * two or more units in an unmarked RTL line → ONLY the producer
-        //     fingerprint can say whether the producer mirrored them.
+        //   * two or more units in an unmarked RTL line → rung 3, the UAX #9
+        //     comparison against the painted order ([`settle_line_by_bidi`]);
+        //   * only when that comparison is not decisive does the line fall through
+        //     to the producer fingerprint (`settle_rtl_order`).
         let marked = slice.iter().any(|unit| unit.reversed);
         let undecided = slice.len() > 1 && !marked;
         match recover_line(&slice) {
-            Some((text, rebuilt)) => {
+            Some((mut text, rebuilt)) => {
                 if rebuilt {
                     flags.reconstructed = true;
                 }
                 if undecided && has_rtl_run(&text) {
-                    pending.push(lines.len());
+                    match settle_line_by_bidi(&slice) {
+                        LineOrder::Keep => flags.bidi_verified = true,
+                        LineOrder::Invert(order) => {
+                            text = order.iter().map(|&i| slice[i].text.as_str()).collect();
+                            flags.bidi_verified = true;
+                            flags.reconstructed = true;
+                        }
+                        // Neither reading reproduces the painting — or both do, which
+                        // would be a coin flip. The line is NOT guessed here: it goes
+                        // to the producer rung, which either knows the family or
+                        // refuses the line with an explicit reason.
+                        LineOrder::Ambiguous | LineOrder::Unexplained => {
+                            pending.push(lines.len());
+                        }
+                    }
                 }
                 lines.push(text);
             }
@@ -872,6 +1187,12 @@ fn build_reasons(flags: Flags) -> Vec<Reason> {
     }
     if flags.producer_visual {
         reasons.push(Reason::ProducerVisualOrderKnown);
+    }
+    if flags.bidi_verified {
+        // Rung 3 established the order: the stored sequence matched the file's own
+        // painted positions under UAX #9 (kept as logical, or inverted when the
+        // comparison proved the mirror). The most specific rule, so it is last.
+        reasons.push(Reason::BidiVerified);
     }
     if flags.refused {
         reasons.push(Reason::UnsupportedNoEvidence);
@@ -1268,7 +1589,69 @@ fn resolve<'a>(doc: &'a Document, value: &'a Object) -> Option<&'a Object> {
 
 #[cfg(test)]
 mod tests {
-    use super::{decode_text_string, stores_logical_order, stores_visual_order};
+    use super::{
+        decode_text_string, invert_units, painted_map, proxy_char, settle_line_by_bidi,
+        stores_logical_order, stores_visual_order, LineOrder, Unit,
+    };
+
+    /// A visual line of units at known painted x — the input rung 3 reads.
+    fn placed(texts: &[(&str, f64)]) -> Vec<Unit> {
+        texts
+            .iter()
+            .map(|&(text, x)| Unit {
+                text: text.to_string(),
+                line: 80_000,
+                x,
+                x_ok: true,
+                reversed: false,
+                epoch: 0,
+            })
+            .collect()
+    }
+
+    /// W1.7b probe: what rung 3 answers for the date line (see bidi_rung.rs).
+    #[test]
+    fn rung3_outcome_for_a_date_line() {
+        let units = placed(&[
+            ("1", 10.0),
+            ("4", 20.0),
+            ("0", 30.0),
+            ("3", 40.0),
+            ("/", 50.0),
+            ("0", 60.0),
+            ("5", 70.0),
+            ("/", 80.0),
+            ("1", 90.0),
+            ("2", 100.0),
+            (" ", 110.0),
+            ("تاریخ", 120.0),
+        ]);
+        let outcome = settle_line_by_bidi(&units);
+        let identity: Vec<usize> = (0..units.len()).collect();
+        let mut painted = identity.clone();
+        painted.sort_by(|&left, &right| {
+            units[left]
+                .x
+                .total_cmp(&units[right].x)
+                .then(left.cmp(&right))
+        });
+        let inverted = invert_units(&units);
+        let proxy_of = |order: &[usize]| -> String {
+            order
+                .iter()
+                .map(|&i| proxy_char(&units[i].text))
+                .collect()
+        };
+        let diag = format!(
+            "painted={painted:?} inverted={inverted:?} keep={:?} inv={:?}",
+            painted_map(&proxy_of(&identity), &identity),
+            painted_map(&proxy_of(&inverted), &inverted),
+        );
+        assert!(
+            matches!(outcome, LineOrder::Invert(_)),
+            "expected Invert, got {outcome:?} {diag}"
+        );
+    }
 
     /// The producer allow-lists ARE the last rung of the ladder (ADR 0004), so a
     /// fingerprint family only counts as order evidence while a test pins it.

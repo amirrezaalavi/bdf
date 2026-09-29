@@ -1,0 +1,20 @@
+{
+  "id": "synthetic-reversed-fa-001",
+  "language": "fa",
+  "script": "Arab",
+  "direction": "rtl",
+  "source": "tools/gen_order_fixtures.py",
+  "text": "سلام دنیا\nگزارش سالانه",
+  "verified_by": null,
+  "verified_at": null,
+  "status": "unverified",
+  "notes": [
+    "Expected text is the LOGICAL line the generator wrote (REVERSED_FA_LINES); the file",
+    "stores those lines reversed, behind /ReversedChars, so the equality is the inversion",
+    "claim itself. Per corpus/AGENT.md rule 5 an agent may not flip status to verified -",
+    "a human must confirm it.",
+    "No /ActualText in this file at all: characters come from a ToUnicode CMap on real",
+    "codes, the order comes from the marker (rung 2). pdftotext drops this text -",
+    "docs/problems/0001."
+  ]
+}

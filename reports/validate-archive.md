@@ -1,6 +1,6 @@
 # Archive validation — `pdfrtl extract` over the private corpus
 
-* generated: `2026-09-27T194801Z`
+* generated: `2026-09-29T071505Z`
 * command: `python3 scripts/validate-archive.py --binary /home/netcon/target-pdfrtl/debug/pdfrtl`
 * input: `corpus/raw/private/desktop-pdfs/*.pdf` — 51 files, read only (never modified, never copied)
 

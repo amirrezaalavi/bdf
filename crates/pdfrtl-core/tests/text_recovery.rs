@@ -320,9 +320,12 @@ const MIRRORED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
 /Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
 EMC\nET";
 
-/// The SAME four clusters with the marker deleted: now nothing in the file says
-/// the producer mirrored them, and the producer is unknown — so the order claim
-/// must be refused, not assumed.
+/// The SAME four clusters with the marker deleted. The marker is gone, the layout
+/// is not: nothing repositions these clusters, so the producer painted them in
+/// stream order (a `Tj` advances the pen through the glyphs it shows), and rung 3 —
+/// the UAX #9 comparison against that painted order — finds exactly one reading
+/// that reproduces the painting. The marker changes which RULE settles the line,
+/// not whether the line can be settled: same text, named differently.
 const UNMARKED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
 /Span<</ActualText <FEFF0627> >> BDC (.) Tj EMC\n\
 /Span<</ActualText <FEFF06CC> >> BDC (.) Tj EMC\n\
@@ -330,9 +333,9 @@ const UNMARKED_DONYA: &str = "BT /F1 12 Tf 20 80 Td\n\
 /Span<</ActualText <FEFF062F> >> BDC (.) Tj EMC\n\
 ET";
 
-/// `/ReversedChars` is page-local order evidence; the producer fingerprint is only
-/// consulted for lines that carry none. One marker changes the outcome, and
-/// nothing else about the file does — that is the ladder, isolated.
+/// `/ReversedChars` is page-local order evidence; lines that carry none go to
+/// rung 3 first and the producer fingerprint last. One marker changes the RULE
+/// that answers, and nothing else about the file does — that is the ladder.
 #[test]
 fn reversed_chars_marker_is_order_evidence_no_matter_the_producer() {
     let marked = write_probe_pdf("reversed-marker", "pdfrtl-test", MIRRORED_DONYA);
@@ -351,15 +354,15 @@ fn reversed_chars_marker_is_order_evidence_no_matter_the_producer() {
     let _ = std::fs::remove_file(&unmarked);
     assert_eq!(
         pages[0].reasons,
-        vec![Reason::ActualText, Reason::UnsupportedVisualOrder],
-        "identical clusters without the marker: the order claim must be refused"
+        vec![Reason::ActualText, Reason::BidiReordered, Reason::BidiVerified],
+        "no marker: the painted positions decide, and the answer is the same text"
     );
-    assert!(!pages[0].is_ordered());
     assert_eq!(
-        pages[0].text, "",
-        "unestablished order is withdrawn, never emitted (ADR 0004)"
+        pages[0].text, "دنیا",
+        "the clusters were painted left to right, so the stored sequence is visual"
     );
-    assert_eq!(pages[0].unordered_chars, 4, "the decoded count survives");
+    assert!(pages[0].is_ordered(), "the comparison established the order");
+    assert_eq!(pages[0].unordered_chars, 0, "nothing withheld: it was decidable");
 }
 
 /// The RTL/LTR boundary line: this is where run-order reconstruction earns its keep.
