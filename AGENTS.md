@@ -58,6 +58,30 @@ fingerprint — otherwise return `unsupported_no_evidence` and exit 3.
    Rationale: the project is dual-licensed; ownership/authorship must be traceable.
    See `AUTHORSHIP.md`.
 
+## Delegated lanes (subagents)
+
+A lane is one agent given one bounded deliverable, working on its own branch while the
+orchestrator integrates. Rules that each cost real time to learn:
+
+* **Never work in the main checkout.** `git worktree add -b lane/<name> ../bdf-<name> master`,
+  and set a **separate** `CARGO_TARGET_DIR="$HOME/target-bdf-<name>"` — a target directory
+  belongs to exactly one tree and the gate refuses artifacts built elsewhere. Push your own
+  branch; `main` belongs to the orchestrator.
+* **Run the whole suite, never one target.** After any change to extraction or the order
+  ladder, `bash scripts/wsl-build.sh` — the invariant control (`no_silent_reversal`) lives in
+  its own target, so a single-target run reports green while the control is failing.
+* **Verify the binary you are measuring.** An ad-hoc `cargo build` without `CARGO_TARGET_DIR`
+  writes to the repo-local `target/` while the run uses the exported one; stamp a marker and
+  check `strings "$BIN" | grep -c '<marker>'` before trusting any behavioural claim.
+* **The core must not print.** Diagnostics are *returned*; the CLI owns stdout. The slop gate
+  greps for prints, and a feature flag does not get around a grep.
+* **No lane touches `corpus/raw/private/` or runs `scripts/publish-public.sh`.** Real customer
+  documents stay local; publishing is the orchestrator's job.
+* **A lane that cannot finish says so**, with the exact failing command and its output. An
+  honest partial result is worth more than a green summary nobody can reproduce.
+* **A lane's own summary is a claim, not evidence.** Raw output goes to `reports/` or
+  `docs/reviews/`, and the orchestrator re-runs the check before integrating.
+
 ## Environment: how to build and test
 
 Build and test run in **WSL Ubuntu-26.04** (the Windows host has no Rust toolchain).
