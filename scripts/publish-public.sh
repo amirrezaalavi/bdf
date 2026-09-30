@@ -185,6 +185,19 @@ else
   fi
 fi
 
+# Sync the mirror clone to the REMOTE before staging anything. The clone's HEAD is not the
+# published state: on 2026-09-29 a push died on a transient GitHub 5xx, which left the clone
+# one commit ahead of origin/main, and from then on every run staged nothing, printed
+# "already up to date" and exited 0 while the remote lagged (docs/problems/0012). The mirror's
+# history is disposable (docs/decisions/0005) and its working tree is wiped on the next line
+# anyway, so resetting to the remote loses nothing that cannot be regenerated from HEAD.
+cd "$MIRROR"
+git fetch -q origin main 2>/dev/null || true
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+  echo "== mirror clone diverged from origin/main ($(git rev-parse --short HEAD) vs $(git rev-parse --short origin/main)): resetting to the published state"
+  git reset --hard -q origin/main
+fi
+
 echo "== replacing mirror working tree =="
 find "$MIRROR" -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.stage' -exec rm -rf {} +
 cp -a "$STAGE/." "$MIRROR/"
