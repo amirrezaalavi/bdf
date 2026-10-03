@@ -16,11 +16,20 @@ pub enum Reason {
     ToUnicodeLogical,
     /// `ToUnicode` mapped cleanly; run order was reconstructed from UAX #9 levels.
     BidiReordered,
-    /// Rung 3 established the order: the stored sequence was compared with the
-    /// sequence the producer actually painted, and UAX #9 run over both readings
-    /// picked exactly one — kept as logical, or inverted when the comparison proved
-    /// the mirror. Two readings, one answer, or no answer (ADR 0002).
-    BidiVerified,
+    /// Rung 3 found the stored order **consistent with** the sequence the producer actually
+    /// painted: UAX #9 was run over both readings and exactly one reproduced the measured
+    /// painting — kept as logical, or inverted when the comparison proved the mirror.
+    ///
+    /// **This is consistency, not proof of the original order.** Measured 2026-10-03
+    /// (`docs/problems/0015`): two different logical strings with distinct characters and a
+    /// known paragraph direction paint to the SAME visual sequence — `אבa 12` and `אב12 a`
+    /// both paint as `a 12בא`, reproduced with `unicode-bidi` 0.3, the crate used here. Geometry
+    /// alone therefore cannot always recover which was stored; uniqueness, when claimed, is
+    /// uniqueness **within the candidate set that was tried**.
+    ///
+    /// Named `bidi_consistent` rather than `bidi_verified` because "verified" asserted the
+    /// stronger claim. Renamed 2026-10-03; the serialized identifier changed with it.
+    BidiConsistent,
     /// Producer is allow-listed as storing visual order (recorded per producer, never guessed).
     ProducerVisualOrderKnown,
     /// No reliable recovery path exists — refuse rather than emit reversed text.
@@ -63,7 +72,7 @@ impl Reason {
             Reason::ActualText => "actual_text",
             Reason::ToUnicodeLogical => "to_unicode_logical",
             Reason::BidiReordered => "bidi_reordered",
-            Reason::BidiVerified => "bidi_verified",
+            Reason::BidiConsistent => "bidi_consistent",
             Reason::ProducerVisualOrderKnown => "producer_visual_order_known",
             Reason::UnsupportedNoEvidence => "unsupported_no_evidence",
             Reason::UnsupportedBrokenToUnicode => "unsupported_broken_to_unicode",

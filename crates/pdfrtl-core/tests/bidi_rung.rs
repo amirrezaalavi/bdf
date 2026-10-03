@@ -126,7 +126,10 @@ fn rtl_line_with_a_latin_run_is_kept_when_the_positions_say_logical() {
         "logical order kept: {:?}",
         page.text
     );
-    assert_eq!(page.reasons, vec![Reason::ActualText, Reason::BidiVerified]);
+    assert_eq!(
+        page.reasons,
+        vec![Reason::ActualText, Reason::BidiConsistent]
+    );
     assert!(page.is_ordered(), "the comparison established the order");
 }
 
@@ -158,7 +161,7 @@ fn digits_of_a_date_survive_inversion_as_one_unreversed_run() {
         page.text
     );
     assert!(page.reasons.contains(&Reason::BidiReordered));
-    assert!(page.reasons.contains(&Reason::BidiVerified));
+    assert!(page.reasons.contains(&Reason::BidiConsistent));
     assert!(page.is_ordered());
 }
 
@@ -290,5 +293,5 @@ fn a_mirrored_text_matrix_still_orders_its_line() {
         page.is_ordered(),
         "the sign of the scale is not an absence of evidence"
     );
-    assert!(page.reasons.contains(&Reason::BidiVerified));
+    assert!(page.reasons.contains(&Reason::BidiConsistent));
 }

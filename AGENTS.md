@@ -23,6 +23,15 @@ fingerprint — otherwise return `unsupported_no_evidence` and exit 3.
 
 ## Rules
 
+0. **Never write a private filename into a tracked document.** The corpus files are customer
+   documents; their names, hashes, embedded titles and derived counts are private too (see
+   `docs/decisions/0004` and the deny-list in `scripts/publish-public.sh`). Refer to them by
+   their manifest language label or as "one unlabelled file". Writing a real filename into a
+   plan or a README looks harmless and is caught only by the publisher's deny-list at the very
+   last step — measured twice on 2026-10-03: a plan table named a customer file, and the rule
+   written to prevent it named the same file in its own text. Both were refused before
+   publication. The guard worked every time; the lesson is that it was the only thing standing
+   between a customer name and the public internet, and both mistakes were mine.
 1. **TDD.** Failing test first, observed failing, then the minimal implementation.
    No test, no merge. Never weaken, delete or skip a test to get a green gate — if an
    expectation is wrong, fix the expectation to match verified reality and say why.

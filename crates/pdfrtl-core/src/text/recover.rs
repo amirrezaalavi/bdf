@@ -23,6 +23,7 @@ use crate::text::tokenizer::{parse_value, tokenize, Token, Value};
 use anyhow::Result;
 use lopdf::{Dictionary, Document, Object, ObjectId};
 use std::collections::HashMap;
+use std::sync::Mutex;
 use unicode_bidi::{bidi_class, BidiClass, BidiInfo, Level};
 
 /// Decompressed content cap per page: a page is text, not a bomb.
@@ -41,6 +42,30 @@ pub struct PageText {
     /// established. Only the count is kept: the honest "we read it but cannot yet
     /// order it" number survives, the unorderable characters are not handed out.
     pub unordered_chars: usize,
+    /// Lines this page decoded but could not put in reading order, WITH their text.
+    ///
+    /// Never merged into [`PageText::text`]. `text` stays proven-only: a caller that reads it
+    /// without reading anything else still gets correct output or nothing. These lines are
+    /// offered separately, in the order they were STORED, so the caller can decide what to do
+    /// — and on a producer that stores visual order (measured: 92–99% of decided lines on
+    /// the arabic-* files) the text here is REVERSED. The caller is told so by name; that is
+    /// the whole point of a separate field.
+    ///
+    /// Added 2026-10-03 after measuring that refusing discards real text and that whether the
+    /// stored order is usable is a PER-FILE fact, not a global one: on `persian-6` 100% of
+    /// decided lines were already in logical order, on `arabic-4` 1%.
+    pub unproven: Vec<UnprovenLine>,
+}
+
+/// A line whose order could not be established, reported rather than discarded.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct UnprovenLine {
+    /// Zero-based index of the line on its page, in the page's line order.
+    pub line: usize,
+    /// The text exactly as it was STORED. Not reading order, and not claimed to be.
+    pub text: String,
+    /// Why the order was not established — the same `Reason` vocabulary the page carries.
+    pub reason: Reason,
 }
 
 impl PageText {
@@ -63,9 +88,23 @@ impl PageText {
 
     /// Withdraw text whose order was never established. Runs after
     /// [`settle_rtl_order`], which is what can add the refusal.
-    fn withdraw_unordered(&mut self) {
+    fn withdraw_unordered(&mut self, withheld: Vec<usize>) {
         if !self.is_ordered() && !self.text.is_empty() {
             self.unordered_chars = self.text.chars().count();
+            // Offer each withheld line WITH its reason instead of destroying it. This is the
+            // whole difference between discarding text and reporting it as unproven.
+            let stored: Vec<&str> = self.text.split('\n').collect();
+            for index in withheld {
+                if let Some(line) = stored.get(index) {
+                    if !line.trim().is_empty() {
+                        self.unproven.push(UnprovenLine {
+                            line: index,
+                            text: (*line).to_string(),
+                            reason: Reason::UnsupportedVisualOrder,
+                        });
+                    }
+                }
+            }
             self.text.clear();
         }
     }
@@ -89,6 +128,10 @@ struct Recovered {
     /// Indices (into the emitted line order) of lines that carry NO order evidence
     /// of their own — see [`settle_rtl_order`].
     pending: Vec<usize>,
+    /// Indices of the lines the order rung could not settle, in line order. The text
+    /// itself comes from `Recovered::text`, which still holds it at this point.
+    /// Reported, never merged into the emitted order.
+    withheld: Vec<usize>,
 }
 
 /// Widths are not available here — this entry point sees a stream and a font map, not the
@@ -124,15 +167,17 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
         let page = match doc.get_page_content_with_limit(page_id, MAX_PAGE_CONTENT) {
             Ok(content) => {
                 let (fonts, metrics) = collect_fonts(doc, page_id);
-                let recovered = recover(&content, &fonts, &metrics);
+                let mut recovered = recover(&content, &fonts, &metrics);
                 let mut page = PageText {
                     page: page_num,
                     text: recovered.text,
                     reasons: recovered.reasons,
                     unordered_chars: 0,
+                    unproven: Vec::new(),
                 };
                 settle_rtl_order(&mut page, &producer, &recovered.pending);
-                page.withdraw_unordered();
+                let withheld = std::mem::take(&mut recovered.withheld);
+                page.withdraw_unordered(withheld);
                 page
             }
             // The document loaded; this one page did not. Keep the page in the
@@ -142,6 +187,7 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
                 text: String::new(),
                 reasons: vec![Reason::UnsupportedPageContent],
                 unordered_chars: 0,
+                unproven: Vec::new(),
             },
         };
         pages.push(page);
@@ -466,7 +512,7 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     // interrogate. Judging a sequence against an assumption derived from itself proves
     // nothing, and on a pure-RTL pair it proves `Invert` by elimination — the bidi algorithm
     // reverses an RTL run, so `keeps` is unreachable, `inverts` is "true" for free, and the
-    // line would be silently mirrored while the run reported `bidi_verified`. Measured on a
+    // line would be silently mirrored while the run reported `bidi_consistent`. Measured on a
     // two-cluster fixture with no font widths, which the invariant control refuses
     // (docs/problems/0007). Refuse here instead: the fingerprint rung may still know the
     // family, and otherwise the line is withheld.
@@ -487,12 +533,50 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     let keeps = predicts_painted(units, &identity, &painted);
     let inverts =
         stored_is_painted && inverted != identity && predicts_painted(units, &inverted, &painted);
+    if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
+        record_pattern(if keeps && inverts {
+            "both_fit"
+        } else if keeps {
+            "stored_only"
+        } else if inverts {
+            "reversed_only"
+        } else {
+            "neither"
+        });
+    }
     match (keeps, inverts) {
         (true, false) => LineOrder::Keep,
         (false, true) => LineOrder::Invert(inverted),
         (true, true) => LineOrder::Ambiguous,
         (false, false) => LineOrder::Unexplained,
     }
+}
+
+/// Counts the four-way outcome of rung 3, so a real corpus can say how often a line is
+/// DECIDED versus genuinely undecidable. Diagnostic only; the product ignores it.
+static OUTCOME_COUNTS: Mutex<[usize; 4]> = Mutex::new([0; 4]);
+
+fn record_pattern(pattern: &str) {
+    let slot = match pattern {
+        "both_fit" => 0,
+        "stored_only" => 1,
+        "reversed_only" => 2,
+        _ => 3,
+    };
+    let mut counts = OUTCOME_COUNTS
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    counts[slot] += 1;
+}
+
+/// [both_fit, stored_only, reversed_only, neither] since the last reset.
+pub fn take_outcome_counts() -> [usize; 4] {
+    let mut counts = OUTCOME_COUNTS
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let snapshot = *counts;
+    *counts = [0; 4];
+    snapshot
 }
 
 /// Run UAX #9 forward over a hypothesised logical order and check that the levels
@@ -503,28 +587,120 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
 /// complete paragraph it claims to be. Two readings that each satisfy the standard
 /// this way are the `Ambiguous` case — a coin flip, which is refused.
 fn predicts_painted(units: &[Unit], logical: &[usize], painted: &[usize]) -> bool {
-    let proxy: String = logical
-        .iter()
-        .map(|&i| proxy_char(&units[i].text))
-        .collect();
-    painted_map(&proxy, logical) == Some(painted.to_vec())
+    painted_map_for(units, logical) == Some(painted.to_vec())
 }
 
-/// The visual order UAX #9 paints for a hypothesised logical order: `map[j]` is the
-/// logical offset shown at painted position `j`. `None` when the proxy and the
-/// logical order disagree in length (a malformed hypothesis, not an answer).
-fn painted_map(proxy: &str, logical: &[usize]) -> Option<Vec<usize>> {
-    let info = BidiInfo::new(proxy, None);
+/// One direction-preserving proxy char per unit — a unit is a single cluster, so its
+/// first character's bidi class stands for the whole unit.
+///
+/// Still used by [`predicts_observed`], which works on plain `&str` with no `Unit` to read.
+/// It is NOT used by [`painted_map_for`], which must represent units holding SEVERAL
+/// characters — flattening those to one char is the defect that made `arabic-3.pdf`
+/// undecidable on 9,878 lines (docs/plans/2026-10-03-canary.md, C3a).
+fn proxy_char(text: &str) -> char {
+    let first = match text.chars().next() {
+        Some(c) => c,
+        None => return '!',
+    };
+    if text.chars().all(|c| bidi_class(c) == BidiClass::WS) {
+        return ' ';
+    }
+    match bidi_class(first) {
+        BidiClass::R | BidiClass::AL => '\u{05D0}',
+        BidiClass::L => 'A',
+        BidiClass::AN => '\u{0665}',
+        BidiClass::EN => '5',
+        BidiClass::WS => ' ',
+        BidiClass::CS => '.',
+        BidiClass::ES => '-',
+        BidiClass::ET => '%',
+        BidiClass::BN | BidiClass::S | BidiClass::B | BidiClass::ON | BidiClass::NSM => '!',
+        _ => '.',
+    }
+}
+
+/// UAX #9 over the units' **whole text**, mapped back to unit positions.
+///
+/// The proxy version (`proxy_char` — one character per unit) cannot represent a unit that
+/// holds several characters: a lam-alef ligature, an `/ActualText` span, or a multi-CID run.
+/// UAX #9 then never sees the structure that decides the order, so `predicts_painted` answers
+/// "neither reading" about a hypothesis it was incapable of expressing — `LineOrder::Unexplained`
+/// on every real line of `arabic-3.pdf` (measured: 9,878 such lines, including lines with ZERO
+/// ties, so the tie test is not the blocker).
+///
+/// **Units of measure, measured not assumed.** `reordered_levels_per_char(para, 0..n)` takes
+/// `n` as a BYTE range but returns one level per CHARACTER, and `reorder_visual` returns a
+/// permutation over CHARACTER indices. For `۱۴۰۳/۰۵/۱۲ تاریخ` that is 29 bytes and 16
+/// characters, and the permutation is `[15, 14, …, 0, 1, …, 9]` over `0..16`. An earlier version
+/// of this function treated those values as byte offsets, so every multi-character unit failed
+/// to match and the function returned `None` for every hypothesis — the same refusal, wearing a
+/// different hat. The whole body below therefore works in character offsets.
+///
+/// So: run the algorithm on the real characters, then collapse to units. A unit is ONE element
+/// of the visual order however many characters it holds, and UAX #9 may reorder a unit's own
+/// characters, so a unit is placed at the EARLIEST visual position any of its characters
+/// occupies — well defined however the characters inside it were reordered. That keeps the
+/// property `invert_units` depends on (a lam-alef must stay whole) while making the prediction
+/// faithful, which is the order the withdrawn attempt in docs/problems/0009 got backwards.
+fn painted_map_for(units: &[Unit], logical: &[usize]) -> Option<Vec<usize>> {
+    // The hypothesis's text, plus each unit's CHARACTER span in it.
+    let mut text = String::new();
+    let mut bounds: Vec<(usize, usize)> = Vec::new();
+    for &index in logical {
+        let unit_text = &units[index].text;
+        let start = text.chars().count();
+        text.push_str(unit_text);
+        let end = text.chars().count();
+        if end == start {
+            // An empty unit carries no bidi information and no place in the visual order.
+            return None;
+        }
+        bounds.push((start, end));
+    }
+
+    let info = BidiInfo::new(&text, None);
     let para = info.paragraphs.first()?;
-    let levels = info.reordered_levels_per_char(para, 0..proxy.len());
-    if levels.len() != logical.len() {
+    let total_chars = text.chars().count();
+    let total_bytes = text.len();
+    // The RANGE is in bytes; the RESULT is per character. Both facts are load-bearing.
+    let levels = info.reordered_levels_per_char(para, 0..total_bytes);
+    if levels.len() != total_chars {
         return None;
     }
-    let map = BidiInfo::reorder_visual(&levels);
-    if map.len() != logical.len() {
+    let visual = BidiInfo::reorder_visual(&levels);
+    if visual.len() != total_chars {
         return None;
     }
-    Some(map.into_iter().map(|position| logical[position]).collect())
+
+    // Character offset -> unit ordinal, in hypothesis order.
+    let mut offset_to_unit = vec![0usize; total_chars];
+    for (ordinal, &(start, end)) in bounds.iter().enumerate() {
+        for slot in offset_to_unit.iter_mut().take(end).skip(start) {
+            *slot = ordinal;
+        }
+    }
+
+    // Each unit sits at the earliest visual position any of its characters occupies.
+    let mut first_at: Vec<Option<usize>> = vec![None; logical.len()];
+    for (visual_position, character) in visual.iter().copied().enumerate() {
+        let ordinal = offset_to_unit[character];
+        if first_at[ordinal].is_none() {
+            first_at[ordinal] = Some(visual_position);
+        }
+    }
+    let mut painted_units: Vec<(usize, usize)> = Vec::with_capacity(logical.len());
+    for (ordinal, position) in first_at.iter().copied().enumerate() {
+        // A unit whose characters never appeared is "no answer", not a guess.
+        let position = position?;
+        painted_units.push((position, ordinal));
+    }
+    painted_units.sort_unstable();
+    Some(
+        painted_units
+            .into_iter()
+            .map(|(_, ordinal)| logical[ordinal])
+            .collect(),
+    )
 }
 
 /// Visual -> logical for one line of base-direction RTL, at UNIT granularity:
@@ -1251,7 +1427,7 @@ struct Flags {
     producer_visual: bool,
     /// Rung 3 decided this page: the stored order was compared against the order
     /// the producer painted, with UAX #9 (`settle_line_by_bidi`).
-    bidi_verified: bool,
+    bidi_consistent: bool,
     reconstructed: bool,
     refused: bool,
     undecodable: bool,
@@ -1264,7 +1440,7 @@ fn assemble(walk: Walk) -> Recovered {
         to_unicode: walk.used_to_unicode,
         encoded: walk.used_encoding,
         producer_visual: walk.units.iter().any(|unit| unit.reversed),
-        bidi_verified: false,
+        bidi_consistent: false,
         reconstructed: false,
         refused: false,
         undecodable: walk.undecodable,
@@ -1287,6 +1463,8 @@ fn assemble(walk: Walk) -> Recovered {
 
     let mut lines: Vec<String> = Vec::new();
     let mut pending: Vec<usize> = Vec::new();
+    // Indices of the lines rung 3 could not settle; their text is still in `lines`.
+    let mut withheld: Vec<usize> = Vec::new();
     for group in &groups {
         let slice: Vec<Unit> = group.iter().map(|&i| units[i].clone()).collect();
         // Does this line still owe the ladder an order justification?
@@ -1305,10 +1483,10 @@ fn assemble(walk: Walk) -> Recovered {
                 }
                 if undecided && has_rtl_run(&text) {
                     match settle_line_by_bidi(&slice) {
-                        LineOrder::Keep => flags.bidi_verified = true,
+                        LineOrder::Keep => flags.bidi_consistent = true,
                         LineOrder::Invert(order) => {
                             text = order.iter().map(|&i| slice[i].text.as_str()).collect();
-                            flags.bidi_verified = true;
+                            flags.bidi_consistent = true;
                             flags.reconstructed = true;
                         }
                         // Neither reading reproduces the painting — or both do, which
@@ -1316,7 +1494,25 @@ fn assemble(walk: Walk) -> Recovered {
                         // to the producer rung, which either knows the family or
                         // refuses the line with an explicit reason.
                         LineOrder::Ambiguous | LineOrder::Unexplained => {
+                            // Record the index BEFORE `lines` grows, then push the text, so
+                            // the index refers to this line in the joined page text.
+                            withheld.push(lines.len());
                             pending.push(lines.len());
+                            // ORDER_TRACE (env-gated, diagnostic only): record WHY the line
+                            // was undecidable — a tie in paint_x, or a prediction that
+                            // reproduced neither reading. Counts and flags only; a unit's
+                            // TEXT is never emitted here, per the instrumentation rule.
+                            if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
+                                let (ties, distinct, min, max) = tie_span(&slice);
+                                trace_line(
+                                    slice.len(),
+                                    ties,
+                                    distinct,
+                                    min,
+                                    max,
+                                    has_geometry(&slice),
+                                );
+                            }
                         }
                     }
                 }
@@ -1332,7 +1528,71 @@ fn assemble(walk: Walk) -> Recovered {
         text: lines.join("\n"),
         reasons: build_reasons(flags),
         pending,
+        withheld,
     }
+}
+
+/// Order-trace line. The CORE MUST NOT PRINT (slop gate, AGENTS.md): the CLI owns stdout.
+/// So this records into a process-global buffer that a test reads and prints, and nothing
+/// else. Fields are counts and coordinates only — never a unit's text.
+///
+/// ONE buffer, shared by the writer and the reader. Declaring a `static` in each function
+/// gives two buffers and a trace that records nothing — a control that reports success while
+/// doing nothing, the shape of docs/problems/0012, committed here by mistake the first time.
+static ORDER_TRACE: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+fn trace_line(units: usize, ties: usize, distinct: usize, min_x: f64, max_x: f64, geometry: bool) {
+    let mut guard = ORDER_TRACE
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    guard.push(format!(
+        "line units={units} tied_pairs={ties} distinct_x={distinct}          span={:.3}..{:.3} geometry={geometry}",
+        min_x, max_x
+    ));
+}
+
+/// Read and clear the recorded order trace. Called by tests, never by the library.
+pub fn take_order_trace() -> Vec<String> {
+    std::mem::take(
+        &mut *ORDER_TRACE
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()),
+    )
+}
+
+/// Why a line could not be decided: how many adjacent pairs share a paint_x, and the span.
+/// A span of exactly 0.0 with more than one unit is the mass-tie signature — every cluster
+/// projected to the same x, whatever the font declared.
+fn tie_span(units: &[Unit]) -> (usize, usize, f64, f64) {
+    let mut sorted: Vec<f64> = units.iter().map(|unit| unit.paint_x).collect();
+    sorted.sort_by(|left, right| left.total_cmp(right));
+    let mut ties = 0;
+    for pair in sorted.windows(2) {
+        if pair[0] == pair[1] {
+            ties += 1;
+        }
+    }
+    // distinct_x separates "the model repeats positions" from "one position for everything":
+    // a line of 208 units with 480 pt of span cannot have only a few distinct x if the pen
+    // really advances, and cannot have 208 if it does not.
+    let distinct = sorted.iter().fold(0usize, |count, value| {
+        if count == 0 || *value != sorted[count - 1] {
+            count + 1
+        } else {
+            count
+        }
+    });
+    let min = sorted.first().copied().unwrap_or(0.0);
+    let max = sorted.last().copied().unwrap_or(0.0);
+    (ties, distinct, min, max)
+}
+
+/// Whether the positions on this line are usable at all: every unit must carry a finite
+/// paint_x and a left-to-right composed scale (`x_ok`, set from the composed matrix).
+fn has_geometry(units: &[Unit]) -> bool {
+    units
+        .iter()
+        .all(|unit| unit.x_ok && unit.paint_x.is_finite())
 }
 
 fn build_reasons(flags: Flags) -> Vec<Reason> {
@@ -1354,11 +1614,11 @@ fn build_reasons(flags: Flags) -> Vec<Reason> {
     if flags.producer_visual {
         reasons.push(Reason::ProducerVisualOrderKnown);
     }
-    if flags.bidi_verified {
+    if flags.bidi_consistent {
         // Rung 3 established the order: the stored sequence matched the file's own
         // painted positions under UAX #9 (kept as logical, or inverted when the
         // comparison proved the mirror). The most specific rule, so it is last.
-        reasons.push(Reason::BidiVerified);
+        reasons.push(Reason::BidiConsistent);
     }
     if flags.refused {
         reasons.push(Reason::UnsupportedNoEvidence);
@@ -1557,31 +1817,6 @@ fn run_level(text: &str, base_rtl: bool) -> Level {
     match first_strong(text) {
         Dir::Rtl => Level::from(1),
         Dir::Ltr | Dir::Neutral => Level::from(even),
-    }
-}
-
-/// One direction-preserving proxy char per unit — a unit is a single cluster, so its
-/// first character's bidi class stands for the whole unit.
-fn proxy_char(text: &str) -> char {
-    let first = match text.chars().next() {
-        Some(c) => c,
-        None => return '!',
-    };
-    if text.chars().all(|c| bidi_class(c) == BidiClass::WS) {
-        return ' ';
-    }
-    match bidi_class(first) {
-        BidiClass::R | BidiClass::AL => '\u{05D0}',
-        BidiClass::L => 'A',
-        BidiClass::AN => '\u{0665}',
-        BidiClass::EN => '5',
-        BidiClass::WS => ' ',
-        BidiClass::CS => '.',
-        BidiClass::ES => '-',
-        BidiClass::ET => '%',
-        // ZWNJ and friends: boundary neutral — a generic neutral proxy.
-        BidiClass::BN | BidiClass::S | BidiClass::B | BidiClass::ON | BidiClass::NSM => '!',
-        _ => '.',
     }
 }
 
@@ -1861,7 +2096,7 @@ fn resolve<'a>(doc: &'a Document, value: &'a Object) -> Option<&'a Object> {
 #[cfg(test)]
 mod tests {
     use super::{
-        decode_text_string, invert_units, painted_map, proxy_char, settle_line_by_bidi,
+        decode_text_string, invert_units, painted_map_for, settle_line_by_bidi,
         stores_logical_order, stores_visual_order, LineOrder, Unit,
     };
 
@@ -1909,13 +2144,15 @@ mod tests {
                 .then(left.cmp(&right))
         });
         let inverted = invert_units(&units);
-        let proxy_of = |order: &[usize]| -> String {
-            order.iter().map(|&i| proxy_char(&units[i].text)).collect()
-        };
+        // Measure the path production actually takes. This used to build a one-character
+        // proxy per unit and call `painted_map`, which was the defect: a multi-character unit
+        // (the date, the digits) could not be represented, so the comparison answered about a
+        // hypothesis it was incapable of expressing. `painted_map_for` runs UAX #9 over the
+        // real characters and collapses back to units.
         let diag = format!(
             "painted={painted:?} inverted={inverted:?} keep={:?} inv={:?}",
-            painted_map(&proxy_of(&identity), &identity),
-            painted_map(&proxy_of(&inverted), &inverted),
+            painted_map_for(&units, &identity),
+            painted_map_for(&units, &inverted),
         );
         assert!(
             matches!(outcome, LineOrder::Invert(_)),

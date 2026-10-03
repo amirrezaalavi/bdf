@@ -58,9 +58,15 @@ The public clone has 14 redistributable PDF fixtures. The 51 real-world PDFs are
 No decision currently blocks the next extraction work. Product/licensing questions and their status are tracked in `docs/OPEN-QUESTIONS.md`; verify that file before making a product-scope decision.
 ## Next work (in order)
 
-1. **Phase 1a:** two-font RED fixture — one correct `/ToUnicode`, one broken — then withhold only text from the broken font; report the private archive delta.
+1. **Phase 1a: DONE.** Per-font withholding already held; proved by fixture, no code needed.
 2. **Phase 1b:** attempt embedded-font cmap inversion for `hebrew-1.pdf`; recover only what can be proved, otherwise refuse loudly; visually review rendered output.
-3. **Phase 2:** faithful per-character prediction, then guarded order-consistency work; do not relax comparisons before the prediction is faithful.
+3. **Phase 2:** the faithful per-character prediction SHIPPED (`8c62805`) but did not move
+   `arabic-3.pdf`. The remaining blocker is the `neither` bucket — the prediction reproduces
+   neither reading — measured at 842 / 1,347 / 340 lines on `arabic-1/2/4`, which decide
+   1,778 / 1,956 / 2,706. `bidi_verified` was renamed `bidi_consistent` (`2bf36d5`) because a
+   forward match is consistency, not proof (`docs/problems/0015`). Q-R11 is answered; the island
+   generators it recommends are NOT implemented — two attempts regressed decided lines, recorded
+   in `docs/problems/0014`.
 4. **Handoff hygiene:** `tools/triage_pdfs.py` should refuse empty input; check/remove the unmatched `Unicode-DFS-2016` allowance; split the RTL skill into reference files when stable.
 5. Only after extraction is reliable: writer, editing, MCP, packaging and enterprise work.
 
@@ -69,7 +75,10 @@ A red gate never moves on. Publishing goes through `scripts/publish-public.sh`, 
 ## What must not drift
 
 * The invariant: **logical order or an explicit reason** — never silent reversal
-  (`docs/decisions/0002`).
+  (`docs/decisions/0002`). Withheld text is REPORTED under `data.pages[].unproven`, never
+  merged into `data.text` (`58f8c76`).
+* `bidi_consistent` means "reproduces the painting", NOT "the painting proves the order"
+  (`docs/problems/0015`) — do not let a later edit restore the stronger claim.
 * Permissive-only dependencies in shipped default features (`docs/decisions/0003`).
 * Authorship trailers on every commit (`AUTHORSHIP.md`).
 * Determinism: fixtures byte-identical across runs; no timestamps in output.
