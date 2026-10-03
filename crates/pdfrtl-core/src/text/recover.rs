@@ -467,7 +467,7 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     // interrogate. Judging a sequence against an assumption derived from itself proves
     // nothing, and on a pure-RTL pair it proves `Invert` by elimination — the bidi algorithm
     // reverses an RTL run, so `keeps` is unreachable, `inverts` is "true" for free, and the
-    // line would be silently mirrored while the run reported `bidi_verified`. Measured on a
+    // line would be silently mirrored while the run reported `bidi_consistent`. Measured on a
     // two-cluster fixture with no font widths, which the invariant control refuses
     // (docs/problems/0007). Refuse here instead: the fingerprint rung may still know the
     // family, and otherwise the line is withheld.
@@ -1344,7 +1344,7 @@ struct Flags {
     producer_visual: bool,
     /// Rung 3 decided this page: the stored order was compared against the order
     /// the producer painted, with UAX #9 (`settle_line_by_bidi`).
-    bidi_verified: bool,
+    bidi_consistent: bool,
     reconstructed: bool,
     refused: bool,
     undecodable: bool,
@@ -1357,7 +1357,7 @@ fn assemble(walk: Walk) -> Recovered {
         to_unicode: walk.used_to_unicode,
         encoded: walk.used_encoding,
         producer_visual: walk.units.iter().any(|unit| unit.reversed),
-        bidi_verified: false,
+        bidi_consistent: false,
         reconstructed: false,
         refused: false,
         undecodable: walk.undecodable,
@@ -1398,10 +1398,10 @@ fn assemble(walk: Walk) -> Recovered {
                 }
                 if undecided && has_rtl_run(&text) {
                     match settle_line_by_bidi(&slice) {
-                        LineOrder::Keep => flags.bidi_verified = true,
+                        LineOrder::Keep => flags.bidi_consistent = true,
                         LineOrder::Invert(order) => {
                             text = order.iter().map(|&i| slice[i].text.as_str()).collect();
-                            flags.bidi_verified = true;
+                            flags.bidi_consistent = true;
                             flags.reconstructed = true;
                         }
                         // Neither reading reproduces the painting — or both do, which
@@ -1525,11 +1525,11 @@ fn build_reasons(flags: Flags) -> Vec<Reason> {
     if flags.producer_visual {
         reasons.push(Reason::ProducerVisualOrderKnown);
     }
-    if flags.bidi_verified {
+    if flags.bidi_consistent {
         // Rung 3 established the order: the stored sequence matched the file's own
         // painted positions under UAX #9 (kept as logical, or inverted when the
         // comparison proved the mirror). The most specific rule, so it is last.
-        reasons.push(Reason::BidiVerified);
+        reasons.push(Reason::BidiConsistent);
     }
     if flags.refused {
         reasons.push(Reason::UnsupportedNoEvidence);

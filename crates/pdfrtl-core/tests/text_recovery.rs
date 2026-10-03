@@ -370,7 +370,7 @@ fn pen_advance_makes_a_single_origin_line_measurable() {
         vec![
             Reason::ActualText,
             Reason::BidiReordered,
-            Reason::BidiVerified
+            Reason::BidiConsistent
         ],
         "the declared widths order the clusters; nothing else in the file does"
     );
@@ -422,7 +422,7 @@ fn reversed_chars_marker_is_order_evidence_no_matter_the_producer() {
         vec![
             Reason::ActualText,
             Reason::BidiReordered,
-            Reason::BidiVerified
+            Reason::BidiConsistent
         ],
         "no marker: the painted positions decide, and the answer is the same text"
     );
