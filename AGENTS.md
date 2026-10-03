@@ -28,9 +28,10 @@ fingerprint — otherwise return `unsupported_no_evidence` and exit 3.
    `docs/decisions/0004` and the deny-list in `scripts/publish-public.sh`). Refer to them by
    their manifest language label or as "one unlabelled file". Writing a real filename into a
    plan or a README looks harmless and is caught only by the publisher's deny-list at the very
-   last step — measured: a plan table written on 2026-10-03 named `unknown-resume-devops-1`, and
-   `publish-public.sh` refused the whole tree. The guard worked; the note is that the mistake was
-   mine and the only reason it was caught before publication.
+   last step — measured twice on 2026-10-03: a plan table named a customer file, and the rule
+   written to prevent it named the same file in its own text. Both were refused before
+   publication. The guard worked every time; the lesson is that it was the only thing standing
+   between a customer name and the public internet, and both mistakes were mine.
 1. **TDD.** Failing test first, observed failing, then the minimal implementation.
    No test, no merge. Never weaken, delete or skip a test to get a green gate — if an
    expectation is wrong, fix the expectation to match verified reality and say why.
