@@ -74,20 +74,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           tag="${GITHUB_REF_NAME}"
+
+          # The notes go in a FILE, not a multi-line shell string. Written inline they became one
+          # long quoted argument, the closing quote was lost to the backslash-escaped table pipes,
+          # and the shell then ran the first asset path as a COMMAND - which is why the log shows
+          # our own binary printing its usage error (runs/37130766019).
+          cat > "$RUNNER_TEMP/notes.md" <<'NOTES'
+          Static Linux binaries (musl, no runtime needed).
+
+          | file | arch | runs on |
+          |---|---|---|
+          | `pdfrtl-x86_64-linux-musl` | x86-64 | Intel/AMD servers, desktops, most VPS |
+          | `pdfrtl-arm64-linux-musl` | aarch64 | ARM servers, Raspberry Pi, AWS Graviton |
+
+          Verify a download:
+
+          ```
+          sha256sum -c SHA256SUMS
+          ```
+
+          Extraction returns logical (reading) order, or it fails with an explicit reason. There
+          is no third outcome: no silently reversed text. See `CANARY.md` for what it refuses,
+          `docs/CLI.md` for the contract and `CHANGELOG.md` for the measured state.
+
+          Licence: all rights reserved. This release is an invitation to test, not a grant.
+          NOTES
+
           gh release create "$tag" \
             --title "$tag" \
-            --notes "Static Linux binaries (musl, no runtime needed).
-
-          | file | arch | size |
-          |---|---|---|
-          | pdfrtl-x86_64-linux-musl | x86-64 | Intel/AMD servers, desktops |
-          | pdfrtl-arm64-linux-musl | aarch64 | ARM servers, Raspberry Pi, Graviton |
-
-          Verify a download with \`sha256sum -c SHA256SUMS\`.
-
-          Extraction returns logical (reading) order or an explicit reason - never silently
-          reversed text. See CANARY.md for what it refuses and docs/CLI.md for the contract."
-          dist/pdfrtl-x86_64-linux-musl \
-          dist/pdfrtl-arm64-linux-musl \
-          dist/SHA256SUMS
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            dist/pdfrtl-x86_64-linux-musl \
+            dist/pdfrtl-arm64-linux-musl \
+            dist/SHA256SUMS
