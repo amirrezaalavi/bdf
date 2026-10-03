@@ -28,6 +28,19 @@ JSON object on stdout. Exit codes are part of the contract:
 withheld and the reason is named. The tool never emits text it cannot vouch for, and it never
 guesses.
 
+### Withheld text is reported, not thrown away
+
+Text that was decoded but could not be ordered is **not discarded**. It appears in a separate
+field, `data.pages[].unproven`, as `{line, text, reason}` — and `data.text` stays **proven-only**.
+
+This matters because the withheld text is frequently **reversed**: on the `arabic-*` files in our
+archive the stored order is the wrong reading for 92–99% of lines. So it is offered, clearly
+labelled, rather than either hidden or passed off as readable.
+
+A caller that reads `data.text` and nothing else gets logical text or nothing. A caller that
+wants the unproven text opts in by reading a field whose name says what it is — and takes
+responsibility for the fact that it may be backwards.
+
 ## 2. The one property that matters
 
 > Extraction returns **logical order**, or it fails with an explicit reason.
@@ -116,9 +129,21 @@ ldd ./pdfrtl            # -> "statically linked"
 pdfrtl extract --json some.pdf
 echo $?                 # 0 = extracted, 3 = refused, and the reasons say why
 
+# What was withheld, if anything (may be reversed — read the reason)
+pdfrtl extract --json some.pdf | jq '.data.unproven_lines, .data.pages[0].unproven'
+
 # Does it match the source build exactly?
 pdfrtl --version
 ```
+
+### Contract changes a caller should know about
+
+* **`bidi_verified` is now `bidi_consistent`** (2026-10-03). The old name claimed the painting
+  *proves* the original order; it does not. Two different logical strings can paint identically —
+  measured, `docs/problems/0015` — so a forward match is consistency, not proof. This is a
+  breaking change to the serialized reason code.
+* **`unproven` was added** to each page in `extract --json`. `data.text` is unchanged and still
+  proven-only.
 
 The canary binary is byte-for-byte reproducible from the repository's source at the tagged
 commit: verified identical in output to the glibc build across all 14 public fixtures.

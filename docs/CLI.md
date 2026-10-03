@@ -45,7 +45,7 @@ established. A page that decoded characters it cannot order reports:
 
 ```json
 {"page": 7, "text": "", "ok": false, "reasons": ["unsupported_visual_order"],
- "unordered_chars": 4021}
+ "unordered_chars": 4021, "unproven": [{"line": 3, "text": "…", "reason": "unsupported_visual_order"}]}
 ```
 
 * `text` is `""`. The characters are in the file and we read them — reading is not
@@ -53,6 +53,29 @@ established. A page that decoded characters it cannot order reports:
 * `unordered_chars` is the honest count of those characters (page level) and
   `data.unordered_chars` the document total: *decoded, order unestablished*.
 * the page's own `reasons` name the missing rung of the ladder; `ok` is `false`.
+
+### `unproven` — the withheld text, offered but never passed off as ordered
+
+Text that was decoded but not ordered is **reported, not discarded**. Each such line
+appears in `data.pages[].unproven` (and `data.unproven_lines` counts them across the
+document):
+
+```json
+{"line": 3, "text": "٢٠٢٠ ﻰﻟإ …", "reason": "unsupported_visual_order"}
+```
+
+* `text` is the line **exactly as it was stored**, not in reading order.
+* **On many producers that stored order is REVERSED.** Measured on our own archive: on the
+  `arabic-*` files the stored order is the wrong reading for 92–99% of decided lines. So this
+  text is frequently unreadable as-is, and that is why it does not belong in `data.text`.
+* `data.text` remains **proven-only**. A caller that reads `text` and nothing else still gets
+  logical text or nothing — the invariant is unchanged by this field.
+* A caller that wants the content opts in by reading a field whose name says what it is.
+  Concatenating `text` and `unproven` without reading the field yields a corrupted document;
+  that is a choice the caller makes knowingly.
+* An **empty** `unproven` means nothing was withheld — not that the wiring failed. A page can
+  be empty because it is genuinely blank (`unordered_chars: 0`, no reasons), which is the
+  distinction `docs/problems/0006` is about.
 
 `ok` means "every glyph decoded **and** an order rule fired". A page can be
 `ok: false` while its text is usable — part of a font we refused to map, with the
@@ -69,11 +92,31 @@ handed reversed text.
 | `bidi_reordered` | `ToUnicode` mapped cleanly; lines marked `/ReversedChars` were reordered to logical | yes |
 | `encoding_mapped` | simple 8-bit font decoded via `/Encoding` + `/Differences` (ADR 0004) | yes |
 | `producer_visual_order_known` | producer measured to store visual order; RTL lines inverted back to logical (ADR 0004) | yes |
+| `bidi_consistent` | the stored order **reproduces the measured painting** under UAX #9 — renamed from `bidi_verified` on 2026-10-03 because "verified" claimed more than the code establishes (see below) | yes |
 | `unsupported_font_encoding` | font has neither `/ToUnicode` nor a usable `/Encoding` (e.g. `/Symbol`) — refused | no |
-| `unsupported_visual_order` | RTL run order could not be established for the page — its characters are counted in `unordered_chars`, never emitted (ADR 0004) | no |
+| `unsupported_visual_order` | RTL run order could not be established for the page — its characters are counted in `unordered_chars`, never emitted (ADR 0004), and the text itself is offered under `unproven` | no |
 | `unsupported_no_evidence` | no trustworthy recovery path — refused | no |
 | `unsupported_broken_to_unicode` | `ToUnicode` missing or maps to C0 controls | no |
 | `unsupported_page_content` | content stream could not be tokenised/decoded (odd-length string, syntax) | no |
+
+### Why `bidi_consistent` and not `bidi_verified`
+
+The name changed on 2026-10-03 because it asserted more than the code establishes.
+A forward match is a **consistency check, not a uniqueness certificate**, and the
+counterexample is measured in our own Unicode implementation
+(`docs/problems/0015`):
+
+| logical | resolved levels | painted |
+|---|---|---|
+| `אבa 12` | `1 1 2 2 2 2` | `a 12בא` |
+| `אב12 a` | `1 1 2 2 1 2` | `a 12בא` |
+
+Two different logical strings, distinct characters, known paragraph direction, **one painted
+string**. Geometry alone cannot always say which was stored. So the code establishes *"this
+order reproduces the painting"*, and uniqueness — when it holds — is uniqueness **within the
+candidates that were tried**.
+
+This is a breaking change to the serialized reason code.
 
 ## Verbs
 

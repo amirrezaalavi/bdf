@@ -23,7 +23,9 @@ These numbers are owner-local and cannot be reproduced from the public clone wit
 PDFs.
 
 **Trying the canary?** Read [`CANARY.md`](CANARY.md) — what the binary does, what it refuses,
-and how to verify what you were handed.
+and how to verify what you were handed. Text that was decoded but could not be ordered is
+reported under `data.pages[].unproven` rather than discarded; `data.text` stays proven-only.
+See [`docs/CLI.md`](docs/CLI.md) for the full contract.
 
 Plan/decisions: `docs/plans/2026-09-29-lane-plan.md` · live state: `HANDOFF.md` ·
 contributor rules: `AGENTS.md` · owner questions: `docs/OPEN-QUESTIONS.md`.
