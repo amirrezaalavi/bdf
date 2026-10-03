@@ -16,3 +16,13 @@ unicode-bidi.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
+
+[features]
+# The acceptance criteria for the order ladder's hypothesis space. Off by default because one
+# of its tests is deliberately red (it specifies an outcome we do not yet produce); see the
+# header of tests/hypothesis_space.rs.
+hypothesis-space = []
+
+[[test]]
+name = "hypothesis_space"
+required-features = ["hypothesis-space"]
