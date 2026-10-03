@@ -17,8 +17,10 @@ permissive-only dependency rule enforced by `cargo deny` (`docs/decisions/0003`)
 licence is deferred until the POC is proven — it blocks shipping an SDK, not building.
 Owner: Yolka / Almas Shabake Tek + bornarad.co.
 
-**Current extraction snapshot (private archive):** 38 fully decoded, 37 order-verified, 12 partial,
-14 refused with a reason, 4 with no text layer; 1,038,880 characters emitted, 1,271,919 withheld.
+**Current extraction snapshot (private archive, 51 files, measured 2026-10-03):** 31 emit every
+decoded character, 14 do not (10 refused entirely, 4 partially), 6 have no text layer at all.
+The median file emits 100% of its decoded text. See [CANARY.md](CANARY.md) for the full breakdown
+and why character totals mislead here.
 These numbers are owner-local and cannot be reproduced from the public clone without the customer
 PDFs.
 

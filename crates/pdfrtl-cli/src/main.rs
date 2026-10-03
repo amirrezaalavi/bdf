@@ -31,6 +31,16 @@ struct Cli {
     #[arg(long, global = true)]
     json: bool,
 
+    /// Include the STORED text of withheld lines under `pages[].unproven`.
+    ///
+    /// Off by default. That text is in the order the producer stored it, which on most
+    /// producers is the wrong reading: measured 92-99% inverted on the arabic-* files. A
+    /// default envelope that carries it invites a caller - or an agent reading the whole
+    /// JSON - to consume reversed text as if it were text. The default reports COUNTS only
+    /// (`unproven_lines`, `unordered_chars`) so a caller can size the gap without reading it.
+    #[arg(long, global = true)]
+    include_unproven: bool,
+
     #[command(subcommand)]
     cmd: Cmd,
 }
@@ -83,7 +93,7 @@ fn main() -> ExitCode {
                 ExitCode::from(EXIT_IO)
             }
         },
-        Cmd::Extract { file } => run_extract(cli.json, &file),
+        Cmd::Extract { file } => run_extract(cli.json, cli.include_unproven, &file),
     }
 }
 
@@ -98,7 +108,7 @@ fn main() -> ExitCode {
 ///
 /// Refusing to guess is a correct outcome, so io errors stay exit 4 and this path
 /// never borrows that code: exit 4 means "the document itself could not be opened".
-fn run_extract(json: bool, file: &std::path::Path) -> ExitCode {
+fn run_extract(json: bool, include_unproven: bool, file: &std::path::Path) -> ExitCode {
     let pages = match pdfrtl_core::extract(file) {
         Ok(pages) => pages,
         Err(err) => {
@@ -147,7 +157,11 @@ fn run_extract(json: bool, file: &std::path::Path) -> ExitCode {
         if json {
             println!(
                 "{}",
-                envelope(true, &extract_payload(&text, &pages), &reasons)
+                envelope(
+                    true,
+                    &extract_payload(&text, &pages, include_unproven),
+                    &reasons
+                )
             );
         } else {
             println!("{text}");
@@ -184,7 +198,7 @@ fn run_extract(json: bool, file: &std::path::Path) -> ExitCode {
     };
 
     if json {
-        let mut payload = extract_payload(&text, &pages);
+        let mut payload = extract_payload(&text, &pages, include_unproven);
         payload["error"] = serde_json::json!(summary);
         println!("{}", envelope(false, &payload, &reasons));
     } else {
@@ -208,7 +222,11 @@ fn run_extract(json: bool, file: &std::path::Path) -> ExitCode {
 /// that wants the unproven text opts in by reading a field whose name says what it is. On a
 /// producer that stores visual order this text is REVERSED, which is exactly why it does not
 /// belong in `text`.
-fn extract_payload(text: &str, pages: &[pdfrtl_core::PageText]) -> serde_json::Value {
+fn extract_payload(
+    text: &str,
+    pages: &[pdfrtl_core::PageText],
+    include_unproven: bool,
+) -> serde_json::Value {
     let page_payload: Vec<serde_json::Value> = pages
         .iter()
         .map(|page| {
@@ -218,7 +236,12 @@ fn extract_payload(text: &str, pages: &[pdfrtl_core::PageText]) -> serde_json::V
                 "ok": page.is_decoded(),
                 "reasons": page.reasons.iter().map(|r| r.as_str()).collect::<Vec<_>>(),
                 "unordered_chars": page.unordered_chars,
-                "unproven": page.unproven,
+                // Emptied unless --include-unproven: the COUNT stays, the text does not.
+                "unproven": if include_unproven {
+                    serde_json::to_value(&page.unproven).unwrap_or(serde_json::Value::Null)
+                } else {
+                    serde_json::Value::Array(Vec::new())
+                },
             })
         })
         .collect();
