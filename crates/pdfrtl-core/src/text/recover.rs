@@ -42,6 +42,30 @@ pub struct PageText {
     /// established. Only the count is kept: the honest "we read it but cannot yet
     /// order it" number survives, the unorderable characters are not handed out.
     pub unordered_chars: usize,
+    /// Lines this page decoded but could not put in reading order, WITH their text.
+    ///
+    /// Never merged into [`PageText::text`]. `text` stays proven-only: a caller that reads it
+    /// without reading anything else still gets correct output or nothing. These lines are
+    /// offered separately, in the order they were STORED, so the caller can decide what to do
+    /// — and on a producer that stores visual order (measured: 92–99% of decided lines on
+    /// the arabic-* files) the text here is REVERSED. The caller is told so by name; that is
+    /// the whole point of a separate field.
+    ///
+    /// Added 2026-10-03 after measuring that refusing discards real text and that whether the
+    /// stored order is usable is a PER-FILE fact, not a global one: on `persian-6` 100% of
+    /// decided lines were already in logical order, on `arabic-4` 1%.
+    pub unproven: Vec<UnprovenLine>,
+}
+
+/// A line whose order could not be established, reported rather than discarded.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct UnprovenLine {
+    /// Zero-based index of the line on its page, in the page's line order.
+    pub line: usize,
+    /// The text exactly as it was STORED. Not reading order, and not claimed to be.
+    pub text: String,
+    /// Why the order was not established — the same `Reason` vocabulary the page carries.
+    pub reason: Reason,
 }
 
 impl PageText {
@@ -64,9 +88,23 @@ impl PageText {
 
     /// Withdraw text whose order was never established. Runs after
     /// [`settle_rtl_order`], which is what can add the refusal.
-    fn withdraw_unordered(&mut self) {
+    fn withdraw_unordered(&mut self, withheld: Vec<usize>) {
         if !self.is_ordered() && !self.text.is_empty() {
             self.unordered_chars = self.text.chars().count();
+            // Offer each withheld line WITH its reason instead of destroying it. This is the
+            // whole difference between discarding text and reporting it as unproven.
+            let stored: Vec<&str> = self.text.split('\n').collect();
+            for index in withheld {
+                if let Some(line) = stored.get(index) {
+                    if !line.trim().is_empty() {
+                        self.unproven.push(UnprovenLine {
+                            line: index,
+                            text: (*line).to_string(),
+                            reason: Reason::UnsupportedVisualOrder,
+                        });
+                    }
+                }
+            }
             self.text.clear();
         }
     }
@@ -90,6 +128,10 @@ struct Recovered {
     /// Indices (into the emitted line order) of lines that carry NO order evidence
     /// of their own — see [`settle_rtl_order`].
     pending: Vec<usize>,
+    /// Indices of the lines the order rung could not settle, in line order. The text
+    /// itself comes from `Recovered::text`, which still holds it at this point.
+    /// Reported, never merged into the emitted order.
+    withheld: Vec<usize>,
 }
 
 /// Widths are not available here — this entry point sees a stream and a font map, not the
@@ -125,15 +167,17 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
         let page = match doc.get_page_content_with_limit(page_id, MAX_PAGE_CONTENT) {
             Ok(content) => {
                 let (fonts, metrics) = collect_fonts(doc, page_id);
-                let recovered = recover(&content, &fonts, &metrics);
+                let mut recovered = recover(&content, &fonts, &metrics);
                 let mut page = PageText {
                     page: page_num,
                     text: recovered.text,
                     reasons: recovered.reasons,
                     unordered_chars: 0,
+                    unproven: Vec::new(),
                 };
                 settle_rtl_order(&mut page, &producer, &recovered.pending);
-                page.withdraw_unordered();
+                let withheld = std::mem::take(&mut recovered.withheld);
+                page.withdraw_unordered(withheld);
                 page
             }
             // The document loaded; this one page did not. Keep the page in the
@@ -143,6 +187,7 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
                 text: String::new(),
                 reasons: vec![Reason::UnsupportedPageContent],
                 unordered_chars: 0,
+                unproven: Vec::new(),
             },
         };
         pages.push(page);
@@ -1418,6 +1463,8 @@ fn assemble(walk: Walk) -> Recovered {
 
     let mut lines: Vec<String> = Vec::new();
     let mut pending: Vec<usize> = Vec::new();
+    // Indices of the lines rung 3 could not settle; their text is still in `lines`.
+    let mut withheld: Vec<usize> = Vec::new();
     for group in &groups {
         let slice: Vec<Unit> = group.iter().map(|&i| units[i].clone()).collect();
         // Does this line still owe the ladder an order justification?
@@ -1447,6 +1494,9 @@ fn assemble(walk: Walk) -> Recovered {
                         // to the producer rung, which either knows the family or
                         // refuses the line with an explicit reason.
                         LineOrder::Ambiguous | LineOrder::Unexplained => {
+                            // Record the index BEFORE `lines` grows, then push the text, so
+                            // the index refers to this line in the joined page text.
+                            withheld.push(lines.len());
                             pending.push(lines.len());
                             // ORDER_TRACE (env-gated, diagnostic only): record WHY the line
                             // was undecidable — a tie in paint_x, or a prediction that
@@ -1478,6 +1528,7 @@ fn assemble(walk: Walk) -> Recovered {
         text: lines.join("\n"),
         reasons: build_reasons(flags),
         pending,
+        withheld,
     }
 }
 

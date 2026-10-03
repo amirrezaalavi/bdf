@@ -202,6 +202,12 @@ fn run_extract(json: bool, file: &std::path::Path) -> ExitCode {
 /// Order gating (ADR 0004): a page whose order was never established reports
 /// `text: ""` and its decoded characters as `unordered_chars`. There is no
 /// third outcome — `text` is logical or it is empty.
+///
+/// `unproven` carries the TEXT of those withheld lines, in the order it was STORED and never
+/// merged into `text`. A caller that reads `text` alone still gets proven-or-nothing; a caller
+/// that wants the unproven text opts in by reading a field whose name says what it is. On a
+/// producer that stores visual order this text is REVERSED, which is exactly why it does not
+/// belong in `text`.
 fn extract_payload(text: &str, pages: &[pdfrtl_core::PageText]) -> serde_json::Value {
     let page_payload: Vec<serde_json::Value> = pages
         .iter()
@@ -212,11 +218,18 @@ fn extract_payload(text: &str, pages: &[pdfrtl_core::PageText]) -> serde_json::V
                 "ok": page.is_decoded(),
                 "reasons": page.reasons.iter().map(|r| r.as_str()).collect::<Vec<_>>(),
                 "unordered_chars": page.unordered_chars,
+                "unproven": page.unproven,
             })
         })
         .collect();
     let unordered: usize = pages.iter().map(|page| page.unordered_chars).sum();
-    serde_json::json!({ "text": text, "unordered_chars": unordered, "pages": page_payload })
+    let unproven_lines: usize = pages.iter().map(|page| page.unproven.len()).sum();
+    serde_json::json!({
+        "text": text,
+        "unordered_chars": unordered,
+        "unproven_lines": unproven_lines,
+        "pages": page_payload,
+    })
 }
 
 /// Human-readable rendering of `inspect`. Never used by agents (they pass `--json`),
