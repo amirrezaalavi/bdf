@@ -1,0 +1,91 @@
+%PDF-1.7
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 140] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 205 >>
+stream
+BT
+/F1 12 Tf
+-1 0 0 -1 20 80 Tm
+<0002> Tj
+<0007> Tj
+<0004> Tj
+<0006> Tj
+<0005> Tj
+<0004> Tj
+<0003> Tj
+<0002> Tj
+<0001> Tj
+<0004> Tj
+<000D> Tj
+<000C> Tj
+<0006> Tj
+<000B> Tj
+<000A> Tj
+<0009> Tj
+<0008> Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /ToUnicode 6 0 R >>
+endobj
+6 0 obj
+<< /Length 507 >>
+stream
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+13 beginbfchar
+<0001> <06AF>
+<0002> <0632>
+<0003> <0627>
+<0004> <0631>
+<0005> <0634>
+<0006> <0020>
+<0007> <0648>
+<0008> <0635>
+<0009> <0641>
+<000A> <062D>
+<000B> <0647>
+<000C> <0622>
+<000D> <062E>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+endstream
+endobj
+7 0 obj
+<< /Producer (pdfrtl-gen) /Creator (pdfrtl-gen) /Title (pdfrtl refusal fixture: two tied lines at one origin) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000247 00000 n 
+0000000502 00000 n 
+0000000589 00000 n 
+0000001146 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+1274
+%%EOF

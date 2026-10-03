@@ -516,6 +516,15 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     // two-cluster fixture with no font widths, which the invariant control refuses
     // (docs/problems/0007). Refuse here instead: the fingerprint rung may still know the
     // family, and otherwise the line is withheld.
+    //
+    // Refusing the WHOLE LINE the moment any pair ties is right.
+    //
+    // A shape-based fallback for tied lines was tried here on 2026-10-03 and REVERTED: its
+    // discriminator ("is this reading a well-formed RTL line?") accepted every candidate equally,
+    // so uniqueness never held and every tied line stayed `Ambiguous` — all cost, no decisions.
+    // The tie is not the blocker anyway: 8 of the 8 refusing Persian files DO declare glyph
+    // widths, so their units do not all share one origin and they never reach this branch.
+    // docs/problems/0018 records the measurement and the withdrawn approach.
     if painted
         .windows(2)
         .any(|pair| units[pair[0]].paint_x == units[pair[1]].paint_x)

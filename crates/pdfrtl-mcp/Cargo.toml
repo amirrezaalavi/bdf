@@ -11,4 +11,4 @@ description = "MCP server exposing the pdfrtl CLI contract to agents (P2)"
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-pdfrtl-core = { path = "../pdfrtl-core", version = "0.0.1" }
+pdfrtl-core = { path = "../pdfrtl-core", version = "0.1.0" }
