@@ -16,3 +16,9 @@ __pycache__/
 reports/render/
 reports/verify/
 .verify/
+
+# Licence texts: the canary carries no licence (owner decision 2026-10-03).
+# The drafts are kept out of git until the final licence is chosen.
+/LICENSE
+/LICENSE-*.md
+/LICENSE.*.txt
