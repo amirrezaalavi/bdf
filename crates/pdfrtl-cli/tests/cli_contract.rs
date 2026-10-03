@@ -244,6 +244,155 @@ fn unproven_order_is_withheld_from_data_text_but_still_counted() {
     );
 }
 
+/// Builds a PDF whose single page carries TWO fonts: `/F1` maps its codes to real Persian
+/// letters through a well-formed `/ToUnicode`, and `/F2` is the same undecodable CID font as
+/// `write_undecodable_cid_pdf`.
+///
+/// The Persian run sits in an `/ActualText`-marked sequence so its ORDER is established by
+/// the producer itself. That is deliberate: without the mark, the order rung withholds the
+/// page for an unrelated reason (`unsupported_visual_order`) and the test would be measuring
+/// the order ladder instead of font decoding. Measured control: removing `/F2` entirely
+/// yields byte-identical output — the broken font changes nothing here, which is exactly
+/// what per-font withholding is supposed to mean.
+fn write_two_font_pdf() -> std::path::PathBuf {
+    // /ActualText carries the logical string in UTF-16BE with a BOM: U+0633 U+0644
+    // U+0627 U+0645 = "سلام". Written as one byte pair each, so a reader cannot
+    // mis-split it (an earlier draft ran two code points together and the fixture,
+    // not the code, was at fault).
+    let content = "BT /Span<</ActualText <FEFF0633064406270645>> >> BDC \
+                   BT /F1 12 Tf 10 700 Td <FEED FEFC FEFA FEA1> Tj ET EMC \
+                   BT /F2 12 Tf 10 680 Td <0041> Tj ET";
+    let cmap = "/CIDInit /ProcSet findresource begin\n\
+                12 dict begin\nbegincmap\n\
+                /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n\
+                /CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n\
+                1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n\
+                4 beginbfchar\n\
+<FEED> <0633>\n\
+<FEFC> <0644>\n\
+<FEFA> <0627>\n\
+<FEA1> <0645>\n\
+endbfchar\nendcmap\nend\nend";
+
+    let objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] \
+           /Resources << /Font << /F1 4 0 R /F2 7 0 R >> >> /Contents 5 0 R >>"
+            .to_string(),
+        "<< /Type /Font /Subtype /Type0 /BaseFont /GoodFont \
+           /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 8 0 R >>"
+            .to_string(),
+        format!(
+            "<< /Length {} >>\nstream\n{}\nendstream",
+            content.len(),
+            content
+        ),
+        "<< /Type /Font /Subtype /CIDFontType2 /BaseFont /GoodFont \
+           /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> \
+           /CIDToGIDMap /Identity >>"
+            .to_string(),
+        "<< /Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H \
+           /DescendantFonts [9 0 R] >>"
+            .to_string(),
+        format!("<< /Length {} >>\nstream\n{}\nendstream", cmap.len(), cmap),
+        "<< /Type /Font /Subtype /CIDFontType2 /BaseFont /X \
+           /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> \
+           /CIDToGIDMap /Identity >>"
+            .to_string(),
+    ];
+
+    let mut pdf: Vec<u8> = b"%PDF-1.4\n".to_vec();
+    let mut offsets = Vec::new();
+    for (i, object) in objects.iter().enumerate() {
+        offsets.push(pdf.len());
+        pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", i + 1, object).as_bytes());
+    }
+    let startxref = pdf.len();
+    let mut table = format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1);
+    for offset in &offsets {
+        table.push_str(&format!("{offset:010} 00000 n \n"));
+    }
+    pdf.extend_from_slice(table.as_bytes());
+    pdf.extend_from_slice(
+        format!(
+            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{startxref}\n%%EOF\n",
+            objects.len() + 1
+        )
+        .as_bytes(),
+    );
+
+    let path = std::env::temp_dir().join(format!("pdfrtl-two-font-{}.pdf", std::process::id()));
+    std::fs::write(&path, pdf).expect("temp pdf is writable");
+    path
+}
+
+/// Per-FONT withholding: the readable font's text survives; the broken font's text is withheld
+/// and named. A page is not all-or-nothing because of one bad font.
+#[test]
+fn a_broken_font_does_not_cost_the_page_its_decodable_text() {
+    let path = write_two_font_pdf();
+    let out = pdfrtl()
+        .args(["--json", "extract"])
+        .arg(&path)
+        .output()
+        .expect("binary runs");
+    let _ = std::fs::remove_file(&path);
+
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let v: serde_json::Value = serde_json::from_str(&stdout).expect("stdout is JSON");
+
+    let page = &v["data"]["pages"][0];
+    let text = page["text"].as_str().unwrap_or_default();
+
+    assert_eq!(
+        text, "سلام",
+        "exactly the /ActualText logical string survives, and the broken font adds nothing"
+    );
+    assert_eq!(
+        page["ok"],
+        serde_json::json!(false),
+        "the page is still not fully trustworthy, and says so: {v}"
+    );
+    let reasons = page["reasons"].as_array().expect("per-page reasons exist");
+    assert!(
+        reasons
+            .iter()
+            .any(|r| r.as_str() == Some("unsupported_broken_to_unicode")),
+        "the broken font is named: {reasons:?}"
+    );
+}
+
+/// The 636-byte counterexample from `docs/decisions/0002` must keep refusing. Two fonts on a
+/// page do not license emitting text whose ORDER is unproven — the two concerns are separate.
+#[test]
+fn per_font_withholding_does_not_weaken_the_order_invariant() {
+    let path = write_two_font_pdf();
+    let out = pdfrtl()
+        .args(["--json", "extract"])
+        .arg(&path)
+        .output()
+        .expect("binary runs");
+    let _ = std::fs::remove_file(&path);
+
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let v: serde_json::Value = serde_json::from_str(&stdout).expect("stdout is JSON");
+    let page = &v["data"]["pages"][0];
+
+    // Text that WAS emitted must be decodable, and nothing may claim full success.
+    if let Some(text) = page["text"].as_str() {
+        assert!(
+            !text.contains('\u{1}') && !text.contains('\u{2}'),
+            "no C0 control characters reach the caller: {text:?}"
+        );
+    }
+    assert_eq!(
+        v["ok"],
+        serde_json::json!(false),
+        "the document verdict is still a refusal: {v}"
+    );
+}
+
 /// Builds the smallest PDF whose only glyph is a CID no font can decode:
 /// no /ActualText, no /ToUnicode. Refusing (exit 3) is the specified behaviour.
 fn write_undecodable_cid_pdf() -> std::path::PathBuf {
