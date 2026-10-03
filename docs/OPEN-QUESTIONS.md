@@ -108,8 +108,81 @@
 - **why it matters:** bindings (PyO3/napi-rs) are a P3-sized effort; a static binary is
   nearly free. Publishing order affects what "v1 sellable" means.
 
+## Q-011 — Is `arabic-3.pdf` a target or a known limitation?
+- **status:** open
+- **blocks:** nothing today; it decides whether the canary's acceptance gate depends on one file
+- **question:** Drop that one 321-page scanned volume as an acceptance target and list it as a
+  known limitation instead?
+- **why it matters:** it is 93.3% of all withheld characters in the archive, and its own text
+  layer is defective (broken even in Edge), so it may be unfixable for reasons unrelated to reading
+  order. The owner has said one file is not a reference for general work and can be replaced.
+  **Recommendation: drop as a target, keep as a file.**
+
+## Q-012 — Should the output state *how sure* it is?
+- **status:** open
+- **blocks:** any change to the output contract
+- **question:** Replace today's binary "ordered / refused" with a per-page label —
+  `proven` (the file states its own order) · `matches_the_drawing` (our reconstruction reproduces
+  it exactly) · `several_readings_match` (more than one fits; we return the best and list the
+  others) · `no_evidence` (refuse, today's behaviour)?
+- **why it matters:** our own measurement (`docs/problems/0015`) shows two different Persian/Hebrew
+  strings can draw **identically**, so "matches the drawing" is not proof. Today a line with two
+  possible readings is treated exactly like a line with none — both are dropped, though those are
+  very different situations for a reader.
+  **Not changed unilaterally: this is the output contract, so it is the owner's decision.**
+  Sequence: after the public refusal fixtures exist (P-5), because the four cases need tests that
+  tell them apart.
+
+## Q-013 — Who reads the output and confirms it is right?
+- **status:** open (supersedes nothing; sharpens Q-006 for the canary)
+- **blocks:** the honest completion of C7 and of every correctness claim
+- **question:** Can the owner (or a colleague) read three rendered pages and confirm the extracted
+  text matches what is written there — and how many hours per week are available?
+- **why it matters:** every number in this repository proves characters were *ordered*, not that a
+  Persian speaker read them and found them correct. `AGENTS.md` rule 8 excludes agent
+  self-assessment, and an AI reading Persian is exactly what that rule excludes. **This is the
+  single largest risk and only the owner can close it.** We make it cheap: one page per file,
+  picture + expected text + extracted text, produced by the existing `scripts/render_pages.py`.
+
+## Q-014 — Build a minimal RTL writer for ground-truth fixtures?
+- **status:** parked (does not block the canary)
+- **question:** Build a minimal RTL PDF writer that emits `/ActualText`, so fixtures we generate
+  are provably correct by construction?
+- **why it matters:** we cannot publish the customer's documents as fixtures, so we invent
+  look-alikes — and then have no independent answer for what an invented file *should* say. A
+  writer removes that: we make the file, so we know the answer. **Recommendation: not now.** The
+  fixture actually needed today is one synthetic file that refuses, which is a small change to the
+  existing generator (`docs/problems/0017`), not a new writer. Revisit after the canary.
+
 ---
 
 ## Answered
 
 _(none yet — answers land here and become ADRs)_
+
+---
+
+## Plain-language version
+
+The four questions above, without jargon — see also `docs/reviews/2026-10-03-review-disposition.md`.
+
+**Q-011 — the one weird book.** One 321-page scanned book from your own files is the worst input
+in the corpus: even Edge shows its text broken, so its text layer is defective independently of
+anything we do. Should it stop being a target and just be named as a known limitation?
+*Recommendation: yes. Cost of answering: one line.*
+
+**Q-012 — saying how sure we are.** Today the tool says only "this is in reading order" or "I
+refuse". We measured that two genuinely different strings can draw **the same letters in the same
+places**, so "it matches the drawing" is not certainty — it means "it matches, and I could not find
+a second reading that also matches". A label saying which of those we did would be more honest:
+*the file states its own order* / *matches the drawing* / *several readings fit* / *nothing fits*.
+Today a line with two possible readings is dropped exactly like a line with none, which is unfair
+to the reader. *Not changed yet — it changes the output contract, so it is your call.*
+
+**Q-013 — the human read.** Every number we publish proves characters were *ordered*, not that a
+Persian speaker read them and found them correct. Our own rule says an agent's own check does not
+count. Nobody has done that read yet. It is about ten minutes for three pages, and we can produce
+the comparison sheets. *This is the one only you can do.*
+
+**Q-014 — a writer, later.** A tool that *creates* RTL PDFs could make our test files correct by
+construction. Nice, but it is a new component and we do not need it for the canary. *Later.*
