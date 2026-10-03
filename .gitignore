@@ -22,3 +22,6 @@ reports/verify/
 /LICENSE
 /LICENSE-*.md
 /LICENSE.*.txt
+
+# Release binaries are build output, never committed (scripts/build-release.sh)
+dist/
