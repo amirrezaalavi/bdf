@@ -23,6 +23,7 @@ use crate::text::tokenizer::{parse_value, tokenize, Token, Value};
 use anyhow::Result;
 use lopdf::{Dictionary, Document, Object, ObjectId};
 use std::collections::HashMap;
+use std::sync::Mutex;
 use unicode_bidi::{bidi_class, BidiClass, BidiInfo, Level};
 
 /// Decompressed content cap per page: a page is text, not a bomb.
@@ -1317,6 +1318,14 @@ fn assemble(walk: Walk) -> Recovered {
                         // refuses the line with an explicit reason.
                         LineOrder::Ambiguous | LineOrder::Unexplained => {
                             pending.push(lines.len());
+                            // ORDER_TRACE (env-gated, diagnostic only): record WHY the line
+                            // was undecidable — a tie in paint_x, or a prediction that
+                            // reproduced neither reading. Counts and flags only; a unit's
+                            // TEXT is never emitted here, per the instrumentation rule.
+                            if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
+                                let (ties, min, max) = tie_span(&slice);
+                                trace_line(slice.len(), ties, min, max, has_geometry(&slice));
+                            }
                         }
                     }
                 }
@@ -1333,6 +1342,59 @@ fn assemble(walk: Walk) -> Recovered {
         reasons: build_reasons(flags),
         pending,
     }
+}
+
+/// Order-trace line. The CORE MUST NOT PRINT (slop gate, AGENTS.md): the CLI owns stdout.
+/// So this records into a process-global buffer that a test reads and prints, and nothing
+/// else. Fields are counts and coordinates only — never a unit's text.
+///
+/// ONE buffer, shared by the writer and the reader. Declaring a `static` in each function
+/// gives two buffers and a trace that records nothing — a control that reports success while
+/// doing nothing, the shape of docs/problems/0012, committed here by mistake the first time.
+static ORDER_TRACE: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+fn trace_line(units: usize, ties: usize, min_x: f64, max_x: f64, geometry: bool) {
+    let mut guard = ORDER_TRACE
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    guard.push(format!(
+        "line units={units} tied_pairs={ties} span={:.3}..{:.3} geometry={geometry}",
+        min_x, max_x
+    ));
+}
+
+/// Read and clear the recorded order trace. Called by tests, never by the library.
+pub fn take_order_trace() -> Vec<String> {
+    std::mem::take(
+        &mut *ORDER_TRACE
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()),
+    )
+}
+
+/// Why a line could not be decided: how many adjacent pairs share a paint_x, and the span.
+/// A span of exactly 0.0 with more than one unit is the mass-tie signature — every cluster
+/// projected to the same x, whatever the font declared.
+fn tie_span(units: &[Unit]) -> (usize, f64, f64) {
+    let mut sorted: Vec<f64> = units.iter().map(|unit| unit.paint_x).collect();
+    sorted.sort_by(|left, right| left.total_cmp(right));
+    let mut ties = 0;
+    for pair in sorted.windows(2) {
+        if pair[0] == pair[1] {
+            ties += 1;
+        }
+    }
+    let min = sorted.first().copied().unwrap_or(0.0);
+    let max = sorted.last().copied().unwrap_or(0.0);
+    (ties, min, max)
+}
+
+/// Whether the positions on this line are usable at all: every unit must carry a finite
+/// paint_x and a left-to-right composed scale (`x_ok`, set from the composed matrix).
+fn has_geometry(units: &[Unit]) -> bool {
+    units
+        .iter()
+        .all(|unit| unit.x_ok && unit.paint_x.is_finite())
 }
 
 fn build_reasons(flags: Flags) -> Vec<Reason> {
