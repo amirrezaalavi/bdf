@@ -1050,6 +1050,54 @@
       "redistributable": true,
       "status": "unverified",
       "notes": "SIMULATED family fixture backing PRODUCER_ALLOW_LIST entry chromium-skia: stores logical order. rung 3 declines on this line (the painting fits neither reading), so the fingerprint's LOGICAL branch is what runs: the text must come back byte-exact, with neither producer_visual_order_known nor unsupported_visual_order. The mirror of the two visual fixtures - this is the branch that stops us inverting Chromium files."
+    },
+    {
+      "id": "refuse-tied-rtl",
+      "path": "corpus/raw/synthetic/refuse-tied-rtl.pdf",
+      "language": "persian",
+      "script": "arab",
+      "direction": "rtl",
+      "producer": "pdfrtl-gen",
+      "producer_tool": "tools/gen_refusal_fixtures.py",
+      "producer_class": "visual",
+      "licence": "ours (CC0)",
+      "source_url": null,
+      "sha256": "b173fd7babcf61a746a2de7998264dacf38deb6a952143c8f7debb70b7c5de30",
+      "redistributable": true,
+      "status": "unverified",
+      "notes": "Withholding fixture: real codes, no /ActualText, no /ReversedChars, all units tied at one origin. Expected result is a REFUSAL."
+    },
+    {
+      "id": "refuse-tied-multiline",
+      "path": "corpus/raw/synthetic/refuse-tied-multiline.pdf",
+      "language": "persian",
+      "script": "arab",
+      "direction": "rtl",
+      "producer": "pdfrtl-gen",
+      "producer_tool": "tools/gen_refusal_fixtures.py",
+      "producer_class": "visual",
+      "licence": "ours (CC0)",
+      "source_url": null,
+      "sha256": "1ffd6491c60696fa961a35fcb0892f4f68130240531b49180ef255a1129e0e21",
+      "redistributable": true,
+      "status": "unverified",
+      "notes": "Two tied lines on one origin, so a fix handling only single-line pages still fails here. Expected result is a REFUSAL."
+    },
+    {
+      "id": "refuse-near-miss-producer",
+      "path": "corpus/raw/synthetic/refuse-near-miss-producer.pdf",
+      "language": "persian",
+      "script": "arab",
+      "direction": "rtl",
+      "producer": "pdfrtl-gen (NOT an allow-listed producer)",
+      "producer_tool": "tools/gen_refusal_fixtures.py",
+      "producer_class": "visual",
+      "licence": "ours (CC0)",
+      "source_url": null,
+      "sha256": "21380463d59f62d08d0f7114fd1b362c281dd74fa596d1c66129275bbe868350",
+      "redistributable": true,
+      "status": "unverified",
+      "notes": "Producer string resembling an allow-listed family must match nothing. Expected result is a REFUSAL."
     }
   ]
 }
