@@ -488,12 +488,50 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     let keeps = predicts_painted(units, &identity, &painted);
     let inverts =
         stored_is_painted && inverted != identity && predicts_painted(units, &inverted, &painted);
+    if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
+        record_pattern(if keeps && inverts {
+            "both_fit"
+        } else if keeps {
+            "stored_only"
+        } else if inverts {
+            "reversed_only"
+        } else {
+            "neither"
+        });
+    }
     match (keeps, inverts) {
         (true, false) => LineOrder::Keep,
         (false, true) => LineOrder::Invert(inverted),
         (true, true) => LineOrder::Ambiguous,
         (false, false) => LineOrder::Unexplained,
     }
+}
+
+/// Counts the four-way outcome of rung 3, so a real corpus can say how often a line is
+/// DECIDED versus genuinely undecidable. Diagnostic only; the product ignores it.
+static OUTCOME_COUNTS: Mutex<[usize; 4]> = Mutex::new([0; 4]);
+
+fn record_pattern(pattern: &str) {
+    let slot = match pattern {
+        "both_fit" => 0,
+        "stored_only" => 1,
+        "reversed_only" => 2,
+        _ => 3,
+    };
+    let mut counts = OUTCOME_COUNTS
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    counts[slot] += 1;
+}
+
+/// [both_fit, stored_only, reversed_only, neither] since the last reset.
+pub fn take_outcome_counts() -> [usize; 4] {
+    let mut counts = OUTCOME_COUNTS
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let snapshot = *counts;
+    *counts = [0; 4];
+    snapshot
 }
 
 /// Run UAX #9 forward over a hypothesised logical order and check that the levels
