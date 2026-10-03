@@ -77,6 +77,13 @@ orchestrator integrates. Rules that each cost real time to learn:
   greps for prints, and a feature flag does not get around a grep.
 * **No lane touches `corpus/raw/private/` or runs `scripts/publish-public.sh`.** Real customer
   documents stay local; publishing is the orchestrator's job.
+* **Never pipe a build to `/dev/null` when its result is the thing you are about to measure.** A
+  missing binary compares as "everything differs", not as "the build failed". Assert the artifact
+  exists (`[ -x "$BIN" ] || exit 2`) before comparing two builds.
+* **Add a target to the PINNED toolchain, not to `stable`.** `rustup target add x86_64-unknown-linux-musl`
+  run outside the repo installs for the default toolchain, and the pinned build then fails with
+  `can't find crate for 'core'` — the same drift `docs/problems/0003` records, in a new costume.
+  Use `rustup target add --toolchain "$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)-x86_64-unknown-linux-gnu"`.
 * **A lane that cannot finish says so**, with the exact failing command and its output. An
   honest partial result is worth more than a green summary nobody can reproduce.
 * **A lane's own summary is a claim, not evidence.** Raw output goes to `reports/` or
