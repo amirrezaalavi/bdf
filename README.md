@@ -1,5 +1,10 @@
 # bdf (working name: pdfrtl) — RTL-first PDF core for agents
 
+> **Licence: TBD — all rights reserved.** No licence file is granted yet; this repository is shared
+> by invitation only. The planned long-term posture is AGPL-3.0-or-later plus a commercial
+> dual licence (`docs/decisions/0001`), but **nothing here is AGPL today**, and the canary build
+> carries no licence at all.
+
 **Last updated:** 2026-10-03
 **Private-corpus measurement snapshot:** 2026-09-29
 **Canonical project:** `https://github.com/amirrezaalavi/bdf`
