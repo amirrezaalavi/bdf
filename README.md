@@ -22,6 +22,9 @@ Owner: Yolka / Almas Shabake Tek + bornarad.co.
 These numbers are owner-local and cannot be reproduced from the public clone without the customer
 PDFs.
 
+**Trying the canary?** Read [`CANARY.md`](CANARY.md) — what the binary does, what it refuses,
+and how to verify what you were handed.
+
 Plan/decisions: `docs/plans/2026-09-29-lane-plan.md` · live state: `HANDOFF.md` ·
 contributor rules: `AGENTS.md` · owner questions: `docs/OPEN-QUESTIONS.md`.
 
