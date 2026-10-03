@@ -36,7 +36,7 @@ jobs:
       - name: Build and verify both static binaries
         run: bash scripts/build-release.sh
 
-      - name: Fail if either binary is missing or empty
+      - name: Fail if either binary is missing, wrong-arch or dynamic
         run: |
           set -euo pipefail
           for arch in x86_64 arm64; do
@@ -48,8 +48,16 @@ jobs:
               arm64)  want="aarch64" ;;
             esac
             file "$f" | grep -qi "$want" || { echo "wrong arch in $f" >&2; exit 1; }
-            readelf -d "$f" 2>/dev/null | grep -q NEEDED && {
-              echo "dynamic binary: $f" >&2; exit 1; }
+            # `readelf -d` on a static binary prints no NEEDED lines and exits non-zero
+            # (there is no dynamic section to dump), so `grep -q` finding nothing IS the
+            # passing case. Written as `if ... then fail; fi` rather than
+            # `cmd && fail` because under `set -e` the latter makes the loop body's last
+            # exit status the grep's, and the step fails on a CORRECT binary.
+            if readelf -d "$f" 2>/dev/null | grep -q NEEDED; then
+              echo "dynamic binary: $f" >&2
+              exit 1
+            fi
+            echo "ok: $f is $want and static"
           done
 
       - name: Upload artifacts to the workflow run
