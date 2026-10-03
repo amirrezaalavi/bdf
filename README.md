@@ -17,10 +17,11 @@ permissive-only dependency rule enforced by `cargo deny` (`docs/decisions/0003`)
 licence is deferred until the POC is proven — it blocks shipping an SDK, not building.
 Owner: Yolka / Almas Shabake Tek + bornarad.co.
 
-**Current extraction snapshot (private archive, 51 files, measured 2026-10-03):** 31 emit every
-decoded character, 14 do not (10 refused entirely, 4 partially), 6 have no text layer at all.
-The median file emits 100% of its decoded text. See [CANARY.md](CANARY.md) for the full breakdown
-and why character totals mislead here.
+**Current extraction snapshot (private archive, 51 files, measured 2026-10-03, produced by
+`scripts/by_language.py`):** **Persian, the focus, is 25 of those files — 13 emit every decoded
+character, 1 is partial, 8 are refused entirely, 3 have no text layer; the median Persian file emits
+100% of its decoded text.** Hebrew is 4/4. Across all languages: 31 fully emitted, 4 partial, 10
+refused, 6 no-text. See [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 These numbers are owner-local and cannot be reproduced from the public clone without the customer
 PDFs.
 

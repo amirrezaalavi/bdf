@@ -65,42 +65,38 @@ Numbers below are from a **51-file private archive** of real Persian, Arabic and
 documents, measured 2026-10-03. They are the author's own files and are not in the public
 repository; a clone of the repository cannot reproduce them.
 
-**Per file, because character sums across files of wildly different sizes mislead.** These
-categories are disjoint and sum to 51:
+**Per language and per file, because a character sum across files of wildly different sizes
+misleads — one 321-page volume is 93% of it.** Derived by `scripts/by_language.py`; see
+[`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for the full table and the method.
+
+**Persian is the focus: 25 of 51 files.**
 
 | | files |
 |---|---|
-| fully emitted (every decoded character ordered and returned) | 31 |
-| partially recovered (some text emitted, some withheld) | 4 |
-| refused entirely (decoded, nothing emitted, reason named) | 10 |
-| no text layer at all — OCR territory, out of scope | 6 |
-| **total** | **51** |
+| fully emitted (every decoded character ordered and returned) | 13 |
+| partially recovered (some text emitted, some withheld) | 1 |
+| refused entirely (decoded, nothing emitted, reason named) | 8 |
+| no text layer at all — OCR territory, out of scope | 3 |
+| **total Persian** | **25** |
 
-So **14 of 51 files do not emit everything** (4 partial + 10 refused) — that is the number to
-quote, and it is the one earlier versions of this file and the README each got half-right
-("12" and "14" were two different definitions of the same set).
+**The median Persian file emits 100% of its decoded text.** All 8 Persian refusals share one
+cause — `unsupported_visual_order`, the geometry comparison at rung 3 — so **8 files is the whole
+remaining Persian scope**, not 51. Hebrew is 4/4; English 9/10.
 
-Per-file emitted fraction: **31 files emit 100%**, 14 emit less than 90%, and the **median file
-emits 100%** of its decoded text.
+All languages, disjoint, summing to 51:
 
-Character totals, as a footnote only:
-
-| | characters |
+| | files |
 |---|---|
-| emitted | 1,038,880 |
-| withheld | 1,271,919 |
-
-**That footnote is an artefact of one file, and earlier wording here called it a headline.** A
-single 321-page scanned volume (`arabic-3.pdf`) accounts for **93.3% of all withheld characters**
-(1,187,033 of 1,271,919). Excluding it, withheld is 84,886 against 1,038,880 emitted — **8% of
-emitted**, not "larger than". The honest summary is: *the tool emits all of most files, and declines
-one pathological file almost entirely.* Counting characters across files of different sizes turns
-that into a number that reads as though the tool refuses more than it answers.
+| fully emitted | 31 |
+| partially recovered | 4 |
+| refused entirely | 10 |
+| no text layer | 6 |
 
 ### Known limitations, stated plainly
 
-* **Reading order is not recovered on every file.** 14 of 51 files do not emit everything
-  (10 refused entirely, 4 partially). The cause is known and documented
+* **Reading order is not recovered on every file.** 8 of the 25 Persian files refuse entirely and
+  1 is partial. All 8 report the same reason — `unsupported_visual_order`, the geometry comparison
+  at rung 3 — so this is **one problem with one fix**, not a list of nine. The cause is documented
   (`docs/plans/2026-10-03-canary.md`, C3): lines mixing several left-to-right runs — dates,
   digit runs, Latin words — exceed what the current hypothesis space can express. A research
   question is open (`docs/RESEARCH-QUESTIONS.md`, Q-R11).
