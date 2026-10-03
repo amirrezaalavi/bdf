@@ -1,12 +1,58 @@
-# pdfrtl — RTL-first, agent-driven PDF core (working name)
+# bdf (working name: pdfrtl) — RTL-first PDF core for agents
 
-**Status:** Phase 0 complete — the workspace builds, `clippy -D warnings` is clean, 11 tests pass,
-and the corpus harness produces a report. There is **no extraction or generation yet** (that is P1/P2).
-Plan of record: `.hermes/plans/2026-09-27_160341-pdfrtl-skeleton-and-p0-plan.md` · live state: `HANDOFF.md` ·
-blocking decisions: `docs/OPEN-QUESTIONS.md` · traps already paid for: `AGENTS.md`.
-Language decided: **Rust 1.97.1**. Licence decided: **AGPL-3.0-or-later + a commercial dual licence**
-(`docs/decisions/0001`), with a permissive-only dependency rule enforced by `cargo deny` (`docs/decisions/0003`).
+**Last updated:** 2026-10-03
+**Private-corpus measurement snapshot:** 2026-09-29
+**Canonical project:** `https://github.com/amirrezaalavi/bdf`
+**Development environment:** WSL Ubuntu-26.04; Rust/Cargo 1.98.1 pinned in `rust-toolchain.toml` and CI.
+**Current public `main` at start of this documentation update:** `9411645b` (CI green).
+
+Language **Rust 1.98.1** (pinned exactly, on both sides — `docs/problems/0003`). Licence posture
+decided: **AGPL-3.0-or-later + a commercial dual licence** (`docs/decisions/0001`), with a
+permissive-only dependency rule enforced by `cargo deny` (`docs/decisions/0003`). The *final*
+licence is deferred until the POC is proven — it blocks shipping an SDK, not building.
 Owner: Yolka / Almas Shabake Tek + bornarad.co.
+
+**Current extraction snapshot (private archive):** 38 fully decoded, 37 order-verified, 12 partial,
+14 refused with a reason, 4 with no text layer; 1,038,880 characters emitted, 1,271,919 withheld.
+These numbers are owner-local and cannot be reproduced from the public clone without the customer
+PDFs.
+
+Plan/decisions: `docs/plans/2026-09-29-lane-plan.md` · live state: `HANDOFF.md` ·
+contributor rules: `AGENTS.md` · owner questions: `docs/OPEN-QUESTIONS.md`.
+
+---
+
+## 0. Clone and run it
+
+```bash
+git clone https://github.com/amirrezaalavi/bdf.git
+cd bdf
+
+# The toolchain comes from rust-toolchain.toml — rustup installs 1.98.1 automatically.
+# Keep build artifacts out of the repo:
+export CARGO_TARGET_DIR="$HOME/target-bdf"
+
+cargo build --workspace
+bash scripts/wsl-build.sh        # the FULL local gate — this is exactly what CI runs
+```
+
+Then prove the clone is healthy before trusting it:
+
+```bash
+bash scripts/verify-clone.sh
+```
+
+`verify-clone.sh` reports the toolchain actually in use, builds, runs the tests, and states which
+corpus files are present and which are *expected* to be missing. It **exits non-zero** if the clone
+is broken — a verifier that reports success without looking is the defect class this repo has hit
+four times (`docs/problems/0006`, `0009`, `0011`, `0012`).
+
+**The 51 real-world corpus PDFs are deliberately not in this repository.** They are customer
+documents (contracts, invoices, reports) kept out of git on purpose, and
+`scripts/publish-public.sh` carries a deny-list that refuses to publish them. A clone therefore
+contains the **14 redistributable synthetic fixtures**, which is enough to build, test and gate. To
+work against the real archive, place the files in `corpus/raw/private/desktop-pdfs/` — that path is
+gitignored, and only hashes and metadata are ever committed, never the documents.
 
 ---
 
@@ -82,19 +128,50 @@ we refuse to do. The MCP server is an adapter over that contract, not a second i
 
 ---
 
-## 4. Scope by phase
+## 4. Where the work actually is
 
-| Phase | Deliverable | Exit criteria |
-|---|---|---|
-| **P0 — oracle + corpus** | `inspect`/`extract --json`, fixture corpus, failure table | Every fixture classified correct/incorrect **with a reason code**; CI runs PDFium pixels + `qpdf --check` + albdf oracle |
-| **P1 — read** | logical-order extraction, bidi-aware search, provenance ids, JSONL | Extracted text equals logical source for every supported producer; unsupported producers fail loudly |
-| **P2 — write** | hrl generation: shaping → bidi → krilla emission with `ToUnicode`/`ActualText`/`ReversedChars` | Render golden + extraction round-trip + Acrobat/Chrome copy-paste spot-check |
-| **P3 — edit** | content rewriting with marked-content preservation, page ops, redaction with proof, bindings | Edit→re-extract invariants hold; signatures survive incremental update |
-| **P4 — enterprise** | PAdES/LTV, forms + RTL appearance streams, PDF/A-2b + PDF/UA-1 validation | Signature validates in Adobe + `pdfsig`; veraPDF (MPL) passes |
+**Shipped and measured** — `crates/pdfrtl-core/src/text/recover.rs`, `crates/pdfrtl-cli`:
+
+- `ToUnicode` CMap parsing (1- and 2-byte codes, `codespacerange`/`bfchar`/`bfrange`)
+- unit model with `/ReversedChars` inversion, `/ActualText` spans preserved whole
+- **the order ladder**: `/ActualText` → geometry (UAX #9 run comparison against *measured* painted
+  positions) → producer fingerprint → **refuse with a reason**. A tie in the painted order is
+  *unanswerable* and falls through rather than guessing
+- per-page granularity, `unsupported_*` reasons, stable exit codes
+- CLI `pdfrtl extract --json`; exit codes 0/2/3/4 documented in `docs/CLI.md`
+
+**Not started:** generation/writer (W4), editing (W5), enterprise (W6), OCR (W7 — deferred by
+owner), MCP server (W8.1).
+
+**The order of work is in `docs/plans/2026-09-29-lane-plan.md`.** In short: per-font withholding for
+broken decoders, then font-program recovery for fonts with no usable `/ToUnicode`, then the order
+recovery that makes the geometry decide instead of refusing.
 
 ---
 
-## 5. Licence posture (decision open, structure now)
+## 5. Why the corpus is two problems, not one
+
+Measured on the real archive, and it is the single most important thing to understand before
+changing the pipeline:
+
+1. **Chrome-exported fixtures mark their RTL runs.** `/ReversedChars` plus per-cluster
+   `/ActualText`. The producer has already answered the ordering question — recovery is a mechanical
+   walk.
+2. **The real archive does neither.** Those files carry only `ToUnicode`, and their stored order is
+   producer-dependent and not self-declaring. 14 of them still refuse because the geometry ties and
+   nothing else can decide.
+
+A fix for one family proves nothing about the other. See `docs/problems/0011` for two instruments
+built to tell them apart and **retired** because they could not.
+
+**No third-party tool is a reference for RTL** — measured, not assumed (`docs/problems/0004`):
+poppler flips every lam-alef pair, Xpdf returns visual order, PDFium drops ZWNJ. Ground truth is a
+rendered page read by a human or by vision. That is why the critical path is *review capacity*, not
+code volume.
+
+---
+
+## 6. What we learned from `al-bdf-engine` (and what we carry over)
 
 Their stated plan — *free GUI bundle under an open licence, paid core + MCP* — has one structural
 trap: **the free GUI bundles the core, so the core cannot be the paid part.** Paywall the
@@ -144,20 +221,30 @@ down knowledge**, not code:
 
 1. **krilla/hayro are single-maintainer crates** — vendor the pinned revision, keep our own emitter
    as a tested fallback, own the emission spec.
-2. **`lopdf` marked-content round-trip** may not carry `BDC/EMC` through a content rewrite (the fork
-   had to patch its own editor for exactly this). Verify in P0; budget a fork/upstream patch.
-3. **No pure-Rust renderer of record** — PDFium stays the optional oracle; never gate a release on hayro.
-4. **Producer detection has no ground truth** — the corpus *is* the ground truth; publish it, and fail
-   loudly rather than guess.
+2. **`lopdf` marked-content round-trip** — **measured, incremental-only**: a plain `Document::save`
+   re-serialised 24 of 25 objects and degraded `Object::Real(f32)` precision. Use
+   `IncrementalDocument` for edits; never mutate `Stream::content` with a stale `/Length`.
+3. **No pure-Rust renderer of record** — PDFium stays the optional oracle; never gate a release on it.
+4. **Producer detection has no ground truth** — the corpus *is* the ground truth, and half of it
+   cannot be published. Fail loudly rather than guess.
 5. **Licence/authorship** — an AGPL+commercial model requires owning enforceable copyright; keep
-   human-authored specs, corpus, and review records (US Copyright Office: purely AI-generated
-   material is not protected, prompts alone are not sufficient control).
+   human-authored specs, corpus, and review records (purely AI-generated material is not
+   copyrightable in the US).
 6. **Adoption** — lead with the fixture corpus + failure table, not with architecture.
 
 ---
 
-## 8. Docs
+## 8. Where to read next
 
-- `docs/ESTIMATE.md` — port map from albdf, agent/human day estimates, LOC projection, risks
-- `../yolka/tmp/pdf-rtl-research/00-SYNTHESIS.md` — full research synthesis (licences, standards, stack, self-critique)
-- `../yolka/tmp/pdf-rtl-research/01..06-*.md` — the six source reports
+| question | file |
+|---|---|
+| Clone, build, verify a fresh checkout | this file, §0 |
+| What is being worked on, and why | `docs/plans/2026-09-29-lane-plan.md` |
+| Current state and open threads | `HANDOFF.md` |
+| What NOT to do (hard-won) | `AGENTS.md` |
+| Exit codes and JSON envelope | `docs/CLI.md` |
+| Decisions and why | `docs/decisions/` (0001–0006) |
+| Failures with root causes | `docs/problems/` (0001–0012) |
+| Dependency licences | `docs/DEPS.md` (CI-checked against `deny.toml`) |
+| The corpus itself | `corpus/README.md`, `corpus/AGENT.md` |
+| Effort estimates | `docs/ESTIMATE.md` |

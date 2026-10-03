@@ -82,6 +82,14 @@ orchestrator integrates. Rules that each cost real time to learn:
 * **A lane's own summary is a claim, not evidence.** Raw output goes to `reports/` or
   `docs/reviews/`, and the orchestrator re-runs the check before integrating.
 
+The 51 real-world PDFs are customer documents and are **not part of the public clone**. Never
+assume `corpus/raw/private/desktop-pdfs/` exists or contains data on another machine. Do not add
+those PDFs, their names, hashes, embedded titles, or derived `reports/` to a public commit. A new
+contributor can build and run the committed synthetic fixtures without them; archive validation
+numbers require the owner's private corpus. See `corpus/README.md` and the root README's clone
+instructions. Do not invent a fetch path: the owner will arrange access to the private files when
+needed.
+
 ## Environment: how to build and test
 
 Build and test run in **WSL Ubuntu-26.04** (the Windows host has no Rust toolchain).
