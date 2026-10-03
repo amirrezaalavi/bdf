@@ -1323,8 +1323,15 @@ fn assemble(walk: Walk) -> Recovered {
                             // reproduced neither reading. Counts and flags only; a unit's
                             // TEXT is never emitted here, per the instrumentation rule.
                             if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
-                                let (ties, min, max) = tie_span(&slice);
-                                trace_line(slice.len(), ties, min, max, has_geometry(&slice));
+                                let (ties, distinct, min, max) = tie_span(&slice);
+                                trace_line(
+                                    slice.len(),
+                                    ties,
+                                    distinct,
+                                    min,
+                                    max,
+                                    has_geometry(&slice),
+                                );
                             }
                         }
                     }
@@ -1353,12 +1360,12 @@ fn assemble(walk: Walk) -> Recovered {
 /// doing nothing, the shape of docs/problems/0012, committed here by mistake the first time.
 static ORDER_TRACE: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
-fn trace_line(units: usize, ties: usize, min_x: f64, max_x: f64, geometry: bool) {
+fn trace_line(units: usize, ties: usize, distinct: usize, min_x: f64, max_x: f64, geometry: bool) {
     let mut guard = ORDER_TRACE
         .lock()
         .unwrap_or_else(|error| error.into_inner());
     guard.push(format!(
-        "line units={units} tied_pairs={ties} span={:.3}..{:.3} geometry={geometry}",
+        "line units={units} tied_pairs={ties} distinct_x={distinct}          span={:.3}..{:.3} geometry={geometry}",
         min_x, max_x
     ));
 }
@@ -1375,7 +1382,7 @@ pub fn take_order_trace() -> Vec<String> {
 /// Why a line could not be decided: how many adjacent pairs share a paint_x, and the span.
 /// A span of exactly 0.0 with more than one unit is the mass-tie signature — every cluster
 /// projected to the same x, whatever the font declared.
-fn tie_span(units: &[Unit]) -> (usize, f64, f64) {
+fn tie_span(units: &[Unit]) -> (usize, usize, f64, f64) {
     let mut sorted: Vec<f64> = units.iter().map(|unit| unit.paint_x).collect();
     sorted.sort_by(|left, right| left.total_cmp(right));
     let mut ties = 0;
@@ -1384,9 +1391,19 @@ fn tie_span(units: &[Unit]) -> (usize, f64, f64) {
             ties += 1;
         }
     }
+    // distinct_x separates "the model repeats positions" from "one position for everything":
+    // a line of 208 units with 480 pt of span cannot have only a few distinct x if the pen
+    // really advances, and cannot have 208 if it does not.
+    let distinct = sorted.iter().fold(0usize, |count, value| {
+        if count == 0 || *value != sorted[count - 1] {
+            count + 1
+        } else {
+            count
+        }
+    });
     let min = sorted.first().copied().unwrap_or(0.0);
     let max = sorted.last().copied().unwrap_or(0.0);
-    (ties, min, max)
+    (ties, distinct, min, max)
 }
 
 /// Whether the positions on this line are usable at all: every unit must carry a finite
