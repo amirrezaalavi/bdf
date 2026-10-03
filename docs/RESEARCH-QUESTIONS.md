@@ -93,4 +93,101 @@ verdict becomes an ADR when W5 starts.
 
 ## Open
 
-None. Append new questions here, one `Q-Rn` block each, in the shape described above.
+### Q-R11 — deciding stored RTL order when a line mixes SEVERAL left-to-right runs
+
+**Priority: blocking the canary.** Nothing else in the order ladder moves until this is answered.
+
+*Numbered Q-R11, not Q-R2, because round 1's Q-R2 is consumed and adjacent: it established that
+"inverting a visual run" has **no standard-defined inverse** (level-based L2 over the visual
+stream, with four traps). This question is about the step **before** inversion — deciding which
+candidate logical order the measured positions support at all. Read both together.*
+
+#### Context
+
+`bdf` (`github.com/amirrezaalavi/bdf`) extracts text from Persian/Arabic/Hebrew PDFs. Its
+invariant: **logical order, or an explicit refusal — never a silent reversal.** The order ladder
+(`crates/pdfrtl-core/src/text/recover.rs`) is: `/ActualText` → `/ReversedChars` → **geometry
+rung (rung 3)** → producer fingerprint → refuse (`unsupported_visual_order`).
+
+#### What we know, all measured
+
+* Rung 3 builds a line's **painted order** by sorting units by `paint_x`, where `paint_x` is the
+  pen projected through the composed matrix — text-space advance accumulated from declared `/W`
+  widths, projected once. Real lines carry **40–210 units**.
+* A hypothesis is accepted only if `predicts_painted` holds: run UAX #9 (`unicode-bidi` 0.3)
+  forward over the hypothesis's **real characters**, collapse the visual result back to unit
+  positions, and reproduce the measured `painted` order exactly.
+* Today only **two** candidates are tried: the stored order, and `invert_units` (whole-unit
+  reversal keeping embedded left-to-right runs intact).
+* Bisection from a 9-unit synthetic fixture (`crates/pdfrtl-core/tests/hypothesis_space.rs`):
+
+  | line | result |
+  |---|---|
+  | 3 units, Persian + **one** Latin token | decided |
+  | 3 units, same line stored visually | decided (inverted) |
+  | 9 units: `تاریخ:` `1403/05/12` `PDF` `شماره` `25` `(ویرایش` `3` `)` `کتاب` | **refused**, empty text |
+
+  So `invert_units` handles **one** embedded LTR run and fails on the second.
+* Not a corner case: `arabic-3.pdf` (321 pages) refuses **9,878 lines** for this reason.
+  Geometry there is healthy — `geometry=true`, ~480 pt spans, **0** mass ties, 177–178 distinct
+  positions per 208-unit line — so the blocker is the **hypothesis space**, not the positions.
+* The corruption we must never emit: `1403/05/12` must survive with digits in reading order;
+  `21/50/3041` is the banned reversal.
+
+#### What we tried and rejected — do not re-suggest
+
+1. **Relaxing the tie test.** Measured dead: lines with **zero** ties are refused too.
+2. **A more faithful per-character prediction.** Implemented and green (`8c62805`); `arabic-3.pdf`
+   unchanged (9,878 → 9,878, 0/321 pages). Necessary, not sufficient.
+3. **Replacing** the two candidates with a base/non-base run classifier. Attempted and reverted:
+   it dropped the working `invert_units` candidate and regressed a passing test. Any change here
+   must be **additive** — keep the existing candidates, add more, accept only on a **unique**
+   match.
+
+#### Questions
+
+**Q-R11.1 (main).** What is the correct, standard-blessed way to decide, from measured painted
+positions, whether a stored RTL line is logical or visual — **for lines containing several
+left-to-right runs** (dates, digit runs, Latin words, punctuation)?
+
+* Is the right formulation to **enumerate candidate logical orders and test each**, or to
+  **solve** for the unique order consistent with the painted positions — e.g. assign each unit
+  its UAX #9 level *from its painted position* and derive the permutation from that? If solving,
+  what is the algorithm, and how is **uniqueness** established? Our acceptance rule is "exactly
+  one candidate matched".
+* How do production engines make this decision? Concretely requested, with `file:line`:
+  **pdf.js** (`src/core/bidi.js`), **Poppler** (`TextOutputDev::reorderText`),
+  **MuPDF** (`fz_bidi`, `bidi-std.c`), **PDFium**. Round 1 told us none of them is
+  byte-faithful for RTL, but we have **not** asked how each decides *this* sub-question.
+* Is there a formulation that avoids hypothesising altogether — comparing the **stored
+  sequence's own UAX #9 level classes** against the painted order and accepting only if they
+  agree? If so, exactly what is compared?
+
+**Q-R11.2.** Inside RTL text, must a Persian date like `1403/05/12` be one unit at the base RTL
+level, or a sequence of EN runs at level 2? Does the answer depend on adjacent characters under
+UAX #9 W-rules — and can a producer's storage convention be inferred from positions alone?
+
+**Q-R11.3.** What do engines do when the stored sequence matches **no** valid UAX #9 visual
+output of the painted order? Refuse, trust a fingerprint, or emit the stored order anyway? We
+forbid the third option; we want the precedent, because it tells us whether refusal is normal or
+whether we are being stricter than every production engine.
+
+#### Why the answer changes the design
+
+If the approach is **solving**, the implementation is different and probably cheaper: one pass
+assigning levels from positions. If it is **enumeration**, search-space and pruning dominate,
+because a 210-unit line admits astronomically many candidates and the right one must be found
+without exhausting them. Given round 1's finding that the standard defines no inverse, we also
+want to know whether a *forward-only* check (predict-from-stored vs painted) can replace
+inversion altogether.
+
+#### What a usable answer looks like
+
+* A named algorithm with its standard clause(s) or spec section.
+* Pseudocode or a `file:line` reference for at least one production engine.
+* An explicit statement of **when the answer is unique** — our invariant depends on it.
+* What a real engine does in the "matches nothing" case.
+
+**Out of scope:** OCR, generation, rendering, licensing, and whether any tool produces correct RTL
+text — already measured as no (`docs/problems/0004`). We are not asking for an oracle, only for
+the decision procedure.
