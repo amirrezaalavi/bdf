@@ -32,11 +32,13 @@ Private-corpus measurements below are from 2026-09-29; the archive is owner-loca
    `docs/problems/0004-no-oracle-is-byte-faithful-for-rtl.md`. Ground truth is a human or
    vision read of the rendered page, which is why the critical path is *review capacity*,
    not code volume.
-3. **"No `ToUnicode`" is a real, common, recoverable case — and it is not an OCR case.**
-   `hebrew-1.pdf` is an English volume quoting Hebrew. Its Hebrew sits in `Identity-H` fonts
-   with **no `ToUnicode` and no `CIDToGIDMap`**, so the text layer yields garbage codepoints
-   (Sinhala/Malayalam range). The answer is to parse the embedded font's own cmap and reverse
-   GID → Unicode. That is W1.6, and it is what "font aware" has to mean in practice.
+3. **A file can have zero recoverable fonts and still extract correctly.** `hebrew-1.pdf` is an
+   English/Spanish volume quoting Hebrew: all 29 pages emit readable text via `/Encoding`
+   (`encoding_mapped`), while every page reports `unsupported_broken_to_unicode` for the Hebrew
+   runs. Its fonts carry **no embedded program at all** (`FontFile`/`FontFile2`/`FontFile3` all
+   absent), so font-program recovery cannot apply to it — the correct answer is the named
+   refusal the code already gives. Earlier notes described its output as wrong-script garbage;
+   it is not (`docs/problems/0013`).
 
 ## Workstreams
 
@@ -48,7 +50,7 @@ Private-corpus measurements below are from 2026-09-29; the archive is owner-loca
 | W1.3 | Reasons + exit-code-3 refusal path | **landed** | `Reason` vocabulary and CLI contract tests exist |
 | W1.4 | `pdfrtl extract --json` CLI verb | **landed** | Exit contract documented in `docs/CLI.md` |
 | W1.5 | Validate against 51-file archive | **measured locally** | Archive is owner-only; public clone cannot repeat these numbers |
-| W1.6 | Font-aware recovery | **next after 1a** | First withhold broken font text per-font; then investigate embedded-font cmap inversion for `hebrew-1.pdf` |
+| W1.6 | Font-aware recovery | **not applicable to hebrew-1.pdf** | Its fonts embed no font program (`FontFile*` absent), so there is nothing to invert; the refusal is correct. See `docs/problems/0013`. Re-target only if a corpus font does embed a program and lacks a usable `/ToUnicode`. |
 | W2 | **Bidi, mixed script, correct reading (P2)** | **planned, after font work** | Faithful per-character prediction before any consistency relaxation |
 | W2.4 | Search/index normalization | check current branch state | Search-side only; never normalize extracted output |
 | W2.5 | Multi-column / table reading order | not started | needs a Reason, never a silent guess |
