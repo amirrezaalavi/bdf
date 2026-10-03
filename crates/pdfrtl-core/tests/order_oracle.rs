@@ -94,10 +94,7 @@ fn closed_form_agrees_with_enumeration() {
                 c[2] = 3;
                 c
             }, // one tied triple
-            {
-                let mut c = vec![2usize; n];
-                c
-            }, // every position a pair
+            vec![2usize; n], // every position a pair
         ] {
             let positions = positions_for(&composition);
             assert_eq!(

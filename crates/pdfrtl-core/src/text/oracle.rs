@@ -138,9 +138,9 @@ pub fn admissible_orders_closed_form(xs: &[f64], classes: &[BidiClassOf]) -> usi
         return AMBIGUITY_NOT_COMPUTED;
     }
     let groups = groups_at_shared_positions(xs);
-    let ties = groups.iter().fold(1usize, |acc, &group| {
-        acc.checked_mul(factorial(group)).unwrap_or(usize::MAX)
-    });
+    let ties = groups
+        .iter()
+        .fold(1usize, |acc, &group| acc.saturating_mul(factorial(group)));
     if base_direction_is_fixed(classes) {
         return ties;
     }
@@ -245,13 +245,12 @@ fn walk_matches(candidate: &[usize], xs: &[f64], rtl: bool) -> bool {
 /// *not* RTL by convention — the ambiguity is accounted for by the factor of 2 in the closed form
 /// and by [`base_direction_is_fixed`] telling the caller the direction is not evidence.
 pub fn base_direction_is_rtl(classes: &[BidiClassOf]) -> bool {
-    match classes
-        .iter()
-        .find(|c| matches!(**c, BidiClassOf::R | BidiClassOf::L))
-    {
-        Some(BidiClassOf::L) => false,
-        _ => true,
-    }
+    !matches!(
+        classes
+            .iter()
+            .find(|c| matches!(**c, BidiClassOf::R | BidiClassOf::L)),
+        Some(BidiClassOf::L)
+    )
 }
 
 fn permute(items: &mut Vec<usize>, at: usize, visit: &mut impl FnMut(&[usize])) {
