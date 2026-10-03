@@ -504,28 +504,120 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
 /// complete paragraph it claims to be. Two readings that each satisfy the standard
 /// this way are the `Ambiguous` case — a coin flip, which is refused.
 fn predicts_painted(units: &[Unit], logical: &[usize], painted: &[usize]) -> bool {
-    let proxy: String = logical
-        .iter()
-        .map(|&i| proxy_char(&units[i].text))
-        .collect();
-    painted_map(&proxy, logical) == Some(painted.to_vec())
+    painted_map_for(units, logical) == Some(painted.to_vec())
 }
 
-/// The visual order UAX #9 paints for a hypothesised logical order: `map[j]` is the
-/// logical offset shown at painted position `j`. `None` when the proxy and the
-/// logical order disagree in length (a malformed hypothesis, not an answer).
-fn painted_map(proxy: &str, logical: &[usize]) -> Option<Vec<usize>> {
-    let info = BidiInfo::new(proxy, None);
+/// One direction-preserving proxy char per unit — a unit is a single cluster, so its
+/// first character's bidi class stands for the whole unit.
+///
+/// Still used by [`predicts_observed`], which works on plain `&str` with no `Unit` to read.
+/// It is NOT used by [`painted_map_for`], which must represent units holding SEVERAL
+/// characters — flattening those to one char is the defect that made `arabic-3.pdf`
+/// undecidable on 9,878 lines (docs/plans/2026-10-03-canary.md, C3a).
+fn proxy_char(text: &str) -> char {
+    let first = match text.chars().next() {
+        Some(c) => c,
+        None => return '!',
+    };
+    if text.chars().all(|c| bidi_class(c) == BidiClass::WS) {
+        return ' ';
+    }
+    match bidi_class(first) {
+        BidiClass::R | BidiClass::AL => '\u{05D0}',
+        BidiClass::L => 'A',
+        BidiClass::AN => '\u{0665}',
+        BidiClass::EN => '5',
+        BidiClass::WS => ' ',
+        BidiClass::CS => '.',
+        BidiClass::ES => '-',
+        BidiClass::ET => '%',
+        BidiClass::BN | BidiClass::S | BidiClass::B | BidiClass::ON | BidiClass::NSM => '!',
+        _ => '.',
+    }
+}
+
+/// UAX #9 over the units' **whole text**, mapped back to unit positions.
+///
+/// The proxy version (`proxy_char` — one character per unit) cannot represent a unit that
+/// holds several characters: a lam-alef ligature, an `/ActualText` span, or a multi-CID run.
+/// UAX #9 then never sees the structure that decides the order, so `predicts_painted` answers
+/// "neither reading" about a hypothesis it was incapable of expressing — `LineOrder::Unexplained`
+/// on every real line of `arabic-3.pdf` (measured: 9,878 such lines, including lines with ZERO
+/// ties, so the tie test is not the blocker).
+///
+/// **Units of measure, measured not assumed.** `reordered_levels_per_char(para, 0..n)` takes
+/// `n` as a BYTE range but returns one level per CHARACTER, and `reorder_visual` returns a
+/// permutation over CHARACTER indices. For `۱۴۰۳/۰۵/۱۲ تاریخ` that is 29 bytes and 16
+/// characters, and the permutation is `[15, 14, …, 0, 1, …, 9]` over `0..16`. An earlier version
+/// of this function treated those values as byte offsets, so every multi-character unit failed
+/// to match and the function returned `None` for every hypothesis — the same refusal, wearing a
+/// different hat. The whole body below therefore works in character offsets.
+///
+/// So: run the algorithm on the real characters, then collapse to units. A unit is ONE element
+/// of the visual order however many characters it holds, and UAX #9 may reorder a unit's own
+/// characters, so a unit is placed at the EARLIEST visual position any of its characters
+/// occupies — well defined however the characters inside it were reordered. That keeps the
+/// property `invert_units` depends on (a lam-alef must stay whole) while making the prediction
+/// faithful, which is the order the withdrawn attempt in docs/problems/0009 got backwards.
+fn painted_map_for(units: &[Unit], logical: &[usize]) -> Option<Vec<usize>> {
+    // The hypothesis's text, plus each unit's CHARACTER span in it.
+    let mut text = String::new();
+    let mut bounds: Vec<(usize, usize)> = Vec::new();
+    for &index in logical {
+        let unit_text = &units[index].text;
+        let start = text.chars().count();
+        text.push_str(unit_text);
+        let end = text.chars().count();
+        if end == start {
+            // An empty unit carries no bidi information and no place in the visual order.
+            return None;
+        }
+        bounds.push((start, end));
+    }
+
+    let info = BidiInfo::new(&text, None);
     let para = info.paragraphs.first()?;
-    let levels = info.reordered_levels_per_char(para, 0..proxy.len());
-    if levels.len() != logical.len() {
+    let total_chars = text.chars().count();
+    let total_bytes = text.len();
+    // The RANGE is in bytes; the RESULT is per character. Both facts are load-bearing.
+    let levels = info.reordered_levels_per_char(para, 0..total_bytes);
+    if levels.len() != total_chars {
         return None;
     }
-    let map = BidiInfo::reorder_visual(&levels);
-    if map.len() != logical.len() {
+    let visual = BidiInfo::reorder_visual(&levels);
+    if visual.len() != total_chars {
         return None;
     }
-    Some(map.into_iter().map(|position| logical[position]).collect())
+
+    // Character offset -> unit ordinal, in hypothesis order.
+    let mut offset_to_unit = vec![0usize; total_chars];
+    for (ordinal, &(start, end)) in bounds.iter().enumerate() {
+        for slot in offset_to_unit.iter_mut().take(end).skip(start) {
+            *slot = ordinal;
+        }
+    }
+
+    // Each unit sits at the earliest visual position any of its characters occupies.
+    let mut first_at: Vec<Option<usize>> = vec![None; logical.len()];
+    for (visual_position, character) in visual.iter().copied().enumerate() {
+        let ordinal = offset_to_unit[character];
+        if first_at[ordinal].is_none() {
+            first_at[ordinal] = Some(visual_position);
+        }
+    }
+    let mut painted_units: Vec<(usize, usize)> = Vec::with_capacity(logical.len());
+    for (ordinal, position) in first_at.iter().copied().enumerate() {
+        // A unit whose characters never appeared is "no answer", not a guess.
+        let position = position?;
+        painted_units.push((position, ordinal));
+    }
+    painted_units.sort_unstable();
+    Some(
+        painted_units
+            .into_iter()
+            .map(|(_, ordinal)| logical[ordinal])
+            .collect(),
+    )
 }
 
 /// Visual -> logical for one line of base-direction RTL, at UNIT granularity:
@@ -1639,31 +1731,6 @@ fn run_level(text: &str, base_rtl: bool) -> Level {
     }
 }
 
-/// One direction-preserving proxy char per unit — a unit is a single cluster, so its
-/// first character's bidi class stands for the whole unit.
-fn proxy_char(text: &str) -> char {
-    let first = match text.chars().next() {
-        Some(c) => c,
-        None => return '!',
-    };
-    if text.chars().all(|c| bidi_class(c) == BidiClass::WS) {
-        return ' ';
-    }
-    match bidi_class(first) {
-        BidiClass::R | BidiClass::AL => '\u{05D0}',
-        BidiClass::L => 'A',
-        BidiClass::AN => '\u{0665}',
-        BidiClass::EN => '5',
-        BidiClass::WS => ' ',
-        BidiClass::CS => '.',
-        BidiClass::ES => '-',
-        BidiClass::ET => '%',
-        // ZWNJ and friends: boundary neutral — a generic neutral proxy.
-        BidiClass::BN | BidiClass::S | BidiClass::B | BidiClass::ON | BidiClass::NSM => '!',
-        _ => '.',
-    }
-}
-
 // --- document plumbing ----------------------------------------------------
 
 /// Read the widths a font declares: `/Widths` (+ `/MissingWidth`) for a simple font,
@@ -1940,7 +2007,7 @@ fn resolve<'a>(doc: &'a Document, value: &'a Object) -> Option<&'a Object> {
 #[cfg(test)]
 mod tests {
     use super::{
-        decode_text_string, invert_units, painted_map, proxy_char, settle_line_by_bidi,
+        decode_text_string, invert_units, painted_map_for, settle_line_by_bidi,
         stores_logical_order, stores_visual_order, LineOrder, Unit,
     };
 
@@ -1988,13 +2055,15 @@ mod tests {
                 .then(left.cmp(&right))
         });
         let inverted = invert_units(&units);
-        let proxy_of = |order: &[usize]| -> String {
-            order.iter().map(|&i| proxy_char(&units[i].text)).collect()
-        };
+        // Measure the path production actually takes. This used to build a one-character
+        // proxy per unit and call `painted_map`, which was the defect: a multi-character unit
+        // (the date, the digits) could not be represented, so the comparison answered about a
+        // hypothesis it was incapable of expressing. `painted_map_for` runs UAX #9 over the
+        // real characters and collapses back to units.
         let diag = format!(
             "painted={painted:?} inverted={inverted:?} keep={:?} inv={:?}",
-            painted_map(&proxy_of(&identity), &identity),
-            painted_map(&proxy_of(&inverted), &inverted),
+            painted_map_for(&units, &identity),
+            painted_map_for(&units, &inverted),
         );
         assert!(
             matches!(outcome, LineOrder::Invert(_)),
