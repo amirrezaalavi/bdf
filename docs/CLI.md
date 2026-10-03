@@ -57,12 +57,21 @@ established. A page that decoded characters it cannot order reports:
 ### `unproven` — the withheld text, offered but never passed off as ordered
 
 Text that was decoded but not ordered is **reported, not discarded**. Each such line
-appears in `data.pages[].unproven` (and `data.unproven_lines` counts them across the
-document):
+appears in `data.pages[].unproven` as `{"line": 3, "text": "…", "reason": "…"}`.
 
-```json
-{"line": 3, "text": "٢٠٢٠ ﻰﻟإ …", "reason": "unsupported_visual_order"}
+**By default the array is EMPTY and only the counts are reported** (`data.unproven_lines`,
+`data.unordered_chars`). Pass `--include-unproven` to get the text.
+
+```bash
+pdfrtl --json extract some.pdf                      # counts only
+pdfrtl --json --include-unproven extract some.pdf   # counts + the withheld text
 ```
+
+The reason for the default: on most producers that text is **reversed**, so a default envelope
+carrying it invites a caller — or an agent that reads the whole JSON object — to consume reversed
+text as if it were text. That is the exact failure this project exists to prevent, and the caller
+most likely to be bitten is an LLM or MCP consumer, which never asks for a field by name. Opting
+in is one flag; the count is always there so a caller can size the gap without reading the text.
 
 * `text` is the line **exactly as it was stored**, not in reading order.
 * **On many producers that stored order is REVERSED.** Measured on our own archive: on the

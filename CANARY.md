@@ -38,8 +38,9 @@ archive the stored order is the wrong reading for 92–99% of lines. So it is of
 labelled, rather than either hidden or passed off as readable.
 
 A caller that reads `data.text` and nothing else gets logical text or nothing. A caller that
-wants the unproven text opts in by reading a field whose name says what it is — and takes
-responsibility for the fact that it may be backwards.
+wants the unproven text passes **`--include-unproven`** — the default envelope carries only the
+count, because that text is often reversed and an agent reading the whole JSON would otherwise
+consume it as though it were text.
 
 ## 2. The one property that matters
 
@@ -64,23 +65,42 @@ Numbers below are from a **51-file private archive** of real Persian, Arabic and
 documents, measured 2026-10-03. They are the author's own files and are not in the public
 repository; a clone of the repository cannot reproduce them.
 
-| | |
-|---|---|
-| Files fully decoded | 38 / 51 |
-| Files with order verified | 37 / 51 |
-| Files partially recovered | 12 |
-| Files refused entirely | 12 |
-| Files with no text layer at all | 4 |
-| Characters emitted | 1,038,880 |
-| Characters **withheld** | 1,271,919 |
+**Per file, because character sums across files of wildly different sizes mislead.** These
+categories are disjoint and sum to 51:
 
-**The withheld number is larger than the emitted number.** That is the honest state of the work,
-not a rounding detail: the tool declines to guess more often than it answers.
+| | files |
+|---|---|
+| fully emitted (every decoded character ordered and returned) | 31 |
+| partially recovered (some text emitted, some withheld) | 4 |
+| refused entirely (decoded, nothing emitted, reason named) | 10 |
+| no text layer at all — OCR territory, out of scope | 6 |
+| **total** | **51** |
+
+So **14 of 51 files do not emit everything** (4 partial + 10 refused) — that is the number to
+quote, and it is the one earlier versions of this file and the README each got half-right
+("12" and "14" were two different definitions of the same set).
+
+Per-file emitted fraction: **31 files emit 100%**, 14 emit less than 90%, and the **median file
+emits 100%** of its decoded text.
+
+Character totals, as a footnote only:
+
+| | characters |
+|---|---|
+| emitted | 1,038,880 |
+| withheld | 1,271,919 |
+
+**That footnote is an artefact of one file, and earlier wording here called it a headline.** A
+single 321-page scanned volume (`arabic-3.pdf`) accounts for **93.3% of all withheld characters**
+(1,187,033 of 1,271,919). Excluding it, withheld is 84,886 against 1,038,880 emitted — **8% of
+emitted**, not "larger than". The honest summary is: *the tool emits all of most files, and declines
+one pathological file almost entirely.* Counting characters across files of different sizes turns
+that into a number that reads as though the tool refuses more than it answers.
 
 ### Known limitations, stated plainly
 
-* **Reading order is not recovered on every file.** 12 files are refused because the painting
-  cannot settle the order. The cause is known and documented
+* **Reading order is not recovered on every file.** 14 of 51 files do not emit everything
+  (10 refused entirely, 4 partially). The cause is known and documented
   (`docs/plans/2026-10-03-canary.md`, C3): lines mixing several left-to-right runs — dates,
   digit runs, Latin words — exceed what the current hypothesis space can express. A research
   question is open (`docs/RESEARCH-QUESTIONS.md`, Q-R11).
@@ -142,11 +162,14 @@ pdfrtl --version
   *proves* the original order; it does not. Two different logical strings can paint identically —
   measured, `docs/problems/0015` — so a forward match is consistency, not proof. This is a
   breaking change to the serialized reason code.
-* **`unproven` was added** to each page in `extract --json`. `data.text` is unchanged and still
-  proven-only.
+* **`unproven` is opt-in** (`--include-unproven`, 2026-10-03). The default envelope reports the
+  **counts** only; the withheld text is behind a flag. That text is frequently reversed, and an
+  LLM or MCP caller reads the whole JSON object without asking for a field by name. `data.text`
+  is unchanged and still proven-only.
 
-The canary binary is byte-for-byte reproducible from the repository's source at the tagged
-commit: verified identical in output to the glibc build across all 14 public fixtures.
+The canary binary's **output** was verified identical to the glibc build across all 14 public
+fixtures. A *reproducible build* — rebuilding the committed binary byte-for-byte from source —
+is **not** verified and no artefact for it is committed; treat that as an open claim, not a fact.
 
 ## 6. What the author would like tested
 
