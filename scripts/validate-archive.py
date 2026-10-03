@@ -161,6 +161,13 @@ def probe(binary: str, path: pathlib.Path) -> dict:
                         if not any(r in DECODE_REFUSALS for r in (p.get("reasons") or [])))
     pages_ordered = sum(1 for p in pages
                         if not any(r in ORDER_REFUSALS for r in (p.get("reasons") or [])))
+    # pages_with_text: how many pages HANDED BACK usable text. This is the number a reader
+    # cares about, and it is NOT pages_decoded. Measured 2026-10-03: arabic-1.pdf reports
+    # pages_decoded=4 of 91 because 87 pages carry unsupported_broken_to_unicode from one
+    # unreadable font -- yet 89 of those 91 pages do emit text. Reading "4 of 91 decoded" as
+    # "4 pages work" is wrong three times over, and it happened to the orchestrator in one
+    # session. Report this column first, then the refusal counts.
+    pages_with_text = sum(1 for p in pages if (p.get("text") or "").strip())
     fully_decoded = bool(pages) and pages_decoded == pages_total and not decode_refusals
     order_verified = bool(pages) and pages_ordered == pages_total and not order_refusals
 
@@ -184,6 +191,7 @@ def probe(binary: str, path: pathlib.Path) -> dict:
         "bytes": path.stat().st_size,
         "producer": (insp.get("data") or {}).get("producer"),
         "pages": pages_total,
+        "pages_with_text": pages_with_text,
         "pages_decoded": pages_decoded,
         "pages_ordered": pages_ordered,
         "pages_failed": len(failed_pages),
@@ -326,16 +334,19 @@ def write_markdown(rows: list[dict], summary: dict, binary: str, stamp: str) -> 
         "",
         "## Per file",
         "",
-        "| file | status | decoded pages | ordered pages | emitted chars | "
-        "withheld chars | order rule | reasons | first 60 chars |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| file | status | pages with text | pages fully decoded | ordered pages | "
+        "emitted chars | withheld chars | order rule | reasons | first 60 chars |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in rows:
         head = row["text_head"].replace("|", "\\|").replace("\n", " ⏎ ")
+        # pages-with-text leads: it is what the reader actually gets. pages_decoded counts
+        # pages with NO refusal of any kind and reads as failure when a file is fine.
+        withtext = f"{row['pages_with_text']}/{row['pages']}"
         decoded = f"{row['pages_decoded']}/{row['pages']}"
         ordered = f"{row['pages_ordered']}/{row['pages']}"
         reasons = ", ".join(row["reasons"]) or "-"
-        lines.append(f"| `{row['file']}` | {row['status']} | {decoded} | {ordered} "
+        lines.append(f"| `{row['file']}` | {row['status']} | {withtext} | {decoded} | {ordered} "
                      f"| {row['chars']} | {row['unordered_chars']} "
                      f"| {row['order_rule']} | {reasons} | {head} |")
 
