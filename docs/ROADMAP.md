@@ -1,28 +1,28 @@
 # pdfrtl — what's left
 
-Status **2026-09-29**. Every claim here has an artifact behind it; the evidence is named.
-Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
+Status **2026-10-03**. Current execution order: `docs/plans/2026-09-29-lane-plan.md`.
+Private-corpus measurements below are from 2026-09-29; the archive is owner-local, not in the public clone.
 
 ## Where we actually are
 
 | area | state | evidence |
 |---|---|---|
-| Workspace, gates, CI | **done, and hardened** | CI jobs `gate · deny · slop · deps-drift · oracle`, green on the published SHA; toolchain pinned `1.98.1` on both sides (`docs/problems/0003`) |
-| Order invariant | **enforced end to end** | ADR 0002 + 0004; a page whose order is unproven is withheld and counted (`unordered_chars`), never emitted as text |
-| Extraction | **real-world capable** | simple-font encodings land, per-page granularity, order inversion for fingerprinted producers |
-| Archive validation | **measured, honestly** | **37 / 51** files order-verified; **14 refuse** (`unsupported_visual_order`); 23 of the 51 have no text layer at all |
-| Public mirror | **clean, published** | `main` = `eb029f9c`; 14 redistributable manifest rows, 0 private; deny-list clean (70 identities / 859 files); `reports/` excluded; history reset still deferred (ADR 0005, `docs/problems/0006`) |
-| Verification lane | **landed** | PDFium pixels + vision review + the oracle matrix (`docs/problems/0004`); `scripts/render_pages.py` |
-| Search normalization | **landed on a lane branch** | `feat/search-normalizer` on the mirror — needs a merge plus the recall/precision calls only you can make |
-| Generation / editing | **not started** | writer stack chosen for W4: `harfrust` (MIT) + `krilla`/`pdf-writer`; editor gated on W5, and its spike is done (incremental-only) |
-| Knowledge gaps | **round 1 consumed** | `docs/RESEARCH-QUESTIONS.md` — queue empty; the answers and our accept/reject decisions are in `docs/research/2026-09-29-external-answers.md` (ADR 0006) |
+| Workspace, gates, CI | **working** | Fresh public clone builds; pinned Rust 1.98.1; CI 5/5 green on `9411645b` |
+| Order invariant | **enforced** | ADR 0002 + 0004; unproven order is withheld with an explicit reason |
+| Extraction | **implemented, incomplete** | CLI `pdfrtl extract --json`; mixed producer/order recovery still refuses cases it cannot prove |
+| Private archive validation | **measured locally** | 38 fully decoded, 37 order-verified, 12 partial, 14 refused, 4 no-text; 1,038,880 emitted / 1,271,919 withheld. PDFs are not in the public repo. |
+| Public clone fixtures | **available** | 14 redistributable PDF fixtures; sufficient for build, tests, and the public CI gate |
+| Public mirror | **published** | `main` = `9411645b`; publisher reset-on-divergence fix tested and remotely verified; history-reset deferral remains ADR 0005 |
+| Search normalization | **verify before relying on it** | A branch existed; check branch/CI/merge state rather than treat old status notes as current |
+| Generation, editing, MCP, enterprise | **not implemented** | Future scope; writer stack chosen, editing spike established incremental-only saves |
+| OCR | **deferred** | Owner decision: reading/search correctness first |
 
 ## The three facts that shape everything left
 
 1. **The corpus is two producer families, and a fix for one is not a fix for the other.**
    Chrome marks an RTL run with `/ReversedChars` and annotates clusters with `/ActualText`.
    Your real Persian/Arabic/Hebrew archive does neither — those files carry only `ToUnicode`,
-   and 19 of them have no text layer at all. Both paths must exist, and they fail differently.
+   and **4 of the 51 have no text layer**. The other counts and the archive are owner-local; a fresh public clone cannot repeat this measurement without access to the customer files.
 2. **No third-party tool can be the reference for RTL — measured, not assumed.** On the same
    five fixtures, against the authority strings: ours is byte-exact, poppler flips every
    lam-alef pair (`سلام` → `سالم`, and that survives a casual read), Xpdf returns visual order
@@ -42,18 +42,15 @@ Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
 
 | # | workstream | state | notes |
 |---|---|---|---|
-| W1 | **Extraction (P1)** | in progress | the POC's core |
-| W1.1 | `ToUnicode` CMap parser (`codespacerange`, `bfchar`, `bfrange`, 1- and 2-byte codes) | **landed** | 1-byte codes matter for simple-font files (`hebrew-2.pdf` is Type1) |
-| W1.2 | Unit model + `/ReversedChars` inversion + run order via UAX #9 | in progress | the hard part is the LTR run *inside* an RTL line (`۱۴۰۳/۰۵/۱۲` must end up last, digits unreversed) |
-| W1.3 | Reasons + exit-code-3 refusal path wired end-to-end | pending | `Reason` vocabulary already exists; tests already assert it |
-| W1.4 | `pdfrtl extract --json` CLI verb | pending | envelope shape fixed in the plan; `main.rs` already touched |
-| W1.5 | Validate against the 51-file archive | not started | classify every file as *extracted with reason* or *refused with reason*; the Arabic docs (91/62/321/185 pages) and the 5 Hebrew files are the real test |
-| W1.6 | **Font-aware recovery where `ToUnicode` is absent** | scoped, new | `hebrew-1.pdf` is the fixture (9 fonts, 0 `ToUnicode`, `Identity-H`, no `CIDToGIDMap`): parse the embedded font cmap, reverse GID→Unicode, refuse loudly when a glyph cannot be placed — procedure and tooling fixed in `docs/research/2026-09-29-external-answers.md` (cmap inversion via `ttf-parser`, `post` names as fallback, NFKC base letters) |
-| W2 | **Bidi, mixed script, correct reading (P2)** | **started — your priority** | your call 2026-09-27: "implementing the correct search and reading is more critical" |
-| W2.1 | Line/run assembly, UAX #9 levels, BD16 brackets, mirroring | not started | |
-| W2.2 | Digits, dates and Latin runs inside RTL text | not started | covered by fixtures already |
-| W2.3 | Arabic + Hebrew + English in one paragraph (`he-eng-ar.pdf`) | not started | real fixture available |
-| W2.4 | Search/index normalization (NFKC, harakat, ZWNJ for matching only, digit folding, lam-alef collapse, Hebrew niqqud) | **in flight** | `docs/SEARCH-NORMALIZATION.md` will be the rule record; search-side only, never applied to output |
+| W1 | **Extraction (P1)** | in progress | The core works; font decoding and order evidence are the remaining correctness gaps |
+| W1.1 | `ToUnicode` CMap parser (1- and 2-byte codes) | **landed** | Simple-font and Type0 mappings are supported where the map is usable |
+| W1.2 | Unit model + `/ReversedChars` inversion + run-order recovery | **partially landed** | `/ActualText`, measured geometry and fingerprint/refusal rungs exist; mixed-script edge cases remain |
+| W1.3 | Reasons + exit-code-3 refusal path | **landed** | `Reason` vocabulary and CLI contract tests exist |
+| W1.4 | `pdfrtl extract --json` CLI verb | **landed** | Exit contract documented in `docs/CLI.md` |
+| W1.5 | Validate against 51-file archive | **measured locally** | Archive is owner-only; public clone cannot repeat these numbers |
+| W1.6 | Font-aware recovery | **next after 1a** | First withhold broken font text per-font; then investigate embedded-font cmap inversion for `hebrew-1.pdf` |
+| W2 | **Bidi, mixed script, correct reading (P2)** | **planned, after font work** | Faithful per-character prediction before any consistency relaxation |
+| W2.4 | Search/index normalization | check current branch state | Search-side only; never normalize extracted output |
 | W2.5 | Multi-column / table reading order | not started | needs a Reason, never a silent guess |
 | W3 | **Verification lane** | **landed** | PDFium pixels + vision review; the oracle matrix is now recorded in `docs/problems/0004` |
 | W3.1 | PDFium pixel goldens (`pypdfium2`), fixed scale, non-blank assertion | **landed** | `scripts/render_pages.py`. Deviation: the 99.5%-white rule alone rejects correct one-line A4 renders (they measure 99.6–99.9% white), so blank now requires white ≥99.5% **and** <256 ink pixels; verified in both directions (fixture exits 0, empty PDF exits 1) |
@@ -85,29 +82,18 @@ Phase 2 is planned in `docs/plans/2026-09-29-phase2-order-recovery.md`.
 
 ## Sequence
 
-Phase 2 runs in this order, planned in detail in
-`docs/plans/2026-09-29-phase2-order-recovery.md`:
+Phase 2 runs in this order, detailed in `docs/plans/2026-09-29-lane-plan.md`:
 
-1. **W1.7 order recovery** (rung 3 done properly, allow-list entries with tests behind them,
-   redistributable fixtures that exercise *inversion*) → re-run the 51-file validation and
-   report two numbers. `Q-R1` is the blocking knowledge gap; where no rule exists we keep
-   refusing and document why.
-   **Status 2026-09-29:** rung 3 landed and then had to be fixed — it settled lines it could
-   not decide and silently reversed them. The invariant control caught it; the fix makes a
-   *tie* in the painted order unanswerable (`docs/problems/0007` records the mechanism). The
-   re-validation is done and both numbers exist: **38 fully decoded / 37 order-verified**, and
-   **rung 3 recovers none of the 14 refusals yet** — on those files the decision comes from the
-   producer fingerprint or not at all. Width-aware positioning landed (`2936662`): rung 3 now
-   sorts and ties on a measured pen — and it still recovers none of the 14, so the remaining work
-   is to make the geometry *decide* (ADR 0006) and, where it refuses, to name the two hypotheses
-   it compared. One allow-list entry with a test behind it per producer family
-   (`Microsoft: Print To PDF` is 7 of the 14) is the fallback, not the first move.
+   **Status 2026-09-30:** order recovery now uses measured geometry where possible, then a
+   producer fingerprint, otherwise it refuses. The mirrored-matrix measurement defect is fixed
+   (`5ecdf1b`, `docs/problems/0010`). Archive validation remains 38 fully decoded / 37
+   order-verified / 14 refused; the refused files' stored-order convention is **undetermined**.
+   Both research instruments built to answer that question were retired as non-discriminating
+   (`docs/problems/0011`). Do not use the old rung-3 alarm or old allow-list claims as current evidence.
 2. **W1.6 font-aware recovery** (`hebrew-1.pdf`) — procedure in `docs/research/2026-09-29-external-answers.md`.
-3. **W2 reading order** (line/run assembly, mixed scripts, digits inside RTL) + merge W2.4
-   search normalization.
-4. **W5.1 spike** (`lopdf` marked-content survival) in parallel — it decides patch vs rewrite
-   for the editor before any editor code exists.
-5. **Then** W4 (writer) → W6 → W8.
+3. **W2 reading order** only after font work: faithful per-character prediction first, guarded consistency relaxation second.
+4. **W5.1 editing spike** is already complete; incremental-save-only is the result (`docs/problems/0012` is publisher-only; see earlier editing spike commit `7086526`).
+5. **Then** writer → editing → enterprise/MCP, only after extraction correctness is established.
 
 A red gate never moves on; `main` only receives CI-passing snapshots.
 
@@ -131,6 +117,10 @@ A red gate never moves on; `main` only receives CI-passing snapshots.
 | W5 editor (after spike) | 2–3 weeks | hours |
 | W6 + W8 | 2 weeks | — |
 
-The estimates from `docs/ESTIMATE.md` predate the real archive. They hold for the code; what
-changed is that *validation* is now a first-class workstream with 51 real files instead of a
-handful of synthetic ones.
+| Severity | Risk | Mitigation |
+|---|---|---|
+| High | Private customer PDFs are a single-person dependency; a fresh public clone cannot reproduce archive measurements. | Disclose the limit; arrange access owner-to-owner; never commit the files or identifying metadata. |
+| High | Incorrect RTL order can look plausible while being wrong. | Refuse without evidence; keep the per-font and order fixtures; render and visually review text changes. |
+| Medium | Toolchain drift can make local success disagree with CI. | Pin Rust 1.98.1 identically in `rust-toolchain.toml` and CI. |
+| Medium | A failed publish can leave a stale scratch clone. | Reset the scratch clone from remote before staging; verify published contents on remote. |
+| Low | Writer/editor/MCP scope can grow before read correctness is proven. | Defer those features until extraction passes the planned acceptance checks. |
