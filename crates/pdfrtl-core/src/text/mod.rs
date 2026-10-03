@@ -21,6 +21,7 @@ use std::path::Path;
 
 pub mod cmap;
 pub mod encoding;
+pub mod oracle;
 pub mod recover;
 mod tables;
 pub mod tokenizer;
