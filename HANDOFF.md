@@ -9,24 +9,20 @@
 
 ## Current checkpoint
 
-P0 baseline reconciliation is complete locally:
+P0 baseline reconciliation is complete locally and published through the privacy-gated publisher. The publisher's public preflight passed; GitHub CI passed its five checks; I fetched `origin/main` and verified the published tree, sanitized manifest, current plan, handoff, and absence of private reports.
 
-- `scripts/audit_languages.py` classifies positive script evidence; `tests/test_audit_languages.py` passed 18 cases. Script evidence is not a language oracle.
-- The owner reviewed the disputed label groups and identified the English-only records and Persian RFP excerpts. The corresponding manifest corrections are local; remaining mixed/undetermined labels are untouched.
-- The owner said the displayed RFP extraction excerpts seemed right. This is not a rendered-page side-by-side test or a construction-verified fixture.
-- Public documentation omits private corpus measurements and identities. Raw audit reports and per-record data remain owner-local.
-- The local checkpoint is on `feat/baseline-reconcile`; verify the actual commit/worktree state before continuing. The public update has not been verified until `scripts/publish-public.sh` completes and `origin/main` is read back.
-
-
+- `scripts/audit_languages.py` classifies positive script evidence; `tests/test_audit_languages.py` passed all 18 cases. Script evidence is not a language oracle.
+- The owner-reviewed label corrections are applied to the local private manifest; remaining mixed/undetermined labels are untouched. The public publisher strips private manifest rows, so the private corrections are not exposed on GitHub.
+- The owner said the displayed Persian RFP extraction excerpts seemed right. This is not a rendered-page side-by-side test or a construction-verified fixture.
+- Public documentation omits private corpus measurements and identities. Raw audit reports remain owner-local outside the repository.
+- Local checkpoint commit: `fd1b79b` on `feat/baseline-reconcile`. Public snapshot was independently read back from `origin/main`; do not push the private source branch directly.
 
 ## Immediate next actions
 
-1. Inspect `git status`, `git diff --check`, and the full diff. Ensure no raw private corpus identity or `reports/` content is staged.
-2. Run the full WSL gate: `bash scripts/wsl-build.sh` with `PATH="$HOME/.cargo/bin:$PATH"` and `CARGO_TARGET_DIR="$HOME/target-bdf"`.
-3. Commit the completed P0 checkpoint on `feat/baseline-reconcile` with a clear message.
-4. Publish through `bash scripts/publish-public.sh "fix: reconcile owner-reviewed corpus labels"`. **Do not push the private source checkout/branch directly to GitHub.** The publisher creates a sanitized staging tree, strips private manifest entries/reports, deny-list scans it, runs the public preflight, pushes a snapshot, waits for CI, and only advances public `main` on green CI.
-5. Verify the pushed commit and `origin/main` contents, the CI result, and the public clone gate. If publication fails privacy or CI checks, stop and fix the exact issue; do not bypass preflight.
-6. Start P1 from the roadmap: add public, construction-grounded RTL success/refusal controls before changing order-recovery behavior.
+1. Start P1 from the roadmap: build public, construction-grounded RTL success/refusal controls before changing order-recovery behavior.
+2. Run focused tests, then the full `bash scripts/wsl-build.sh` gate after each extraction change.
+3. Publish future checkpoints only with `bash scripts/publish-public.sh`; verify CI and read back `origin/main` after each publish.
+4. Before a follow-up release, verify/download/test the Linux x86_64 and arm64 binaries and checksums. Do not overwrite v0.1.0.
 
 ## Remaining checkpoints
 

@@ -1,8 +1,8 @@
 # pdfrtl — remaining roadmap after owner label review
 
-**Updated:** 2026-10-04  
-**Branch:** `feat/baseline-reconcile`  
-**Current checkpoint:** P0 completed locally; publish through `scripts/publish-public.sh` after the final privacy and CI gates.  
+**Updated:** 2026-10-04
+**Branch:** `feat/baseline-reconcile`
+**Current checkpoint:** P0 baseline reconciliation is complete locally and published through `scripts/publish-public.sh`; the sanitized public gate, CI, and remote read-back passed.
 **Goal:** improve Persian extraction correctness without ever returning unproven order as trusted text, then release a tested Linux x86_64/arm64 follow-up.
 
 ## Verified state
