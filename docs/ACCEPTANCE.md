@@ -1,108 +1,32 @@
 # Acceptance, measured per language
 
-**Date:** 2026-10-03 · **Source:** `scripts/by_language.py` over `reports/validate-archive.json`
-· **Corpus:** 51 private files, owner's own documents.
+**Date:** 2026-10-04 · **Source:** `scripts/by_language.py` over `reports/validate-archive.json` · **Corpus:** 51 owner-local private PDFs. Manifest labels for nine records were corrected after owner review; raw identities and per-document report rows remain private.
 
-Run it yourself:
+Run it yourself from an owner-local checkout with the corpus present:
 
 ```bash
-python3 scripts/by_language.py            # the table below
-python3 scripts/by_language.py --json     # for tooling
+python3 scripts/by_language.py            # aggregate table
+python3 scripts/by_language.py --json     # machine-readable output
 ```
 
-Every number here is **produced by that script**, never typed. That is the rule from
-`docs/problems/0016`: a table that merely sums correctly is not a measurement. If the corpus is
-absent the script exits 2 and says so rather than printing zeros.
+Every number here is **produced by that script**, never typed. If the private corpus or report is absent, the script exits non-zero rather than printing zeros. These aggregates cannot be reproduced from the public clone.
 
 ---
 
-## 1. Persian is the focus — so Persian is the headline
+## 1. Private acceptance data is not public
 
-25 of 51 files. **13 emit every decoded character, 8 are refused entirely, 1 is partial, 3 have no
-text layer at all.**
+The language audit and per-language extraction outcomes are derived from private customer PDFs. They remain owner-local and are deliberately excluded from tracked documents and the public mirror. Owner-reviewed language-label corrections are reflected only in the local private manifest; public publication strips private manifest rows.
 
-| outcome | files | |
-|---|---|---|
-| fully emitted | 13 / 25 | every decoded character returned in order |
-| partial | 1 / 25 | some text withheld |
-| refused entirely | 8 / 25 | decoded, order unestablished, reason named |
-| no text layer | 3 / 25 | scanned images — OCR territory, out of scope |
+To recompute results locally, run `scripts/validate-archive.sh` and `python3 scripts/by_language.py` in a checkout where the owner has arranged access to the corpus. Do not copy the raw output, per-record rows, private paths, titles, hashes, or extracted text into public artifacts.
 
-**The median Persian file emits 100% of its decoded text.**
+## 2. Ordering evidence and refusal gap
 
-### The 8 Persian refusals are one problem, not eight
+The private audit records page-level order decisions, but its result rows remain owner-local. Add public construction-grounded success and refusal fixtures before changing order recovery. Preserve proven-only `data.text`; do not weaken evidence rules to improve private aggregate counts.
 
-Measured, every one of them reports `unsupported_visual_order` and nothing else blocks them:
+## 3. Public evidence
 
-| file | withheld chars | pages |
-|---|---|---|
-| `persian-report-noc-revision` | 42,107 | 29 |
-| `persian-1` | 8,475 | 13 |
-| `persian-hld-7-summary-fa` | 6,333 | 3 |
-| `persian-2` | 2,076 | 2 |
-| `persian-3` | 1,981 | 2 |
-| `persian-panel1` | 1,629 | 1 |
-| `persian-4` | 1,488 | 1 |
-| `persian-6` | 759 | 1 |
+The public clone contains redistributable synthetic fixtures. Run `bash scripts/verify-clone.sh` and `bash scripts/wsl-build.sh` for reproducible public checks. A private-corpus result cannot replace those tests or be reproduced by public contributors.
 
-One root cause, one ladder rung (rung 3, the geometry comparison), one fix. **8 files is the
-entire remaining Persian scope** — not 51, and not one pathological file.
+## 4. Owner review and limits
 
-## 2. What actually decides Persian text
-
-The rung that produced the output, per file:
-
-| rung | files | note |
-|---|---|---|
-| `to_unicode_logical` | 9 | `/ToUnicode` decoded to base letters, stored order already logical |
-| `producer_visual_order_known` | 2 | allow-listed producer, inverted per the fingerprint |
-| both | 1 | |
-| no RTL text / no text layer | 4 | out of scope |
-| **rung 3 exhausted → refuse** | **9** | **the remaining work** |
-
-So **two rungs carry 100% of working Persian text today**, and the third never fires
-successfully on a Persian file in this corpus. That is where effort belongs: extend rung 3's
-hypothesis space (the critique's P-7), and do it after public fixtures exist (P-5), because
-`docs/problems/0009`, `0014` and `0015` all say a comparison must not change before the fixtures
-that would catch the regression are in place.
-
-## 3. All languages, for context
-
-| language | files | full | partial | refused | no text | median emitted |
-|---|---|---|---|---|---|---|
-| persian | 25 | 13 | 1 | 8 | 3 | 100% |
-| english | 10 | 9 | 1 | 0 | 0 | 100% |
-| unknown | 7 | 2 | 0 | 2 | 3 | 50% |
-| arabic | 4 | 3 | 1 | 0 | 0 | 100% |
-| hebrew | 4 | 4 | 0 | 0 | 0 | 100% |
-| he-eng | 1 | 0 | 1 | 0 | 0 | 5% |
-| **total** | **51** | **31** | **4** | **10** | **6** | |
-
-Hebrew is 4/4 and needs nothing. English is 9/10 and is not the focus. The `unknown` bucket is
-files whose language was never established from positive evidence — see
-`references/real-world-pdf-interrogation.md`; a filename is not evidence.
-
-## 4. Corrections to earlier numbers
-
-Earlier documents in this repository said "12 refused", then "14", then quoted character totals as
-a headline. Both were wrong and the reasons differ:
-
-* **12 vs 14** — two different definitions of the same set. 14 was "files that do not emit
-  everything"; the measured split is 8 refused entirely + 4 partial = 12 files with a
-  non-empty `unproven` field, and 10 files that emit nothing. The table above is disjoint and sums
-  to 51.
-* **Character totals** — `1,271,919` withheld against `1,038,880` emitted reads as "the tool
-  refuses more than it answers". It is an artefact of one 321-page scanned volume contributing
-  93.3% of all withheld characters. **Per-language and per-file counts are the honest unit**, and
-  that is what this document uses. A single file is not a reference for general work.
-
-## 5. Known gaps in this measurement
-
-* **Not reproducible outside the owner's machine.** The corpus is private customer documents.
-  `scripts/validate-archive.sh` should emit an aggregate-only report that a second holder of the
-  same corpus can diff (the critique's P-9). Until then, treat these numbers as owner-local.
-* **No human has read the output.** Every count here says characters were ordered, not that a
-  person read them and found them correct. `AGENTS.md` rule 8 requires that read and it has not
-  happened (Q-006).
-* **No public fixture exercises the refusal path.** All 14 tracked fixtures emit fully
-  (`docs/problems/0017`), so rung 3 has zero coverage outside the private archive.
+The owner reviewed the displayed Persian RFP extraction text and said it seemed right. That feedback does not constitute a rendered-page comparison fixture or prove general reading-order correctness. Remaining mixed/undetermined labels require further positive evidence and human adjudication; no inference is made from missing output.

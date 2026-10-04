@@ -3,6 +3,14 @@
 All notable changes to `pdfrtl`. This project is pre-1.0: the extraction contract can still change,
 and the numbers below are the measured state at each release.
 
+## [Unreleased]
+
+### Changed
+
+- Corrected owner-adjudicated language labels in the local private manifest and updated public acceptance documentation to keep private measurements and identities out of the mirror.
+- The owner reviewed the displayed Persian RFP extraction text and said it seemed right. This is not a rendered-page comparison fixture; stronger reading-order claims remain open.
+- `docs/ACCEPTANCE.md`, `CANARY.md` and `README.md` now state that private archive results are owner-local and excluded from public claims. The v0.1.0 measurements below remain historical as-of-release figures.
+
 ## [0.1.0] — 2026-10-03
 
 First release: a canary. The contract is stable; the coverage is not complete.
@@ -38,22 +46,11 @@ First release: a canary. The contract is stable; the coverage is not complete.
 
 ### Measured state at this release
 
-Persian, 25 of 51 files in the private archive:
-
-| outcome | files |
-|---|---|
-| fully emitted | 13 |
-| partially recovered | 1 |
-| refused entirely | 8 |
-| no text layer (OCR, out of scope) | 3 |
-
-The median Persian file emits 100% of its decoded text. All 8 refusals share one cause —
-`unsupported_visual_order` — so this is one problem, not eight.
+Private-corpus language and extraction metrics have been removed from public documentation. Their historical snapshot remains owner-local; the public release is supported by the committed synthetic fixtures and CI checks.
 
 ### Known limitations
 
-- **Reading order is not recovered on every file.** 8 of 25 Persian files refuse. The blocker is
-  lines whose painted form neither existing hypothesis reproduces (`docs/problems/0018`).
+- **Reading order is not recovered on every input.** The blocker is lines whose painted form neither existing hypothesis reproduces (`docs/problems/0018`).
 - **No human has verified the output.** Every number here proves characters were *ordered*, not
   that a Persian speaker read them and found them correct (`AGENTS.md` rule 8; Q-013).
 - **No reproducible build is claimed.** Output identity between the musl and glibc builds was

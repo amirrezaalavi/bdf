@@ -33,14 +33,7 @@ guesses.
 Text that was decoded but could not be ordered is **not discarded**. It appears in a separate
 field, `data.pages[].unproven`, as `{line, text, reason}` — and `data.text` stays **proven-only**.
 
-This matters because the withheld text is frequently **reversed**: on the `arabic-*` files in our
-archive the stored order is the wrong reading for 92–99% of lines. So it is offered, clearly
-labelled, rather than either hidden or passed off as readable.
-
-A caller that reads `data.text` and nothing else gets logical text or nothing. A caller that
-wants the unproven text passes **`--include-unproven`** — the default envelope carries only the
-count, because that text is often reversed and an agent reading the whole JSON would otherwise
-consume it as though it were text.
+Text whose order could not be established is kept separate from the proven `data.text` field. The text is available only through `--include-unproven`; by default the envelope contains counts without the withheld text.
 
 ## 2. The one property that matters
 
@@ -59,59 +52,19 @@ cannot read the script. So the tool asks the file, in this order:
 4. A producer fingerprint, for families verified individually.
 5. **Refuse**, naming the reason.
 
-## 3. What it can and cannot do — measured
+## 3. What it can and cannot do — public evidence
 
-Numbers below are from a **51-file private archive** of real Persian, Arabic and Hebrew
-documents, measured 2026-10-03. They are the author's own files and are not in the public
-repository; a clone of the repository cannot reproduce them.
+Private-corpus performance measurements and language-label audit results remain owner-local and are not published. The public clone contains redistributable synthetic fixtures; its CI and `scripts/verify-clone.sh` are the reproducible evidence for the published build.
 
-**Per language and per file, because a character sum across files of wildly different sizes
-misleads — one 321-page volume is 93% of it.** Derived by `scripts/by_language.py`; see
-[`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for the full table and the method.
-
-**Persian is the focus: 25 of 51 files.**
-
-| | files |
-|---|---|
-| fully emitted (every decoded character ordered and returned) | 13 |
-| partially recovered (some text emitted, some withheld) | 1 |
-| refused entirely (decoded, nothing emitted, reason named) | 8 |
-| no text layer at all — OCR territory, out of scope | 3 |
-| **total Persian** | **25** |
-
-**The median Persian file emits 100% of its decoded text.** All 8 Persian refusals share one
-cause — `unsupported_visual_order`, the geometry comparison at rung 3 — so **8 files is the whole
-remaining Persian scope**, not 51. Hebrew is 4/4; English 9/10.
-
-All languages, disjoint, summing to 51:
-
-| | files |
-|---|---|
-| fully emitted | 31 |
-| partially recovered | 4 |
-| refused entirely | 10 |
-| no text layer | 6 |
+The owner reviewed recently displayed Persian RFP extraction text and said it seemed right. This is a useful review of those excerpts, not a rendered-page comparison or a construction-verified public fixture. Do not treat the private label corrections as proof that the general RTL-order problem is solved.
 
 ### Known limitations, stated plainly
 
-* **Reading order is not recovered on every file.** 8 of the 25 Persian files refuse entirely and
-  1 is partial. All 8 report the same reason — `unsupported_visual_order`, the geometry comparison
-  at rung 3 — so this is **one problem with one fix**, not a list of nine. The cause is documented
-  (`docs/plans/2026-10-03-canary.md`, C3): lines mixing several left-to-right runs — dates,
-  digit runs, Latin words — exceed what the current hypothesis space can express. A research
-  question is open (`docs/RESEARCH-QUESTIONS.md`, Q-R11).
-* **Scanned documents without a text layer are out of scope.** OCR is deliberately not
-  implemented. Such files return no text with `unsupported_page_content` or an empty text field —
-  they are not silently "empty" because the tool failed; they are empty because there is nothing
-  to extract.
-* **Fonts with no usable character mapping are refused per font.** Text from a font that cannot
-  be mapped is withheld and `unsupported_broken_to_unicode` is reported; text from other fonts
-  on the same page still comes through. This is per-font behaviour, measured and tested.
-* **Generation, editing, signing, forms, MCP and OCR are not implemented.** This binary only
-  reads.
-* **No page reordering for multi-column layouts.** A `Reason` is required before that is
-  attempted; none is guessed.
-
+* **Reading order is not proven on every RTL input.** Ambiguous text is withheld with a reason; no release claim should imply complete recovery.
+* **Scanned documents without a text layer are out of scope.** OCR is deliberately not implemented.
+* **Fonts with no usable character mapping are refused per font.** Text from a font that cannot be mapped is withheld and `unsupported_broken_to_unicode` is reported; other text on the page may still be returned.
+* **Generation, editing, signing, forms, MCP and OCR are not implemented.** This binary only reads.
+* **No page reordering for multi-column layouts.** A `Reason` is required before that is attempted; none is guessed.
 ### What "correct" means here, and who checked it
 
 No automated test can confirm that Persian text *reads* correctly — only a person who reads the

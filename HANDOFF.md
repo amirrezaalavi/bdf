@@ -1,84 +1,56 @@
 # HANDOFF — pdfrtl
 
-**Purpose:** let another machine (or a fresh agent with zero chat history) continue this
-project. If something here is stale, fix it in the same commit that made it stale.
+**Updated:** 2026-10-04
+**Repository:** `https://github.com/amirrezaalavi/bdf` (public mirror; publish only through the repository's privacy-gated publisher)
+**Development root:** WSL Ubuntu-26.04, `/home/netcon/playground/ai/bdf`
+**Branch:** `feat/baseline-reconcile`
+**Current release:** `v0.1.0` (Linux x86_64 and arm64); follow-up release not started.
+**Plan of record:** `.hermes/plans/2026-10-04_pdfrtl-next-roadmap.md`
 
-* **Updated:** 2026-10-03 — handoff refreshed for a fresh public clone
-* **Repo:** `https://github.com/amirrezaalavi/bdf` (public mirror; `main` was `9411645b` before this handoff update)
-* **Development environment:** WSL Ubuntu-26.04, `~/playground/ai/bdf`; exact Rust/Cargo 1.98.1 from `rust-toolchain.toml`
-* **Private corpus:** 51 customer PDFs stay owner-local and gitignored. Public clone has 14 synthetic fixtures; never treat the missing private PDFs as a broken clone or publish them.
-* **Plan of record:** `docs/plans/2026-09-29-lane-plan.md`; current priorities below.
-* **State:** extraction works but remains incomplete; generation/editing are not implemented.
-* **New clone:** follow `README.md` §0, then run `bash scripts/verify-clone.sh` and `bash scripts/wsl-build.sh`.
+## Current checkpoint
 
-## Where things stand (verified, not claimed)
+P0 baseline reconciliation is complete locally:
 
-| Item | State | Evidence |
+- `scripts/audit_languages.py` classifies positive script evidence; `tests/test_audit_languages.py` passed 18 cases. Script evidence is not a language oracle.
+- The owner reviewed the disputed label groups and identified the English-only records and Persian RFP excerpts. The corresponding manifest corrections are local; remaining mixed/undetermined labels are untouched.
+- The owner said the displayed RFP extraction excerpts seemed right. This is not a rendered-page side-by-side test or a construction-verified fixture.
+- Public documentation omits private corpus measurements and identities. Raw audit reports and per-record data remain owner-local.
+- The local checkpoint is on `feat/baseline-reconcile`; verify the actual commit/worktree state before continuing. The public update has not been verified until `scripts/publish-public.sh` completes and `origin/main` is read back.
+
+
+
+## Immediate next actions
+
+1. Inspect `git status`, `git diff --check`, and the full diff. Ensure no raw private corpus identity or `reports/` content is staged.
+2. Run the full WSL gate: `bash scripts/wsl-build.sh` with `PATH="$HOME/.cargo/bin:$PATH"` and `CARGO_TARGET_DIR="$HOME/target-bdf"`.
+3. Commit the completed P0 checkpoint on `feat/baseline-reconcile` with a clear message.
+4. Publish through `bash scripts/publish-public.sh "fix: reconcile owner-reviewed corpus labels"`. **Do not push the private source checkout/branch directly to GitHub.** The publisher creates a sanitized staging tree, strips private manifest entries/reports, deny-list scans it, runs the public preflight, pushes a snapshot, waits for CI, and only advances public `main` on green CI.
+5. Verify the pushed commit and `origin/main` contents, the CI result, and the public clone gate. If publication fails privacy or CI checks, stop and fix the exact issue; do not bypass preflight.
+6. Start P1 from the roadmap: add public, construction-grounded RTL success/refusal controls before changing order-recovery behavior.
+
+## Remaining checkpoints
+
+- **P1 — Public correctness controls:** logical and visual-order fixtures, mixed Persian/Latin/digits, a genuine tied-geometry refusal, deliberate reversal detection, and explicit precondition assertions.
+- **P2 — Safe refusal reduction:** categorize current Persian `unsupported_visual_order` cases; test candidate generation against the exhaustive short-line oracle; do not weaken proven-only output.
+- **P3 — Contract/docs:** keep `data.text` proven-only, `--include-unproven` opt-in, and `bidi_consistent` described as consistency rather than proof. Keep docs and tests synchronized.
+- **P4 — Follow-up release:** after P1/P2 evidence is green, run full and public gates, verify public CI/read-back, and download/test x86_64 + arm64 release artifacts and checksums. Never overwrite v0.1.0.
+- OCR, writer/editing, GUI, MCP productization, and broader script support remain deferred.
+
+## Invariants and privacy
+
+- Correct logical order or an explicit reason; no silent reversal.
+- `data.text` contains proven text only. Unproven lines are separately reported and their text is opt-in.
+- `albdf` is a differential comparator, not an oracle.
+- Keep private PDFs, identifiers, titles, hashes, raw audit rows, and per-document text out of public commits. `reports/` is excluded by the publisher.
+- Use Rust/Cargo 1.98.1 from the pinned toolchain. In WSL set `export CARGO_TARGET_DIR="$HOME/target-bdf"`; the Windows checkout is a read-only mirror.
+
+## Cloud/SRE self-critique
+
+| Severity | Risk | Mitigation |
 |---|---|---|
-| Rust workspace (`pdfrtl-core`, `pdfrtl-cli`, `pdfrtl-mcp`) | builds | `bash scripts/wsl-build.sh` → gate GREEN: fmt, clippy `-D warnings`, 13 test suites, slop greps, deps-drift, `cargo deny` |
-| CLI contract (envelope + exit codes 0/2/3/4) | tested | `crates/pdfrtl-cli/tests/cli_contract.rs` (8 tests, including the invariant control) |
-| Text extraction | implemented, incomplete | `pdfrtl extract --json`; unsupported or ambiguous text is withheld with a reason |
-| Archive validation | owner-local measurement | 38 fully decoded / 37 order-verified / 12 partial / 14 refused / 4 no-text; 1,038,880 emitted / 1,271,919 withheld. Cannot be reproduced from public clone without customer files. |
-| Public fixtures / private PDFs | 14 fixtures in git; 51 real-world PDFs local only | Never commit the private PDFs or their identifying metadata. |
-| Public mirror | current before this doc update: `9411645b` | publisher fix tested by forcing clone ahead of remote; CI passed and fix read back from remote |
-| Generation / editing / MCP | not implemented | Editing spike says incremental save only (`7086526`). |
-| OCR | deferred | Owner priority: correct reading/search first. |
-
-## Reproduce from scratch on a new machine
-
-```bash
-git clone https://github.com/amirrezaalavi/bdf.git
-cd bdf
-# Install rustup if needed; rust-toolchain.toml pins 1.98.1.
-export CARGO_TARGET_DIR="$HOME/target-bdf"
-bash scripts/verify-clone.sh   # builds/tests and reports fixture + private-corpus status
-bash scripts/wsl-build.sh      # full local gate, matching CI
-```
-
-The public clone has 14 redistributable PDF fixtures. The 51 real-world PDFs are private customer files and intentionally absent; archive results cannot be reproduced without owner-arranged access. Do not invent or publish a fetch location.
-
-## Environment traps on the current host (cost real time — read this)
-
-| Trap | Symptom | Fix already applied |
-|---|---|---|
-| **No Rust toolchain on the Windows host** | `cargo: command not found` | build in WSL Ubuntu-26.04; rustc/cargo 1.98.1 lives in `~/.cargo` (pinned by `rust-toolchain.toml` — never `stable`) |
-| Non-login shell has no cargo on PATH | `bash: cargo: command not found` | `. "$HOME/.cargo/env"` — `scripts/wsl-build.sh` does this |
-| WSL resolver was 8.8.8.8/1.1.1.1 (blocked locally) | every `curl` returns `000` | `/etc/resolv.conf` → `nameserver 192.168.13.4` (FortiGate) |
-| WSL has **no IPv6 route**, DNS returns AAAA | `curl` silently fails on some hosts | `/etc/gai.conf` → `precedence ::ffff:0:0/96 100` (prefer IPv4). Do not remove |
-| crates.io CDN unreliable from this network | `cargo fetch` stalls | `~/.cargo/config.toml` → Aliyun sparse mirror (verified 200) |
-| cargo over `/mnt/c` is slow | long builds | the dev root itself moved to ext4: `~/playground/ai/bdf`, `CARGO_TARGET_DIR=$HOME/target-bdf`; the Windows checkout is a read-only mirror |
-| `python3` does not exist on Windows | `command not found` | use `python` there, `python3` in WSL — scripts must tolerate both |
-| Windows-side blocked hosts | connection `000` | SOCKS5 `127.0.0.1:10808`: `curl --socks5-hostname 127.0.0.1:10808 <url>` |
-| git-bash mangles multi-line `for` loops passed to `wsl.exe` | loop body sees empty vars | prefer a script file inside WSL, or one command per call |
-| **WSL `/tmp` is wiped between separate `wsl.exe` invocations** | a log or fixture written by one call is gone by the next; the follow-up reports a bogus IO error (exit 4 on a file that was never there) | keep cross-call artifacts under `$HOME` (e.g. `~/verify-pdfrtl/`), never `/tmp` |
-| Only `python3` exists in WSL 26.04 (`python` is absent) | `python: command not found` | use `python3` in WSL; a script that says `python` fails there and reads as "no interpreter installed" |
-
-## Owner decisions
-
-No decision currently blocks the next extraction work. Product/licensing questions and their status are tracked in `docs/OPEN-QUESTIONS.md`; verify that file before making a product-scope decision.
-## Next work (in order)
-
-1. **Phase 1a: DONE.** Per-font withholding already held; proved by fixture, no code needed.
-2. **Phase 1b:** attempt embedded-font cmap inversion for `hebrew-1.pdf`; recover only what can be proved, otherwise refuse loudly; visually review rendered output.
-3. **Phase 2:** the faithful per-character prediction SHIPPED (`8c62805`) but did not move
-   `arabic-3.pdf`. The remaining blocker is the `neither` bucket — the prediction reproduces
-   neither reading — measured at 842 / 1,347 / 340 lines on `arabic-1/2/4`, which decide
-   1,778 / 1,956 / 2,706. `bidi_verified` was renamed `bidi_consistent` (`2bf36d5`) because a
-   forward match is consistency, not proof (`docs/problems/0015`). Q-R11 is answered; the island
-   generators it recommends are NOT implemented — two attempts regressed decided lines, recorded
-   in `docs/problems/0014`.
-4. **Handoff hygiene:** `tools/triage_pdfs.py` should refuse empty input; check/remove the unmatched `Unicode-DFS-2016` allowance; split the RTL skill into reference files when stable.
-5. Only after extraction is reliable: writer, editing, MCP, packaging and enterprise work.
-
-A red gate never moves on. Publishing goes through `scripts/publish-public.sh`, then verify the remote.
-
-## What must not drift
-
-* The invariant: **logical order or an explicit reason** — never silent reversal
-  (`docs/decisions/0002`). Withheld text is REPORTED under `data.pages[].unproven`, never
-  merged into `data.text` (`58f8c76`).
-* `bidi_consistent` means "reproduces the painting", NOT "the painting proves the order"
-  (`docs/problems/0015`) — do not let a later edit restore the stronger claim.
-* Permissive-only dependencies in shipped default features (`docs/decisions/0003`).
-* Authorship trailers on every commit (`AUTHORSHIP.md`).
-* Determinism: fixtures byte-identical across runs; no timestamps in output.
+| Critical | Wrong RTL order silently corrupts caller data. | Proven-only output and non-vacuous refusal tests are release gates. |
+| High | Private corpus and one Persian-reading owner are single points of validation. | Add redistributable fixtures and seek a second reviewer for stronger real-world claims. |
+| High | Direct source-branch pushes can leak local metadata. | Publish only through the sanitizer/deny-list/preflight script and read back remote state. |
+| Medium | Mixed/undetermined labels may still distort per-language metrics. | Preserve unresolved labels; make no further corrections without positive evidence and human review. |
+| Medium | Architecture artifacts can drift from source/tests. | Verify downloaded binaries, SHA256, architecture, and smoke behavior before release. |
+| Low | Broad candidate search raises complexity and regression risk. | Extend hypotheses incrementally, bounded by the short-line oracle. |

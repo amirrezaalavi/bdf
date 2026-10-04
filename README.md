@@ -17,13 +17,7 @@ permissive-only dependency rule enforced by `cargo deny` (`docs/decisions/0003`)
 licence is deferred until the POC is proven — it blocks shipping an SDK, not building.
 Owner: Yolka / Almas Shabake Tek + bornarad.co.
 
-**Current extraction snapshot (private archive, 51 files, measured 2026-10-03, produced by
-`scripts/by_language.py`):** **Persian, the focus, is 25 of those files — 13 emit every decoded
-character, 1 is partial, 8 are refused entirely, 3 have no text layer; the median Persian file emits
-100% of its decoded text.** Hebrew is 4/4. Across all languages: 31 fully emitted, 4 partial, 10
-refused, 6 no-text. See [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
-These numbers are owner-local and cannot be reproduced from the public clone without the customer
-PDFs.
+**Private corpus:** real-world customer PDFs and per-language measurements remain owner-local; the public mirror excludes those files, manifest rows and raw reports. Owner-reviewed label corrections are applied only in the local private manifest; public documentation omits their counts and identities. Use the synthetic fixtures and public CI for reproducible checks.
 
 **Trying the canary?** Read [`CANARY.md`](CANARY.md) — what the binary does, what it refuses,
 and how to verify what you were handed. Prebuilt static Linux binaries (x86_64 and arm64) are on
@@ -31,9 +25,9 @@ the [releases page](https://github.com/amirrezaalavi/bdf/releases); `bash script
 builds the same two files locally. Text that was decoded but could not be ordered is reported
 under `data.pages[].unproven` (behind `--include-unproven`) rather than discarded; `data.text`
 stays proven-only. See [`docs/CLI.md`](docs/CLI.md) for the full contract and
-[`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for the measured numbers.
+[`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) for the acceptance-evidence and privacy policy.
 
-Plan/decisions: `docs/plans/2026-09-29-lane-plan.md` · live state: `HANDOFF.md` ·
+Plan of record: `.hermes/plans/2026-10-04_pdfrtl-next-roadmap.md` · live state: `HANDOFF.md` ·
 contributor rules: `AGENTS.md` · owner questions: `docs/OPEN-QUESTIONS.md`.
 
 ---
@@ -63,12 +57,10 @@ corpus files are present and which are *expected* to be missing. It **exits non-
 is broken — a verifier that reports success without looking is the defect class this repo has hit
 four times (`docs/problems/0006`, `0009`, `0011`, `0012`).
 
-**The 51 real-world corpus PDFs are deliberately not in this repository.** They are customer
-documents (contracts, invoices, reports) kept out of git on purpose, and
-`scripts/publish-public.sh` carries a deny-list that refuses to publish them. A clone therefore
-contains the **14 redistributable synthetic fixtures**, which is enough to build, test and gate. To
-work against the real archive, place the files in `corpus/raw/private/desktop-pdfs/` — that path is
-gitignored, and only hashes and metadata are ever committed, never the documents.
+**The real-world corpus PDFs are deliberately not in this repository.** They are customer
+documents (contracts, invoices, reports) kept out of git on purpose; `scripts/publish-public.sh`
+excludes private manifest rows and raw reports. A public clone contains only the redistributable
+synthetic fixtures needed to build and test. Owner-local archive results are not published.
 
 ---
 
