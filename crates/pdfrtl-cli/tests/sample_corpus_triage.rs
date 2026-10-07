@@ -50,7 +50,12 @@ fn sample_corpus_does_not_panic_and_honors_exit_contract() {
 
         // 2. extract verb: must exit 0 or 3 (never panic, never exit 4 or other unhandled codes)
         let extract_output = Command::new(bin)
-            .args(["extract", "--json", "--include-unproven", path.to_str().unwrap()])
+            .args([
+                "extract",
+                "--json",
+                "--include-unproven",
+                path.to_str().unwrap(),
+            ])
             .output()
             .expect("exec extract");
 
@@ -67,5 +72,8 @@ fn sample_corpus_does_not_panic_and_honors_exit_contract() {
         assert!(extract_val.get("reasons").is_some());
     }
 
-    assert!(tested >= 10, "expected at least 10 sample PDFs tested, found {tested}");
+    assert!(
+        tested >= 10,
+        "expected at least 10 sample PDFs tested, found {tested}"
+    );
 }

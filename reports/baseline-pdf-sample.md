@@ -5,9 +5,9 @@
 - **Total Size**: 1,777,028 bytes (1735.4 KB)
 - **Total Pages**: 90
 - **Extraction Exit Codes**: Code 0: 2 | Code 3: 8 | Other: 0
-- **Total Emitted Characters**: 29,385
-- **Total Withheld Characters (unordered)**: 73,344
-- **Total Unproven Lines**: 956
+- **Total Emitted Characters**: 29,362
+- **Total Withheld Characters (unordered)**: 73,321
+- **Total Unproven Lines**: 947
 
 ---
 
@@ -15,16 +15,16 @@
 
 | # | Filename | Size (B) | Pages | Producer | Creator | Encrypted | Exit Code | Reasons | Emitted Chars | Withheld Chars | Unproven Lines |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | `02-from-url-to-page.pdf` | 180,734 | 12 | WeasyPrint 70.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 7,270 | 85 |
-| 2 | `05b-css-build.pdf` | 200,491 | 14 | WeasyPrint 70.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 10,545 | 117 |
-| 3 | `07-backends-and-apis.pdf` | 130,464 | 12 | WeasyPrint 70.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 8,635 | 77 |
+| 1 | `02-from-url-to-page.pdf` | 180,734 | 12 | WeasyPrint 70.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 7,262 | 80 |
+| 2 | `05b-css-build.pdf` | 200,491 | 14 | WeasyPrint 70.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 10,542 | 114 |
+| 3 | `07-backends-and-apis.pdf` | 130,464 | 12 | WeasyPrint 70.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 8,631 | 76 |
 | 4 | `contract-observations-letter-fa.pdf` | 305,174 | 14 | LibreOffice 26.2.4.2 (AARCH64) | Writer | No | **3** | `actual_text`, `bidi_consistent`, `unsupported_broken_to_unicode`, `unsupported_visual_order` | 0 | 23,619 | 380 |
-| 5 | `final.pdf` | 148,611 | 2 | Foxit PDF Editor Printer Version 2024.3.0.16038 | None | No | **3** | `to_unicode_logical`, `encoding_mapped`, `unsupported_visual_order` | 91 | 986 | 17 |
+| 5 | `final.pdf` | 148,611 | 2 | Foxit PDF Editor Printer Version 2024.3.0.16038 | None | No | **3** | `to_unicode_logical`, `encoding_mapped`, `unsupported_visual_order` | 88 | 985 | 17 |
 | 6 | `ghale.pdf` | 120,264 | 1 | iText® 5.1.3 ©2000-2011 1T3XT BVBA | None | No | **0** | `-` | 0 | 0 | 0 |
-| 7 | `report_persian.pdf` | 75,648 | 12 | WeasyPrint 69.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 10,591 | 137 |
+| 7 | `report_persian.pdf` | 75,648 | 12 | WeasyPrint 69.0 | None | No | **3** | `bidi_consistent`, `unsupported_visual_order` | 0 | 10,584 | 137 |
 | 8 | `united.pdf` | 2,226 | 4 | PDF4QT 1.6.0.0 | None | No | **3** | `unsupported_font_encoding` | 0 | 0 | 0 |
 | 9 | `سیدامیررضاعلوی.pdf` | 200,058 | 9 | LibreOffice 26.2.4.2 (AARCH64) | Writer | No | **3** | `actual_text`, `bidi_reordered`, `bidi_consistent`, `unsupported_visual_order` | 248 | 11,698 | 143 |
-| 10 | `قرارداد پشتیبانی و برون_سپاری خدمات فناوری اطلاعات (IT) اصلاح شده.pdf` | 413,358 | 10 | Microsoft® Word 2021 | Microsoft® Word 2021 | No | **0** | `producer_visual_order_known`, `encoding_mapped` | 29,046 | 0 | 0 |
+| 10 | `قرارداد پشتیبانی و برون_سپاری خدمات فناوری اطلاعات (IT) اصلاح شده.pdf` | 413,358 | 10 | Microsoft® Word 2021 | Microsoft® Word 2021 | No | **0** | `producer_visual_order_known`, `encoding_mapped` | 29,026 | 0 | 0 |
 
 ---
 
@@ -35,7 +35,7 @@
 - **Size**: 180,734 bytes | **Pages**: 12
 - **Producer**: WeasyPrint 70.0 | **Creator**: None | **Encrypted**: False
 - **Status**: Exit Code `3`, Reasons: ['bidi_consistent', 'unsupported_visual_order']
-- **Text Metrics**: Emitted: 0 chars | Withheld: 7,270 chars | Unproven Lines: 85
+- **Text Metrics**: Emitted: 0 chars | Withheld: 7,262 chars | Unproven Lines: 80
 
 **Content Sample (First 2 Lines):**
 
@@ -51,7 +51,7 @@
 - **Size**: 200,491 bytes | **Pages**: 14
 - **Producer**: WeasyPrint 70.0 | **Creator**: None | **Encrypted**: False
 - **Status**: Exit Code `3`, Reasons: ['bidi_consistent', 'unsupported_visual_order']
-- **Text Metrics**: Emitted: 0 chars | Withheld: 10,545 chars | Unproven Lines: 117
+- **Text Metrics**: Emitted: 0 chars | Withheld: 10,542 chars | Unproven Lines: 114
 
 **Content Sample (First 2 Lines):**
 
@@ -67,7 +67,7 @@
 - **Size**: 130,464 bytes | **Pages**: 12
 - **Producer**: WeasyPrint 70.0 | **Creator**: None | **Encrypted**: False
 - **Status**: Exit Code `3`, Reasons: ['bidi_consistent', 'unsupported_visual_order']
-- **Text Metrics**: Emitted: 0 chars | Withheld: 8,635 chars | Unproven Lines: 77
+- **Text Metrics**: Emitted: 0 chars | Withheld: 8,631 chars | Unproven Lines: 76
 
 **Content Sample (First 2 Lines):**
 
@@ -99,13 +99,13 @@
 - **Size**: 148,611 bytes | **Pages**: 2
 - **Producer**: Foxit PDF Editor Printer Version 2024.3.0.16038 | **Creator**: None | **Encrypted**: False
 - **Status**: Exit Code `3`, Reasons: ['to_unicode_logical', 'encoding_mapped', 'unsupported_visual_order']
-- **Text Metrics**: Emitted: 91 chars | Withheld: 986 chars | Unproven Lines: 17
+- **Text Metrics**: Emitted: 88 chars | Withheld: 985 chars | Unproven Lines: 17
 
 **Content Sample (First 2 Lines):**
 
 - **Emitted Text (Proven)**:
-  > `𝑝𝑥𝜃=`
-  > `(|)`
+  > `𝑝(𝑥|𝜃)=`
+  > `{`
 - **Unproven Text (Withheld - Visual Order)**:
   > `1-  ییامن عیزوت کی یاربX  رتماراپ اب𝜆 :میراد`
   > `رادقم رتماراپ𝜆  اردیبایب (4 )هرمن.`
@@ -132,7 +132,7 @@
 - **Size**: 75,648 bytes | **Pages**: 12
 - **Producer**: WeasyPrint 69.0 | **Creator**: None | **Encrypted**: False
 - **Status**: Exit Code `3`, Reasons: ['bidi_consistent', 'unsupported_visual_order']
-- **Text Metrics**: Emitted: 0 chars | Withheld: 10,591 chars | Unproven Lines: 137
+- **Text Metrics**: Emitted: 0 chars | Withheld: 10,584 chars | Unproven Lines: 137
 
 **Content Sample (First 2 Lines):**
 
@@ -181,7 +181,7 @@
 - **Size**: 413,358 bytes | **Pages**: 10
 - **Producer**: Microsoft® Word 2021 | **Creator**: Microsoft® Word 2021 | **Encrypted**: False
 - **Status**: Exit Code `0`, Reasons: ['producer_visual_order_known', 'encoding_mapped']
-- **Text Metrics**: Emitted: 29,046 chars | Withheld: 0 chars | Unproven Lines: 0
+- **Text Metrics**: Emitted: 29,026 chars | Withheld: 0 chars | Unproven Lines: 0
 
 **Content Sample (First 2 Lines):**
 

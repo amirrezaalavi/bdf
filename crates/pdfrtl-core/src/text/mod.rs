@@ -19,10 +19,13 @@ use lopdf::Document;
 use std::collections::HashMap;
 use std::path::Path;
 
+pub mod bidi;
+pub mod cluster;
 pub mod cmap;
 pub mod encoding;
 pub mod oracle;
 pub mod recover;
+pub mod state;
 mod tables;
 pub mod tokenizer;
 
