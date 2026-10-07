@@ -28,10 +28,13 @@ pub mod recover;
 pub mod state;
 mod tables;
 pub mod tokenizer;
+pub mod unit_text;
 
 pub use cmap::ToUnicode;
 pub use encoding::{BaseEncoding, Font, SimpleEncoding};
-pub use recover::{recover_text, stream_units, PageText};
+pub use recover::{extract_pages_iter, recover_text, stream_units, PageText};
+pub use tokenizer::{TextOp, Token, Value};
+pub use unit_text::UnitText;
 
 /// Recover logical text from a PDF file. Never guesses: every page comes back with the
 /// [`crate::Reason`]s that justify its order, including an `unsupported_*` reason when

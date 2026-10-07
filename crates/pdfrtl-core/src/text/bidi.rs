@@ -2,8 +2,13 @@
 
 use super::cluster::{invert_units, is_combining, is_rtl};
 use super::state::Unit;
-use std::sync::Mutex;
+use std::cell::RefCell;
 use unicode_bidi::{bidi_class, BidiClass, BidiInfo, Level};
+
+thread_local! {
+    static OUTCOME_COUNTS: RefCell<[usize; 4]> = const { RefCell::new([0; 4]) };
+    static ORDER_TRACE: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+}
 
 pub fn proxy_char(text: &str) -> char {
     let first = match text.chars().next() {
@@ -36,9 +41,6 @@ pub enum LineOrder {
     Unexplained,
 }
 
-/// Counts the four-way outcome of rung 3. Diagnostic only.
-static OUTCOME_COUNTS: Mutex<[usize; 4]> = Mutex::new([0; 4]);
-
 pub fn record_pattern(pattern: &str) {
     let slot = match pattern {
         "both_fit" => 0,
@@ -46,23 +48,20 @@ pub fn record_pattern(pattern: &str) {
         "reversed_only" => 2,
         _ => 3,
     };
-    let mut counts = OUTCOME_COUNTS
-        .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    counts[slot] += 1;
+    OUTCOME_COUNTS.with(|counts| {
+        counts.borrow_mut()[slot] += 1;
+    });
 }
 
-/// [both_fit, stored_only, reversed_only, neither] since the last reset.
+/// [both_fit, stored_only, reversed_only, neither] since the last reset on this thread.
 pub fn take_outcome_counts() -> [usize; 4] {
-    let mut counts = OUTCOME_COUNTS
-        .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    let snapshot = *counts;
-    *counts = [0; 4];
-    snapshot
+    OUTCOME_COUNTS.with(|counts| {
+        let mut b = counts.borrow_mut();
+        let snapshot = *b;
+        *b = [0; 4];
+        snapshot
+    })
 }
-
-static ORDER_TRACE: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
 pub fn trace_line(
     units: usize,
@@ -72,22 +71,17 @@ pub fn trace_line(
     max_x: f64,
     geometry: bool,
 ) {
-    let mut guard = ORDER_TRACE
-        .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    guard.push(format!(
-        "line units={units} tied_pairs={ties} distinct_x={distinct}          span={:.3}..{:.3} geometry={geometry}",
-        min_x, max_x
-    ));
+    ORDER_TRACE.with(|trace| {
+        trace.borrow_mut().push(format!(
+            "line units={units} tied_pairs={ties} distinct_x={distinct}          span={:.3}..{:.3} geometry={geometry}",
+            min_x, max_x
+        ));
+    });
 }
 
-/// Read and clear the recorded order trace.
+/// Read and clear the recorded order trace on this thread.
 pub fn take_order_trace() -> Vec<String> {
-    std::mem::take(
-        &mut *ORDER_TRACE
-            .lock()
-            .unwrap_or_else(|error| error.into_inner()),
-    )
+    ORDER_TRACE.with(|trace| std::mem::take(&mut *trace.borrow_mut()))
 }
 
 /// Compare a line's stored sequence with its painted sequence under UAX #9.

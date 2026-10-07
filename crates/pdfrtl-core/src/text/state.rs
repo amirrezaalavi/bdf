@@ -1,7 +1,8 @@
 //! Graphics state machine, content stream walker, and font resource metrics.
 
 use crate::text::encoding::Font;
-use crate::text::tokenizer::{parse_value, tokenize, Token, Value};
+use crate::text::tokenizer::{parse_value, tokenize, TextOp, Token, Value};
+use crate::text::unit_text::UnitText;
 use lopdf::{Dictionary, Document, Object, ObjectId};
 use std::collections::HashMap;
 
@@ -11,7 +12,7 @@ pub const SIMPLE_FONT_SUBTYPES: &[&[u8]] = &[b"Type1", b"MMType1", b"TrueType"];
 /// One unit of producer evidence on a visual line.
 #[derive(Debug, Clone)]
 pub struct Unit {
-    pub text: String,
+    pub text: UnitText,
     /// Baseline vertical position (the matrix `f`), grouping units onto one line.
     pub line: f64,
     /// Where the PEN was when this unit was painted (CTM ∘ the advanced text matrix).
@@ -216,19 +217,19 @@ impl<'a> Walker<'a> {
         }
     }
 
-    pub fn op(&mut self, op: &[u8], ops: &[Value]) {
+    pub fn op(&mut self, op: TextOp, ops: &[Value]) {
         match op {
-            b"BT" => {
+            TextOp::BT => {
                 self.line = Mat::identity();
                 self.pen = 0.0;
             }
-            b"q" => self.ctm_stack.push(self.ctm),
-            b"Q" => {
+            TextOp::Q => self.ctm_stack.push(self.ctm),
+            TextOp::PopQ => {
                 if let Some(saved) = self.ctm_stack.pop() {
                     self.ctm = saved;
                 }
             }
-            b"cm" => {
+            TextOp::Cm => {
                 if let (Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)) = (
                     num(ops, 0),
                     num(ops, 1),
@@ -240,7 +241,7 @@ impl<'a> Walker<'a> {
                     self.ctm = Mat { a, b, c, d, e, f }.multiplied(&self.ctm);
                 }
             }
-            b"Tm" => {
+            TextOp::Tm => {
                 if let (Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)) = (
                     num(ops, 0),
                     num(ops, 1),
@@ -254,87 +255,87 @@ impl<'a> Walker<'a> {
                     self.epoch += 1;
                 }
             }
-            b"Td" => {
+            TextOp::Td => {
                 if let (Some(tx), Some(ty)) = (num(ops, 0), num(ops, 1)) {
                     self.line = self.line.translated(tx, ty);
                     self.pen = 0.0;
                 }
             }
-            b"TD" => {
+            TextOp::TD => {
                 if let (Some(tx), Some(ty)) = (num(ops, 0), num(ops, 1)) {
                     self.leading = -ty;
                     self.line = self.line.translated(tx, ty);
                     self.pen = 0.0;
                 }
             }
-            b"T*" => {
+            TextOp::TStar => {
                 self.line = self.line.translated(0.0, -self.leading);
                 self.pen = 0.0;
             }
-            b"TL" => {
+            TextOp::TL => {
                 if let Some(value) = num(ops, 0) {
                     self.leading = value;
                 }
             }
-            b"Tf" => {
+            TextOp::Tf => {
                 self.font = match ops.first() {
-                    Some(Value::Name(name)) => Some(name.clone()),
+                    Some(Value::Name(name)) => Some(name.to_vec()),
                     _ => None,
                 };
                 self.font_size = num(ops, 1).unwrap_or(0.0);
             }
-            b"Tc" => self.char_spacing = num(ops, 0).unwrap_or(0.0),
-            b"Tw" => self.word_spacing = num(ops, 0).unwrap_or(0.0),
-            b"Tz" => self.h_scale = num(ops, 0).unwrap_or(100.0) / 100.0,
-            b"Tj" => {
+            TextOp::Tc => self.char_spacing = num(ops, 0).unwrap_or(0.0),
+            TextOp::Tw => self.word_spacing = num(ops, 0).unwrap_or(0.0),
+            TextOp::Tz => self.h_scale = num(ops, 0).unwrap_or(100.0) / 100.0,
+            TextOp::Tj => {
                 if let Some(Value::Str(bytes)) = ops.first() {
-                    self.show(bytes);
+                    self.show(bytes.as_ref());
                 }
             }
-            b"TJ" => {
+            TextOp::TJ => {
                 if let Some(Value::Arr(items)) = ops.first() {
                     for item in items {
                         match item {
-                            Value::Str(bytes) => self.show(bytes),
+                            Value::Str(bytes) => self.show(bytes.as_ref()),
                             Value::Num(number) => self.kern(*number),
                             _ => {}
                         }
                     }
                 }
             }
-            b"'" => {
+            TextOp::Quote => {
                 self.line = self.line.translated(0.0, -self.leading);
                 if let Some(Value::Str(bytes)) = ops.first() {
-                    self.show(bytes);
+                    self.show(bytes.as_ref());
                 }
             }
-            b"\"" => {
+            TextOp::DoubleQuote => {
                 if let Some(Value::Str(bytes)) = ops.get(2) {
                     self.line = self.line.translated(0.0, -self.leading);
-                    self.show(bytes);
+                    self.show(bytes.as_ref());
                 }
             }
-            b"BMC" => {
+            TextOp::BMC => {
                 if let Some(Value::Name(tag)) = ops.first() {
                     self.marks.push(Mark {
-                        tag: tag.clone(),
+                        tag: tag.to_vec(),
                         actual_text: None,
                     });
                 }
             }
-            b"BDC" => {
+            TextOp::BDC => {
                 if let (Some(Value::Name(tag)), Some(value)) = (ops.first(), ops.get(1)) {
                     let actual_text = match value {
                         Value::Dict(entries) => dict_actual_text(entries),
                         _ => None,
                     };
                     self.marks.push(Mark {
-                        tag: tag.clone(),
+                        tag: tag.to_vec(),
                         actual_text,
                     });
                 }
             }
-            b"EMC" => {
+            TextOp::EMC => {
                 self.marks.pop();
             }
             _ => {}
@@ -352,7 +353,7 @@ impl<'a> Walker<'a> {
             .find_map(|mark| mark.actual_text.clone());
         if let Some(text) = actual.filter(|text| !text.is_empty()) {
             self.used_actual_text = true;
-            self.push_unit(text);
+            self.push_unit(&text);
             self.advance_over(bytes);
             return;
         }
@@ -372,7 +373,7 @@ impl<'a> Walker<'a> {
                         Some(text) => {
                             self.used_encoding = true;
                             if !text.is_empty() {
-                                self.push_unit(text);
+                                self.push_unit(&text);
                             }
                         }
                         None => self.refused_encoding = true,
@@ -404,7 +405,7 @@ impl<'a> Walker<'a> {
                         Some(text) => {
                             self.used_to_unicode = true;
                             if !text.is_empty() {
-                                self.push_unit(text.to_string());
+                                self.push_unit(text);
                             }
                         }
                         None => {
@@ -418,14 +419,14 @@ impl<'a> Walker<'a> {
         }
     }
 
-    pub fn push_unit(&mut self, text: String) {
+    pub fn push_unit(&mut self, text: &str) {
         let reversed = self.marks.iter().any(|mark| mark.tag == b"ReversedChars");
         let line = self.line.f;
         let origin_x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
         let x_scale = self.ctm.a * self.line.a + self.ctm.c * self.line.b;
         let paint_x = origin_x + x_scale * self.pen;
         self.units.push(Unit {
-            text,
+            text: UnitText::new(text),
             line,
             paint_x,
             x_ok: x_scale != 0.0 && x_scale.is_finite() && origin_x.is_finite(),
@@ -446,12 +447,12 @@ impl<'a> Walker<'a> {
     }
 }
 
-pub fn dict_actual_text(entries: &[(Vec<u8>, Value)]) -> Option<String> {
+pub fn dict_actual_text(entries: &[(std::borrow::Cow<'_, [u8]>, Value<'_>)]) -> Option<String> {
     entries
         .iter()
-        .find(|(key, _)| key == b"ActualText")
+        .find(|(key, _)| key.as_ref() == b"ActualText")
         .and_then(|(_, value)| match value {
-            Value::Str(bytes) => Some(decode_text_string(bytes)),
+            Value::Str(bytes) => Some(decode_text_string(bytes.as_ref())),
             _ => None,
         })
 }
@@ -486,65 +487,45 @@ pub fn lossy_utf16(bytes: &[u8], big_endian: bool) -> String {
         .collect()
 }
 
-pub enum Item {
-    Value(Value),
-    Op(Vec<u8>),
-}
-
-pub fn flatten(tokens: &[Token]) -> Vec<Item> {
-    let mut items = Vec::new();
-    let mut i = 0usize;
-    while i < tokens.len() {
-        match &tokens[i] {
-            Token::Op(op) => {
-                items.push(Item::Op(op.clone()));
-                i += 1;
-            }
-            Token::ArrStart | Token::DictStart => {
-                let before = i;
-                match parse_value(tokens, &mut i) {
-                    Some(value) => items.push(Item::Value(value)),
-                    None => {
-                        if i == before {
-                            i += 1;
-                        }
-                    }
-                }
-            }
-            Token::Name(name) => {
-                items.push(Item::Value(Value::Name(name.clone())));
-                i += 1;
-            }
-            Token::Num(n) => {
-                items.push(Item::Value(Value::Num(*n)));
-                i += 1;
-            }
-            Token::Str(bytes) => {
-                items.push(Item::Value(Value::Str(bytes.clone())));
-                i += 1;
-            }
-            Token::ArrEnd | Token::DictEnd | Token::Reference(..) => i += 1,
-        }
-    }
-    items
-}
-
 pub fn walk(
     stream: &[u8],
     fonts: &HashMap<Vec<u8>, Font>,
     metrics: &HashMap<Vec<u8>, Metrics>,
 ) -> Walk {
     let tokens = tokenize(stream);
-    let items = flatten(&tokens);
     let mut walker = Walker::new(fonts, metrics);
-    let mut pending: Vec<Value> = Vec::new();
-    for item in &items {
-        match item {
-            Item::Op(op) => {
-                walker.op(op, &pending);
+    let mut pending: Vec<Value<'_>> = Vec::new();
+    let mut i = 0usize;
+    while i < tokens.len() {
+        match &tokens[i] {
+            Token::Op(op, _) => {
+                walker.op(*op, &pending);
                 pending.clear();
+                i += 1;
             }
-            Item::Value(value) => pending.push(value.clone()),
+            Token::ArrStart | Token::DictStart => {
+                let before = i;
+                if let Some(val) = parse_value(&tokens, &mut i) {
+                    pending.push(val);
+                } else if i == before {
+                    i += 1;
+                }
+            }
+            Token::Name(name) => {
+                pending.push(Value::Name(name.clone()));
+                i += 1;
+            }
+            Token::Num(n) => {
+                pending.push(Value::Num(*n));
+                i += 1;
+            }
+            Token::Str(bytes) => {
+                pending.push(Value::Str(bytes.clone()));
+                i += 1;
+            }
+            Token::ArrEnd | Token::DictEnd | Token::Reference(..) => {
+                i += 1;
+            }
         }
     }
     walker.finish()

@@ -4,7 +4,7 @@
 //! `Reason::UnsupportedBrokenToUnicode` for every glyph it cannot place. The library
 //! never panics on producer input. The code byte width comes from
 //! `begincodespacerange`, so 1-byte Type1 codes decode as single bytes.
-use crate::text::tokenizer::{tokenize, Token};
+use crate::text::tokenizer::{tokenize, TextOp, Token};
 use std::collections::HashMap;
 
 /// A decoded `ToUnicode` CMap: code → Unicode text.
@@ -27,21 +27,21 @@ impl ToUnicode {
 
         while i < tokens.len() {
             match &tokens[i] {
-                Token::Op(op) => {
-                    match op.as_slice() {
-                        b"begincodespacerange" => {
+                Token::Op(op, _) => {
+                    match op {
+                        TextOp::BeginCodeSpaceRange => {
                             mode = Mode::CodeSpace;
                             pending.clear();
                         }
-                        b"beginbfchar" => {
+                        TextOp::BeginBfChar => {
                             mode = Mode::BfChar;
                             pending.clear();
                         }
-                        b"beginbfrange" => {
+                        TextOp::BeginBfRange => {
                             mode = Mode::BfRange;
                             pending.clear();
                         }
-                        b"endcodespacerange" | b"endbfchar" | b"endbfrange" => {
+                        TextOp::EndCodeSpaceRange | TextOp::EndBfChar | TextOp::EndBfRange => {
                             mode = Mode::None;
                             pending.clear();
                         }
@@ -54,7 +54,7 @@ impl ToUnicode {
                     if mode == Mode::None {
                         continue;
                     }
-                    pending.push(bytes.clone());
+                    pending.push(bytes.to_vec());
                     match mode {
                         Mode::CodeSpace => {
                             if pending.len() == 2 {
@@ -88,7 +88,7 @@ impl ToUnicode {
                     let mut items: Vec<Vec<u8>> = Vec::new();
                     while i < tokens.len() && !matches!(tokens[i], Token::ArrEnd) {
                         if let Token::Str(bytes) = &tokens[i] {
-                            items.push(bytes.clone());
+                            items.push(bytes.to_vec());
                         }
                         i += 1;
                     }
