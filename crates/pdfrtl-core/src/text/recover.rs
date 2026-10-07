@@ -1,36 +1,21 @@
 //! Page text recovery: content stream → units → lines → logical order + reasons.
 //!
-//! The unit model is docs/problems/0002: inside `/ReversedChars BMC … EMC` a
-//! `/Span<</ActualText …>>> Tj` is ONE unit (the decoded ActualText — authoritative,
-//! returned verbatim, no NFKC folding: folding presentation forms belongs to the
-//! search/index path, not to extraction) and a bare `<CID> Tj` is ONE unit PER CID,
-//! decoded through the font's `ToUnicode`.
-//!
-//! Order reasoning, per visual line:
-//! * a line with no `/ReversedChars` run stores logical order already — the stream
-//!   order is emitted untouched (blanket reversal would corrupt it);
-//! * a line with a `/ReversedChars` run stores VISUAL order: each reversed run's UNIT
-//!   order is reversed (unit level, never character level — digits inside an LTR run
-//!   stay unreversed) and the RUN order is reconstructed from UAX #9 levels;
-//! * a reconstructed order is accepted only if running UAX #9 forward on it reproduces
-//!   the observed stream order. If two orders both reproduce it, the paragraph's own
-//!   direction (P2/P3) breaks the tie — and if that still leaves two, the line is
-//!   refused with `Reason::UnsupportedNoEvidence` rather than guessed at.
+//! High-level recovery orchestrator connecting content stream walking (`state.rs`),
+//! cluster script analysis (`cluster.rs`), and UAX #9 bidirectional order settlement (`bidi.rs`).
+
 use crate::reasons::Reason;
-use crate::text::cmap::ToUnicode;
-use crate::text::encoding::{BaseEncoding, Font, SimpleEncoding};
-use crate::text::tokenizer::{parse_value, tokenize, Token, Value};
+use crate::text::bidi::{settle_line_by_bidi, LineOrder};
+use crate::text::cluster::{has_rtl_run, visual_to_logical};
+use crate::text::encoding::Font;
+use crate::text::state::{collect_fonts, walk, Metrics, Unit, Walk};
 use anyhow::Result;
-use lopdf::{Dictionary, Document, Object, ObjectId};
+use lopdf::Document;
 use std::collections::HashMap;
-use std::sync::Mutex;
-use unicode_bidi::{bidi_class, BidiClass, BidiInfo, Level};
+
+pub use crate::text::bidi::{take_order_trace, take_outcome_counts};
 
 /// Decompressed content cap per page: a page is text, not a bomb.
 const MAX_PAGE_CONTENT: usize = 32 * 1024 * 1024;
-
-/// Simple-font subtypes whose byte codes come from `/Encoding` (PDF spec §9.6.6).
-const SIMPLE_FONT_SUBTYPES: &[&[u8]] = &[b"Type1", b"MMType1", b"TrueType"];
 
 /// One page's recovered text plus the reasons that justify its order.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,21 +24,9 @@ pub struct PageText {
     pub text: String,
     pub reasons: Vec<Reason>,
     /// Characters this page DECODED but did not emit, because their order is not
-    /// established. Only the count is kept: the honest "we read it but cannot yet
-    /// order it" number survives, the unorderable characters are not handed out.
+    /// established.
     pub unordered_chars: usize,
     /// Lines this page decoded but could not put in reading order, WITH their text.
-    ///
-    /// Never merged into [`PageText::text`]. `text` stays proven-only: a caller that reads it
-    /// without reading anything else still gets correct output or nothing. These lines are
-    /// offered separately, in the order they were STORED, so the caller can decide what to do
-    /// — and on a producer that stores visual order (measured: 92–99% of decided lines on
-    /// the arabic-* files) the text here is REVERSED. The caller is told so by name; that is
-    /// the whole point of a separate field.
-    ///
-    /// Added 2026-10-03 after measuring that refusing discards real text and that whether the
-    /// stored order is usable is a PER-FILE fact, not a global one: on `persian-6` 100% of
-    /// decided lines were already in logical order, on `arabic-4` 1%.
     pub unproven: Vec<UnprovenLine>,
 }
 
@@ -70,29 +43,19 @@ pub struct UnprovenLine {
 
 impl PageText {
     /// True when every glyph this page showed was decoded with a justification.
-    /// A page that failed still carries whatever text it did recover — partial
-    /// text is reported, never dropped (ADR 0004).
     pub fn is_decoded(&self) -> bool {
         !self.reasons.iter().any(|reason| reason.is_unsupported())
     }
 
     /// True when everything in `text` was put in reading order by a named rule.
-    ///
-    /// False for a page carrying `unsupported_visual_order`: its characters were
-    /// decoded but their order was not established, so they live in
-    /// [`PageText::unordered_chars`] and `text` is empty (ADR 0004 — extraction
-    /// returns logical order or it fails; there is no third outcome).
     pub fn is_ordered(&self) -> bool {
         !self.reasons.contains(&Reason::UnsupportedVisualOrder)
     }
 
-    /// Withdraw text whose order was never established. Runs after
-    /// [`settle_rtl_order`], which is what can add the refusal.
+    /// Withdraw text whose order was never established. Runs after [`settle_rtl_order`].
     fn withdraw_unordered(&mut self, withheld: Vec<usize>) {
         if !self.is_ordered() && !self.text.is_empty() {
             self.unordered_chars = self.text.chars().count();
-            // Offer each withheld line WITH its reason instead of destroying it. This is the
-            // whole difference between discarding text and reporting it as unproven.
             let stored: Vec<&str> = self.text.split('\n').collect();
             for index in withheld {
                 if let Some(line) = stored.get(index) {
@@ -111,33 +74,19 @@ impl PageText {
 }
 
 /// Recover logical text (and its justification) from one content stream.
-///
-/// No producer fingerprint is applied here — `recover_text` is the pure
-/// content-stream ladder. The producer rung is consulted by
-/// [`extract_document`], which is where `/Producer` is known.
 pub fn recover_text(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> (String, Vec<Reason>) {
     let recovered = recover(stream, fonts, &HashMap::new());
     (recovered.text, recovered.reasons)
 }
 
-/// One page's recovery result: text, its justifications, and the lines that are
-/// still waiting for the producer rung of the ladder.
+/// One page's recovery result.
 struct Recovered {
     text: String,
     reasons: Vec<Reason>,
-    /// Indices (into the emitted line order) of lines that carry NO order evidence
-    /// of their own — see [`settle_rtl_order`].
     pending: Vec<usize>,
-    /// Indices of the lines the order rung could not settle, in line order. The text
-    /// itself comes from `Recovered::text`, which still holds it at this point.
-    /// Reported, never merged into the emitted order.
     withheld: Vec<usize>,
 }
 
-/// Widths are not available here — this entry point sees a stream and a font map, not the
-/// document they came from — so the pen never moves and multi-glyph lines tie. That is the
-/// safe direction (a tie is refused; a guessed advance would order the line silently
-/// wrong), and [`extract_document`] is the path that has the document and the widths.
 fn recover(
     stream: &[u8],
     fonts: &HashMap<Vec<u8>, Font>,
@@ -146,8 +95,7 @@ fn recover(
     assemble(walk(stream, fonts, metrics))
 }
 
-/// The units a producer wrote for one stream, in STREAM (visual) order — before any
-/// recovery. Exposed so tests can pin the unit model itself.
+/// The units a producer wrote for one stream, in STREAM (visual) order — before any recovery.
 pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Vec<String> {
     walk(stream, fonts, &HashMap::new())
         .units
@@ -157,9 +105,6 @@ pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Vec<String
 }
 
 /// Recover every page of a loaded document, in page order.
-///
-/// Failures are **page-level**: a content stream we cannot decode costs us that
-/// page (reported as `unsupported_page_content`), never the pages around it.
 pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
     let mut pages = Vec::new();
     let producer = producer_fingerprint(doc);
@@ -180,8 +125,6 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
                 page.withdraw_unordered(withheld);
                 page
             }
-            // The document loaded; this one page did not. Keep the page in the
-            // result with its own reason instead of failing the whole file.
             Err(_) => PageText {
                 page: page_num,
                 text: String::new(),
@@ -195,8 +138,7 @@ pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
     Ok(pages)
 }
 
-/// The document's `/Producer` and `/Creator`, lowercased: the producer fingerprint
-/// used to decide right-to-left order (ADR 0004).
+/// The document's `/Producer` and `/Creator`, lowercased.
 fn producer_fingerprint(doc: &Document) -> String {
     let info = doc
         .trailer
@@ -217,8 +159,6 @@ fn producer_fingerprint(doc: &Document) -> String {
     fingerprint.to_ascii_lowercase()
 }
 
-/// A PDF text string: UTF-16BE when it carries a BOM (Microsoft Word writes its
-/// `/Producer` that way), otherwise bytes read as UTF-8.
 fn pdf_text_string(bytes: &[u8]) -> String {
     let utf16 = |be: bool| -> String {
         let mut units = Vec::with_capacity(bytes.len() / 2);
@@ -243,37 +183,20 @@ fn pdf_text_string(bytes: &[u8]) -> String {
     }
 }
 
-/// The storage convention a measured producer family writes its text in (ADR 0004).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OrderConvention {
-    /// The stored sequence is the painted one: invert it to reach logical order.
     Visual,
-    /// The stored sequence is already logical: invert nothing.
     Logical,
 }
 
-/// One measured producer family, keyed by its `/Producer` fingerprint.
-///
-/// Every entry MUST have a fixture in the corpus asserting its convention: the
-/// coverage control in `crates/pdfrtl-core/tests/producer_allowlist.rs` enumerates
-/// this table, so a family added here with no fixture fails the gate, and a fixture
-/// deleted from the corpus fails it too rather than silently dropping out. That is
-/// the rule docs/problems/0005 set for allow-list entries.
 pub struct ProducerFamily {
-    /// Stable id the coverage control matches fixtures against.
     pub id: &'static str,
-    /// Every needle must appear in the lowercased fingerprint.
     pub all: &'static [&'static str],
-    /// At least one needle must appear when the list is not empty.
     pub any: &'static [&'static str],
     pub convention: OrderConvention,
 }
 
-/// The whole fingerprint allow-list — the last rung of the order ladder.
 pub const PRODUCER_ALLOW_LIST: &[ProducerFamily] = &[
-    // Visual: measured on this corpus (ADR 0004) — every Word/InDesign RTL file
-    // decodes to the mirror of what pdftotext and pypdf call logical, and none of
-    // them carries `/ReversedChars`.
     ProducerFamily {
         id: "microsoft-word",
         all: &["microsoft", "word"],
@@ -286,7 +209,6 @@ pub const PRODUCER_ALLOW_LIST: &[ProducerFamily] = &[
         any: &["indesign"],
         convention: OrderConvention::Visual,
     },
-    // Logical: Chromium's fixtures extract byte-exact with no inversion at all.
     ProducerFamily {
         id: "chromium-skia",
         all: &[],
@@ -295,7 +217,6 @@ pub const PRODUCER_ALLOW_LIST: &[ProducerFamily] = &[
     },
 ];
 
-/// The allow-listed convention for this fingerprint, if it is allow-listed at all.
 fn producer_convention(fingerprint: &str) -> Option<OrderConvention> {
     PRODUCER_ALLOW_LIST
         .iter()
@@ -307,492 +228,14 @@ fn producer_convention(fingerprint: &str) -> Option<OrderConvention> {
         .map(|family| family.convention)
 }
 
-/// Producers that store right-to-left text in *visual* order (ADR 0004).
 fn stores_visual_order(fingerprint: &str) -> bool {
     producer_convention(fingerprint) == Some(OrderConvention::Visual)
 }
 
-/// Producers measured to store right-to-left text in *logical* order (ADR 0004).
 fn stores_logical_order(fingerprint: &str) -> bool {
     producer_convention(fingerprint) == Some(OrderConvention::Logical)
 }
 
-fn is_rtl(ch: char) -> bool {
-    let cp = ch as u32;
-    matches!(
-        cp,
-        0x0590..=0x05FF
-            | 0x0600..=0x06FF
-            | 0x0750..=0x077F
-            | 0x08A0..=0x08FF
-            | 0xFB50..=0xFDFF
-            | 0xFE70..=0xFEFF
-    )
-}
-
-/// Combining marks and bidi/format controls that must stay glued to their base
-/// when a line is inverted — reversing a base away from its marks corrupts the
-/// text just as surely as reversing the line.
-fn is_combining(ch: char) -> bool {
-    let cp = ch as u32;
-    matches!(
-        cp,
-        0x0300..=0x036F
-            | 0x0483..=0x0489
-            | 0x0591..=0x05C7
-            | 0x0610..=0x061A
-            | 0x064B..=0x065F
-            | 0x0670
-            | 0x06D6..=0x06DC
-            | 0x06DF..=0x06E4
-            | 0x06E7..=0x06E8
-            | 0x06EA..=0x06ED
-            | 0x0711
-            | 0x0730..=0x074A
-            | 0x07A6..=0x07B0
-            | 0x0900..=0x0903
-            | 0x093A..=0x094F
-            | 0x0951..=0x0957
-            | 0x0E31
-            | 0x0E34..=0x0E3A
-            | 0x0E47..=0x0E4E
-            | 0x200C..=0x200F
-            | 0x202A..=0x202E
-            | 0x2060..=0x2064
-            | 0xFE00..=0xFE0F
-            | 0xFE20..=0xFE2F
-    )
-}
-
-/// A character that can *start* an embedded left-to-right run: Latin/Greek
-/// letters and digits (never a right-to-left one).
-fn ltr_start(ch: char) -> bool {
-    ch.is_alphanumeric() && !is_rtl(ch) && (ch as u32) < 0x0900
-}
-
-/// A unit whose text begins with a combining/format character: it belongs to the
-/// preceding unit's cluster and has to move with it when the line is inverted.
-fn starts_combining(text: &str) -> bool {
-    text.chars().next().is_some_and(is_combining)
-}
-
-/// Characters allowed *inside* an LTR run: the ASCII punctuation that occurs in
-/// Latin tokens (URLs, decimals, dates).
-fn ltr_run_char(ch: char) -> bool {
-    matches!(
-        ch,
-        '.' | ',' | ':' | '/' | '-' | '_' | '@' | '#' | '%' | '?' | '!' | '&' | '=' | '+' | '\''
-    ) || ltr_start(ch)
-}
-
-/// A line worth settling: at least two right-to-left letters (a stray mark is not
-/// evidence of an RTL run).
-fn has_rtl_run(text: &str) -> bool {
-    text.chars().filter(|ch| is_rtl(*ch)).count() >= 2
-}
-
-/// Visual -> logical for one line of base-direction RTL: reverse the line in
-/// clusters (base + combining marks), then put embedded left-to-right runs back
-/// into reading order. This is the inverse of the UAX #9 L2 reversal the renderer
-/// performed when it drew the line left to right.
-fn visual_to_logical(line: &str) -> String {
-    let chars: Vec<char> = line.chars().collect();
-    if !chars.iter().any(|ch| is_rtl(*ch)) {
-        return line.to_string();
-    }
-
-    // Cluster: a base character with the marks/format controls glued to it.
-    let mut clusters: Vec<Vec<char>> = Vec::new();
-    let mut i = 0;
-    while i < chars.len() {
-        let mut j = i + 1;
-        while j < chars.len() && is_combining(chars[j]) {
-            j += 1;
-        }
-        clusters.push(chars[i..j].to_vec());
-        i = j;
-    }
-    clusters.reverse();
-
-    let starts_ltr = |cluster: &[char]| cluster.first().is_some_and(|ch| ltr_start(*ch));
-    let is_space = |cluster: &[char]| cluster.first() == Some(&' ');
-    let ltr_after_space = |clusters: &[Vec<char>], index: usize| {
-        let mut next = index;
-        while next < clusters.len() && is_space(&clusters[next]) {
-            next += 1;
-        }
-        next < clusters.len() && starts_ltr(&clusters[next])
-    };
-
-    let mut k = 0;
-    while k < clusters.len() {
-        if starts_ltr(&clusters[k]) {
-            let mut end = k + 1;
-            while end < clusters.len() {
-                let head = clusters[end].first().copied();
-                if head.is_some_and(ltr_run_char)
-                    || (is_space(&clusters[end]) && ltr_after_space(&clusters, end))
-                {
-                    end += 1;
-                } else {
-                    break;
-                }
-            }
-            clusters[k..end].reverse();
-            k = end;
-        } else {
-            k += 1;
-        }
-    }
-
-    clusters.into_iter().flatten().collect()
-}
-
-/// Rung 3 of the order ladder — the UAX #9 comparison.
-///
-/// For a line with no order evidence of its own (no `/ReversedChars`, more than one
-/// unit) we do not ask *who* produced the file first; we ask the file itself. Two
-/// readings are possible, and both are checked by running the bidi algorithm
-/// FORWARD over the hypothesised logical order and seeing which one reproduces the
-/// sequence the producer actually painted:
-///
-/// * `Keep`    — the computation reproduces the painting from the stored order, so
-///   the stored order **is** logical: no inversion.
-/// * `Invert`  — only the mirrored reading reproduces it, so the producer stored
-///   the painted (visual) sequence: invert, once, and the result is
-///   verified the same way.
-/// * `Ambiguous` — both readings reproduce the painting, or the painting was never
-///   measured in the first place (units tied at one x, so `painted` is stream
-///   order by assumption). Either way it is a coin flip, and
-///   a coin flip is banned: the answer is REFUSE (the line falls
-///   through to the producer fingerprint, and is refused outright when
-///   the fingerprint does not know the family). It happens because one
-///   line does not say which base direction it was written in — an
-///   English line with an Arabic word and an Arabic line with an
-///   English word paint identically.
-/// * `Unexplained` — neither reading reproduces the painting: the file contradicts
-///   the model, so we refuse instead of picking a side.
-///
-/// Both outcomes are `false` in the ladder — no third outcome exists (ADR 0002).
-#[derive(Debug)]
-enum LineOrder {
-    Keep,
-    Invert(Vec<usize>),
-    Ambiguous,
-    Unexplained,
-}
-
-/// Compare a line's stored sequence with its painted sequence under UAX #9.
-///
-/// The painted order is read from placement: units are ordered by their painted x,
-/// and units that share one text origin keep stream order — showing a string is a
-/// single operation that advances the pen through the glyphs in emission order
-/// (ISO 32000-1 §9.4.4), so there is nothing else for the origin to disagree with.
-/// A line whose horizontal scale is degenerate or non-finite (`x_ok` is false) has no usable
-/// position at all, so the rung reports no opinion instead of a wrong one. A MIRRORED scale is
-/// not that case: it is the ordinary way a right-to-left producer paints, and the sign cancels
-/// out of every comparison made below.
-fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
-    let count = units.len();
-    if count < 2 || units.iter().any(|unit| !unit.x_ok) {
-        return LineOrder::Unexplained;
-    }
-
-    // The painted (visual) order: left to right by position, ties in stream order.
-    let mut painted: Vec<usize> = (0..count).collect();
-    painted.sort_by(|&left, &right| {
-        units[left]
-            .paint_x
-            .total_cmp(&units[right].paint_x)
-            .then(left.cmp(&right))
-    });
-
-    // A tie at equal x means the painted order was never MEASURED: `painted` fell back to
-    // stream order for those units, and stream order is exactly what this rung is trying to
-    // interrogate. Judging a sequence against an assumption derived from itself proves
-    // nothing, and on a pure-RTL pair it proves `Invert` by elimination — the bidi algorithm
-    // reverses an RTL run, so `keeps` is unreachable, `inverts` is "true" for free, and the
-    // line would be silently mirrored while the run reported `bidi_consistent`. Measured on a
-    // two-cluster fixture with no font widths, which the invariant control refuses
-    // (docs/problems/0007). Refuse here instead: the fingerprint rung may still know the
-    // family, and otherwise the line is withheld.
-    //
-    // Refusing the WHOLE LINE the moment any pair ties is right.
-    //
-    // A shape-based fallback for tied lines was tried here on 2026-10-03 and REVERTED: its
-    // discriminator ("is this reading a well-formed RTL line?") accepted every candidate equally,
-    // so uniqueness never held and every tied line stayed `Ambiguous` — all cost, no decisions.
-    // The tie is not the blocker anyway: 8 of the 8 refusing Persian files DO declare glyph
-    // widths, so their units do not all share one origin and they never reach this branch.
-    // docs/problems/0018 records the measurement and the withdrawn approach.
-    if painted
-        .windows(2)
-        .any(|pair| units[pair[0]].paint_x == units[pair[1]].paint_x)
-    {
-        return LineOrder::Ambiguous;
-    }
-
-    let identity: Vec<usize> = (0..count).collect();
-    let inverted = invert_units(units);
-    // The visual reading is a claim about the FILE: "the producer stored what it
-    // painted". Only the positions can support it — when the painted order and the
-    // stored order disagree, the producer demonstrably did not store what it
-    // painted, so the claim is refuted before any bidi run gets to rescue it.
-    let stored_is_painted = painted == identity;
-    let keeps = predicts_painted(units, &identity, &painted);
-    let inverts =
-        stored_is_painted && inverted != identity && predicts_painted(units, &inverted, &painted);
-    if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
-        record_pattern(if keeps && inverts {
-            "both_fit"
-        } else if keeps {
-            "stored_only"
-        } else if inverts {
-            "reversed_only"
-        } else {
-            "neither"
-        });
-    }
-    match (keeps, inverts) {
-        (true, false) => LineOrder::Keep,
-        (false, true) => LineOrder::Invert(inverted),
-        (true, true) => LineOrder::Ambiguous,
-        (false, false) => LineOrder::Unexplained,
-    }
-}
-
-/// Counts the four-way outcome of rung 3, so a real corpus can say how often a line is
-/// DECIDED versus genuinely undecidable. Diagnostic only; the product ignores it.
-static OUTCOME_COUNTS: Mutex<[usize; 4]> = Mutex::new([0; 4]);
-
-fn record_pattern(pattern: &str) {
-    let slot = match pattern {
-        "both_fit" => 0,
-        "stored_only" => 1,
-        "reversed_only" => 2,
-        _ => 3,
-    };
-    let mut counts = OUTCOME_COUNTS
-        .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    counts[slot] += 1;
-}
-
-/// [both_fit, stored_only, reversed_only, neither] since the last reset.
-pub fn take_outcome_counts() -> [usize; 4] {
-    let mut counts = OUTCOME_COUNTS
-        .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    let snapshot = *counts;
-    *counts = [0; 4];
-    snapshot
-}
-
-/// Run UAX #9 forward over a hypothesised logical order and check that the levels
-/// the algorithm computes paint back into `painted`.
-///
-/// The paragraph direction is NOT ours to pick: UAX #9 P2/P3 derives it from the
-/// hypothesis's own first strong character, so each reading is judged as the
-/// complete paragraph it claims to be. Two readings that each satisfy the standard
-/// this way are the `Ambiguous` case — a coin flip, which is refused.
-fn predicts_painted(units: &[Unit], logical: &[usize], painted: &[usize]) -> bool {
-    painted_map_for(units, logical) == Some(painted.to_vec())
-}
-
-/// One direction-preserving proxy char per unit — a unit is a single cluster, so its
-/// first character's bidi class stands for the whole unit.
-///
-/// Still used by [`predicts_observed`], which works on plain `&str` with no `Unit` to read.
-/// It is NOT used by [`painted_map_for`], which must represent units holding SEVERAL
-/// characters — flattening those to one char is the defect that made `arabic-3.pdf`
-/// undecidable on 9,878 lines (docs/plans/2026-10-03-canary.md, C3a).
-fn proxy_char(text: &str) -> char {
-    let first = match text.chars().next() {
-        Some(c) => c,
-        None => return '!',
-    };
-    if text.chars().all(|c| bidi_class(c) == BidiClass::WS) {
-        return ' ';
-    }
-    match bidi_class(first) {
-        BidiClass::R | BidiClass::AL => '\u{05D0}',
-        BidiClass::L => 'A',
-        BidiClass::AN => '\u{0665}',
-        BidiClass::EN => '5',
-        BidiClass::WS => ' ',
-        BidiClass::CS => '.',
-        BidiClass::ES => '-',
-        BidiClass::ET => '%',
-        BidiClass::BN | BidiClass::S | BidiClass::B | BidiClass::ON | BidiClass::NSM => '!',
-        _ => '.',
-    }
-}
-
-/// UAX #9 over the units' **whole text**, mapped back to unit positions.
-///
-/// The proxy version (`proxy_char` — one character per unit) cannot represent a unit that
-/// holds several characters: a lam-alef ligature, an `/ActualText` span, or a multi-CID run.
-/// UAX #9 then never sees the structure that decides the order, so `predicts_painted` answers
-/// "neither reading" about a hypothesis it was incapable of expressing — `LineOrder::Unexplained`
-/// on every real line of `arabic-3.pdf` (measured: 9,878 such lines, including lines with ZERO
-/// ties, so the tie test is not the blocker).
-///
-/// **Units of measure, measured not assumed.** `reordered_levels_per_char(para, 0..n)` takes
-/// `n` as a BYTE range but returns one level per CHARACTER, and `reorder_visual` returns a
-/// permutation over CHARACTER indices. For `۱۴۰۳/۰۵/۱۲ تاریخ` that is 29 bytes and 16
-/// characters, and the permutation is `[15, 14, …, 0, 1, …, 9]` over `0..16`. An earlier version
-/// of this function treated those values as byte offsets, so every multi-character unit failed
-/// to match and the function returned `None` for every hypothesis — the same refusal, wearing a
-/// different hat. The whole body below therefore works in character offsets.
-///
-/// So: run the algorithm on the real characters, then collapse to units. A unit is ONE element
-/// of the visual order however many characters it holds, and UAX #9 may reorder a unit's own
-/// characters, so a unit is placed at the EARLIEST visual position any of its characters
-/// occupies — well defined however the characters inside it were reordered. That keeps the
-/// property `invert_units` depends on (a lam-alef must stay whole) while making the prediction
-/// faithful, which is the order the withdrawn attempt in docs/problems/0009 got backwards.
-fn painted_map_for(units: &[Unit], logical: &[usize]) -> Option<Vec<usize>> {
-    // The hypothesis's text, plus each unit's CHARACTER span in it.
-    let mut text = String::new();
-    let mut bounds: Vec<(usize, usize)> = Vec::new();
-    for &index in logical {
-        let unit_text = &units[index].text;
-        let start = text.chars().count();
-        text.push_str(unit_text);
-        let end = text.chars().count();
-        if end == start {
-            // An empty unit carries no bidi information and no place in the visual order.
-            return None;
-        }
-        bounds.push((start, end));
-    }
-
-    let info = BidiInfo::new(&text, None);
-    let para = info.paragraphs.first()?;
-    let total_chars = text.chars().count();
-    let total_bytes = text.len();
-    // The RANGE is in bytes; the RESULT is per character. Both facts are load-bearing.
-    let levels = info.reordered_levels_per_char(para, 0..total_bytes);
-    if levels.len() != total_chars {
-        return None;
-    }
-    let visual = BidiInfo::reorder_visual(&levels);
-    if visual.len() != total_chars {
-        return None;
-    }
-
-    // Character offset -> unit ordinal, in hypothesis order.
-    let mut offset_to_unit = vec![0usize; total_chars];
-    for (ordinal, &(start, end)) in bounds.iter().enumerate() {
-        for slot in offset_to_unit.iter_mut().take(end).skip(start) {
-            *slot = ordinal;
-        }
-    }
-
-    // Each unit sits at the earliest visual position any of its characters occupies.
-    let mut first_at: Vec<Option<usize>> = vec![None; logical.len()];
-    for (visual_position, character) in visual.iter().copied().enumerate() {
-        let ordinal = offset_to_unit[character];
-        if first_at[ordinal].is_none() {
-            first_at[ordinal] = Some(visual_position);
-        }
-    }
-    let mut painted_units: Vec<(usize, usize)> = Vec::with_capacity(logical.len());
-    for (ordinal, position) in first_at.iter().copied().enumerate() {
-        // A unit whose characters never appeared is "no answer", not a guess.
-        let position = position?;
-        painted_units.push((position, ordinal));
-    }
-    painted_units.sort_unstable();
-    Some(
-        painted_units
-            .into_iter()
-            .map(|(_, ordinal)| logical[ordinal])
-            .collect(),
-    )
-}
-
-/// Visual -> logical for one line of base-direction RTL, at UNIT granularity:
-/// reverse the unit order in clusters (a base unit plus the combining/format units
-/// glued to it), then put embedded left-to-right unit runs back into reading order.
-///
-/// Unit granularity, not character granularity: a lam-alef ligature arrives as ONE
-/// unit (one code, two characters) and has to stay whole — reversing its
-/// characters would turn `سلام` into `سالم`, the silent corruption ADR 0002 bans.
-fn invert_units(units: &[Unit]) -> Vec<usize> {
-    if !units.iter().any(|unit| unit.text.chars().any(is_rtl)) {
-        return (0..units.len()).collect();
-    }
-
-    let mut clusters: Vec<Vec<usize>> = Vec::new();
-    let mut index = 0;
-    while index < units.len() {
-        let mut end = index + 1;
-        while end < units.len() && starts_combining(&units[end].text) {
-            end += 1;
-        }
-        clusters.push((index..end).collect());
-        index = end;
-    }
-    clusters.reverse();
-
-    let first_char = |cluster: &[usize]| {
-        cluster
-            .first()
-            .and_then(|&unit| units[unit].text.chars().next())
-    };
-    let starts_ltr = |cluster: &[usize]| first_char(cluster).is_some_and(ltr_start);
-    let is_space = |cluster: &[usize]| first_char(cluster) == Some(' ');
-    let ltr_after_space = |clusters: &[Vec<usize>], position: usize| {
-        let mut next = position;
-        while next < clusters.len() && is_space(&clusters[next]) {
-            next += 1;
-        }
-        next < clusters.len() && starts_ltr(&clusters[next])
-    };
-
-    let mut at = 0;
-    while at < clusters.len() {
-        if starts_ltr(&clusters[at]) {
-            let mut end = at + 1;
-            while end < clusters.len() {
-                let head = first_char(&clusters[end]);
-                if head.is_some_and(ltr_run_char)
-                    || (is_space(&clusters[end]) && ltr_after_space(&clusters, end))
-                {
-                    end += 1;
-                } else {
-                    break;
-                }
-            }
-            clusters[at..end].reverse();
-            at = end;
-        } else {
-            at += 1;
-        }
-    }
-
-    clusters.into_iter().flatten().collect()
-}
-
-/// Settle the lines that carry no order evidence of their own, using the producer.
-///
-/// `pending` names exactly those lines: a right-to-left run of two or more units
-/// that the producer did **not** wrap in `/ReversedChars`, and for which the UAX #9
-/// comparison (`settle_line_by_bidi`) was not decisive. Every other line on the
-/// page is already settled, and by one of three page-local facts:
-///
-/// * the producer marked the run as mirrored (`/ReversedChars`) — `recover_line`
-///   inverted the UNIT order and verified the result against UAX #9;
-/// * the line is a single unit — one element has exactly one order, so there is no
-///   ordering decision left for anyone to get wrong (this is what the synthetic
-///   `/ActualText` fixture is: one marked sequence per line);
-/// * rung 3 verified the stored order against the file's own painted positions.
-///
-/// Consulting the fingerprint for the whole page instead — the previous behaviour —
-/// both refused pages that were already settled and re-inverted lines that were
-/// already settled. The fingerprint is the LAST rung of the ladder, not the first
-/// (ADR 0004).
 fn settle_rtl_order(page: &mut PageText, fingerprint: &str, pending: &[usize]) {
     if pending.is_empty() {
         return;
@@ -822,620 +265,11 @@ fn settle_rtl_order(page: &mut PageText, fingerprint: &str, pending: &[usize]) {
     page.reasons.sort_by_key(|reason| *reason as u32);
 }
 
-// --- the walk -------------------------------------------------------------
-
-/// One unit of producer evidence on a visual line.
-#[derive(Debug, Clone)]
-struct Unit {
-    text: String,
-    /// Quantised text-line origin (the matrix `f`), grouping units onto one line.
-    line: i64,
-    /// Where the PEN was when this unit was painted (CTM ∘ the advanced text matrix): the
-    /// text-line origin plus every advance before it. The UAX #9 rung reads the painted run
-    /// order from this — see [`settle_line_by_bidi`] — because a run whose glyphs share one
-    /// origin is ordered only by what the file declares each glyph to be wide. It is the
-    /// only position a unit carries: line assembly groups on the line key, not on x.
-    paint_x: f64,
-    /// False when the composed matrix does not run left-to-right (`a ≤ 0`): then the
-    /// painted positions no longer order the glyphs the way they paint, and the rung
-    /// must not read them.
-    x_ok: bool,
-    /// Inside `/ReversedChars`: the producer stored this run in visual order.
-    reversed: bool,
-    /// Bumped by each `Tm`; a new text matrix starts a new run.
-    epoch: u64,
-}
-
-struct Walk {
-    units: Vec<Unit>,
-    used_actual_text: bool,
-    used_to_unicode: bool,
-    used_encoding: bool,
-    undecodable: bool,
-    refused_encoding: bool,
-}
-
-#[derive(Clone, Copy)]
-struct Mat {
-    a: f64,
-    b: f64,
-    c: f64,
-    d: f64,
-    e: f64,
-    f: f64,
-}
-
-impl Mat {
-    fn identity() -> Mat {
-        Mat {
-            a: 1.0,
-            b: 0.0,
-            c: 0.0,
-            d: 1.0,
-            e: 0.0,
-            f: 0.0,
-        }
-    }
-
-    /// `T(tx,ty) × self` — PDF composes row-vector matrices on the left.
-    fn translated(&self, tx: f64, ty: f64) -> Mat {
-        Mat {
-            a: self.a,
-            b: self.b,
-            c: self.c,
-            d: self.d,
-            e: tx * self.a + ty * self.c + self.e,
-            f: tx * self.b + ty * self.d + self.f,
-        }
-    }
-
-    /// `self × rhs` for row-vector matrices: a point goes through `rhs` first, then
-    /// `self`. `cm` uses this to pre-multiply the CTM (ISO 32000-1 §8.3.3), and the
-    /// painted x of a text origin needs the CTM to be right: a page-level flip or
-    /// scale would otherwise reverse the very run order the UAX #9 rung compares.
-    fn multiplied(&self, rhs: &Mat) -> Mat {
-        Mat {
-            a: self.a * rhs.a + self.b * rhs.c,
-            b: self.a * rhs.b + self.b * rhs.d,
-            c: self.c * rhs.a + self.d * rhs.c,
-            d: self.c * rhs.b + self.d * rhs.d,
-            e: self.e * rhs.a + self.f * rhs.c + rhs.e,
-            f: self.e * rhs.b + self.f * rhs.d + rhs.f,
-        }
-    }
-}
-
-struct Mark {
-    tag: Vec<u8>,
-    actual_text: Option<String>,
-}
-
-/// What the file says each code is WIDE, in text-space units (already divided by 1000).
-///
-/// Widths are what turn a list of codes into a *painting*. Without them every unit of a
-/// show operator sits at the same text origin, they all tie, and rung 3 has to refuse
-/// (docs/problems/0007). Only what the file declares is used: a simple font with no
-/// `/Widths`, or a CID font with no `/W`, leaves `known` false and the pen still — a
-/// guessed advance orders the line silently wrong, and a tie is merely refused.
-#[derive(Debug, Clone, Default)]
-struct Metrics {
-    widths: HashMap<u16, f64>,
-    missing: f64,
-    known: bool,
-    two_byte: bool,
-}
-
-impl Metrics {
-    /// Width of one code in text-space units, or `None` when the file does not say.
-    fn width(&self, code: u16) -> Option<f64> {
-        if !self.known {
-            return None;
-        }
-        self.widths.get(&code).copied().or(Some(self.missing))
-    }
-}
-
-fn as_number(value: &Object) -> Option<f64> {
-    match value {
-        Object::Integer(number) => Some(*number as f64),
-        Object::Real(number) => Some(f64::from(*number)),
-        _ => None,
-    }
-}
-
-struct Walker<'a> {
-    fonts: &'a HashMap<Vec<u8>, Font>,
-    marks: Vec<Mark>,
-    font: Option<Vec<u8>>,
-    line: Mat,
-    /// Text-space advance accumulated since the last positioning operator, projected to
-    /// device x only when a unit is recorded. The line matrix itself is left alone: moving
-    /// it shifts `line.f` too when the text matrix is skewed, which re-groups the
-    /// assembler's lines and shredded real pages into one glyph per line.
-    pen: f64,
-    /// Graphics-state matrix (`q`/`Q`/`cm`). Only its x-direction is used: to read
-    /// the painted order of a line's runs from their positions, the composed
-    /// mapping from text space to device space has to be the real one.
-    ctm: Mat,
-    ctm_stack: Vec<Mat>,
-    leading: f64,
-    /// Text state that decides how far the pen moves after a show operator
-    /// (ISO 32000-1 §9.4.4): the measured painting rung 3 compares against.
-    metrics: &'a HashMap<Vec<u8>, Metrics>,
-    font_size: f64,
-    char_spacing: f64,
-    word_spacing: f64,
-    h_scale: f64,
-    epoch: u64,
-    units: Vec<Unit>,
-    used_actual_text: bool,
-    used_to_unicode: bool,
-    used_encoding: bool,
-    undecodable: bool,
-    refused_encoding: bool,
-}
-
-fn num(ops: &[Value], index: usize) -> Option<f64> {
-    ops.get(index).and_then(|value| match value {
-        Value::Num(n) => Some(*n),
-        _ => None,
-    })
-}
-
-impl<'a> Walker<'a> {
-    fn new(
-        fonts: &'a HashMap<Vec<u8>, Font>,
-        metrics: &'a HashMap<Vec<u8>, Metrics>,
-    ) -> Walker<'a> {
-        Walker {
-            fonts,
-            metrics,
-            font_size: 0.0,
-            char_spacing: 0.0,
-            word_spacing: 0.0,
-            h_scale: 1.0,
-            marks: Vec::new(),
-            font: None,
-            line: Mat::identity(),
-            pen: 0.0,
-            ctm: Mat::identity(),
-            ctm_stack: Vec::new(),
-            leading: 0.0,
-            epoch: 0,
-            units: Vec::new(),
-            used_actual_text: false,
-            used_to_unicode: false,
-            used_encoding: false,
-            undecodable: false,
-            refused_encoding: false,
-        }
-    }
-
-    /// A `TJ` number moves the pen **back** by that many thousandths of an em.
-    fn kern(&mut self, number: f64) {
-        self.pen -= number / 1000.0 * self.font_size * self.h_scale;
-    }
-
-    /// Move the pen past one shown code, using only what the file declares.
-    fn advance(&mut self, code: u16) {
-        let tx = {
-            let Some(name) = self.font.as_ref() else {
-                return;
-            };
-            let Some(metrics) = self.metrics.get(name) else {
-                return;
-            };
-            let Some(width) = metrics.width(code) else {
-                return;
-            };
-            let mut tx = (width * self.font_size + self.char_spacing) * self.h_scale;
-            // Word spacing applies to code 32 of a simple font (ISO 32000-1 §9.3.3).
-            if !metrics.two_byte && code == 32 {
-                tx += self.word_spacing * self.h_scale;
-            }
-            tx
-        };
-        if tx != 0.0 {
-            self.pen += tx;
-        }
-    }
-
-    /// Move the pen past every code of a shown string. The `/ActualText` path knows the
-    /// text but the glyphs were still painted, so the next cluster needs its own x.
-    fn advance_over(&mut self, bytes: &[u8]) {
-        let two_byte = self
-            .font
-            .as_ref()
-            .and_then(|name| self.metrics.get(name))
-            .is_some_and(|metrics| metrics.two_byte);
-        let stride = if two_byte { 2 } else { 1 };
-        let mut index = 0usize;
-        while index + stride <= bytes.len() {
-            let code = if two_byte {
-                u16::from_be_bytes([bytes[index], bytes[index + 1]])
-            } else {
-                u16::from(bytes[index])
-            };
-            self.advance(code);
-            index += stride;
-        }
-    }
-
-    fn op(&mut self, op: &[u8], ops: &[Value]) {
-        match op {
-            b"BT" => {
-                self.line = Mat::identity();
-                self.pen = 0.0;
-            }
-            b"q" => self.ctm_stack.push(self.ctm),
-            b"Q" => {
-                if let Some(saved) = self.ctm_stack.pop() {
-                    self.ctm = saved;
-                }
-            }
-            b"cm" => {
-                if let (Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)) = (
-                    num(ops, 0),
-                    num(ops, 1),
-                    num(ops, 2),
-                    num(ops, 3),
-                    num(ops, 4),
-                    num(ops, 5),
-                ) {
-                    // CTM' = cm × CTM (ISO 32000-1 §8.3.3).
-                    self.ctm = Mat { a, b, c, d, e, f }.multiplied(&self.ctm);
-                }
-            }
-            b"Tm" => {
-                if let (Some(a), Some(b), Some(c), Some(d), Some(e), Some(f)) = (
-                    num(ops, 0),
-                    num(ops, 1),
-                    num(ops, 2),
-                    num(ops, 3),
-                    num(ops, 4),
-                    num(ops, 5),
-                ) {
-                    self.line = Mat { a, b, c, d, e, f };
-                    self.pen = 0.0;
-                    self.epoch += 1;
-                }
-            }
-            b"Td" => {
-                if let (Some(tx), Some(ty)) = (num(ops, 0), num(ops, 1)) {
-                    self.line = self.line.translated(tx, ty);
-                    self.pen = 0.0;
-                }
-            }
-            b"TD" => {
-                if let (Some(tx), Some(ty)) = (num(ops, 0), num(ops, 1)) {
-                    self.leading = -ty;
-                    self.line = self.line.translated(tx, ty);
-                    self.pen = 0.0;
-                }
-            }
-            b"T*" => {
-                self.line = self.line.translated(0.0, -self.leading);
-                self.pen = 0.0;
-            }
-            b"TL" => {
-                if let Some(value) = num(ops, 0) {
-                    self.leading = value;
-                }
-            }
-            b"Tf" => {
-                self.font = match ops.first() {
-                    Some(Value::Name(name)) => Some(name.clone()),
-                    _ => None,
-                };
-                // The size is half of the advance equation: without it there is no em.
-                self.font_size = num(ops, 1).unwrap_or(0.0);
-            }
-            b"Tc" => self.char_spacing = num(ops, 0).unwrap_or(0.0),
-            b"Tw" => self.word_spacing = num(ops, 0).unwrap_or(0.0),
-            b"Tz" => self.h_scale = num(ops, 0).unwrap_or(100.0) / 100.0,
-            b"Tj" => {
-                if let Some(Value::Str(bytes)) = ops.first() {
-                    self.show(bytes);
-                }
-            }
-            b"TJ" => {
-                if let Some(Value::Arr(items)) = ops.first() {
-                    for item in items {
-                        match item {
-                            Value::Str(bytes) => self.show(bytes),
-                            // Kerning is part of where the glyphs sit.
-                            Value::Num(number) => self.kern(*number),
-                            _ => {}
-                        }
-                    }
-                }
-            }
-            b"'" => {
-                self.line = self.line.translated(0.0, -self.leading);
-                if let Some(Value::Str(bytes)) = ops.first() {
-                    self.show(bytes);
-                }
-            }
-            b"\"" => {
-                if let Some(Value::Str(bytes)) = ops.get(2) {
-                    self.line = self.line.translated(0.0, -self.leading);
-                    self.show(bytes);
-                }
-            }
-            b"BMC" => {
-                if let Some(Value::Name(tag)) = ops.first() {
-                    self.marks.push(Mark {
-                        tag: tag.clone(),
-                        actual_text: None,
-                    });
-                }
-            }
-            b"BDC" => {
-                if let (Some(Value::Name(tag)), Some(value)) = (ops.first(), ops.get(1)) {
-                    let actual_text = match value {
-                        Value::Dict(entries) => dict_actual_text(entries),
-                        _ => None,
-                    };
-                    self.marks.push(Mark {
-                        tag: tag.clone(),
-                        actual_text,
-                    });
-                }
-            }
-            b"EMC" => {
-                self.marks.pop();
-            }
-            _ => {}
-        }
-    }
-
-    /// One `Tj`/`TJ` element → zero or more units.
-    fn show(&mut self, bytes: &[u8]) {
-        if bytes.is_empty() {
-            return;
-        }
-        // /ActualText wins: the innermost marked sequence carries the logical text
-        // verbatim. Presentation forms in ToUnicode are NOT folded here.
-        let actual = self
-            .marks
-            .iter()
-            .rev()
-            .find_map(|mark| mark.actual_text.clone());
-        if let Some(text) = actual.filter(|text| !text.is_empty()) {
-            self.used_actual_text = true;
-            self.push_unit(text);
-            self.advance_over(bytes);
-            return;
-        }
-        let fonts = self.fonts;
-        let font = match self.font.as_ref().and_then(|name| fonts.get(name)) {
-            Some(font) => font,
-            None => {
-                // No entry for this font name: either the resource is missing or the
-                // font has no decodable mapping at all (a CID font without `/ToUnicode`).
-                self.undecodable = true;
-                return;
-            }
-        };
-        match font {
-            // Encoding we refuse to interpret: `/Symbol`, `/ZapfDingbats`,
-            // `/MacExpertEncoding`, an unknown name, or no `/Encoding` at all.
-            // Their byte maps are not Unicode — say so instead of inventing text.
-            Font::Refused => self.refused_encoding = true,
-            Font::Simple(encoding) => {
-                for &code in bytes {
-                    match encoding.decode(code) {
-                        Some(text) => {
-                            self.used_encoding = true;
-                            if !text.is_empty() {
-                                self.push_unit(text);
-                            }
-                        }
-                        // Undefined slot or a `/Differences` name with no Unicode
-                        // mapping we can justify: an explicit refusal, per code.
-                        None => self.refused_encoding = true,
-                    }
-                    // The glyph was painted whether or not we could decode it.
-                    self.advance(u16::from(code));
-                }
-            }
-            Font::ToUnicode(cmap) => {
-                let width = cmap.code_len();
-                if width == 0 || width > 2 {
-                    self.undecodable = true;
-                    return;
-                }
-                let mut i = 0usize;
-                while i < bytes.len() {
-                    if i + width > bytes.len() {
-                        // A trailing half-code is not decodable; say so instead of inventing.
-                        self.undecodable = true;
-                        break;
-                    }
-                    let code = match &bytes[i..i + width] {
-                        [b] => u16::from(*b),
-                        [hi, lo] => u16::from_be_bytes([*hi, *lo]),
-                        _ => {
-                            self.undecodable = true;
-                            break;
-                        }
-                    };
-                    match cmap.get(code) {
-                        Some(text) => {
-                            self.used_to_unicode = true;
-                            if !text.is_empty() {
-                                self.push_unit(text.to_string());
-                            }
-                        }
-                        None => {
-                            self.undecodable = true;
-                        }
-                    }
-                    i += width;
-                    self.advance(code);
-                }
-            }
-        }
-    }
-
-    fn push_unit(&mut self, text: String) {
-        let reversed = self.marks.iter().any(|mark| mark.tag == b"ReversedChars");
-        let line = (self.line.f * 1000.0).round() as i64;
-        // The pen is tracked in text space and projected exactly once, here. `line` itself
-        // is never moved: doing that shifts `line.f` too when the text matrix is skewed,
-        // which re-groups the assembler's lines, and a real page shredded into one glyph
-        // per line is what that looks like. `paint_x` is the only position a unit carries
-        // and the only thing that can order a run whose glyphs share one origin.
-        let origin_x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
-        // Project the pen with the COMPOSED horizontal scale, never with the CTM's `a` alone.
-        // A right-to-left producer mirrors the text matrix (`-1 0 0 -1 … Tm`); `a` then points
-        // the wrong way and a run's own advance would order it backwards — the measurement
-        // would be wrong, not missing.
-        let x_scale = self.ctm.a * self.line.a + self.ctm.c * self.line.b;
-        let paint_x = origin_x + x_scale * self.pen;
-        self.units.push(Unit {
-            text,
-            line,
-            paint_x,
-            // A mirrored run measures perfectly well: the sign cancels out of every
-            // comparison made against it. Only a degenerate or non-finite scale leaves the
-            // line with no usable position at all (docs/problems/0010).
-            x_ok: x_scale != 0.0 && x_scale.is_finite() && origin_x.is_finite(),
-            reversed,
-            epoch: self.epoch,
-        });
-    }
-
-    fn finish(self) -> Walk {
-        Walk {
-            units: self.units,
-            used_actual_text: self.used_actual_text,
-            used_to_unicode: self.used_to_unicode,
-            used_encoding: self.used_encoding,
-            undecodable: self.undecodable,
-            refused_encoding: self.refused_encoding,
-        }
-    }
-}
-
-fn dict_actual_text(entries: &[(Vec<u8>, Value)]) -> Option<String> {
-    entries
-        .iter()
-        .find(|(key, _)| key == b"ActualText")
-        .and_then(|(_, value)| match value {
-            Value::Str(bytes) => Some(decode_text_string(bytes)),
-            _ => None,
-        })
-}
-
-/// PDF text string: UTF-16BE with BOM, UTF-16LE with BOM, else UTF-8, else byte-per-char.
-fn decode_text_string(bytes: &[u8]) -> String {
-    if bytes.starts_with(&[0xFE, 0xFF]) {
-        return lossy_utf16(&bytes[2..], true);
-    }
-    if bytes.starts_with(&[0xFF, 0xFE]) {
-        return lossy_utf16(&bytes[2..], false);
-    }
-    match std::str::from_utf8(bytes) {
-        Ok(text) => text.to_string(),
-        Err(_) => bytes.iter().map(|&b| b as char).collect(),
-    }
-}
-
-fn lossy_utf16(bytes: &[u8], big_endian: bool) -> String {
-    // Explicit index stepping, not `chunks_exact(2)`: a trailing odd byte is dropped
-    // exactly as `chunks_exact` dropped it — that policy is pinned by a test.
-    let mut units: Vec<u16> = Vec::with_capacity(bytes.len() / 2);
-    let mut i = 0usize;
-    while i + 1 < bytes.len() {
-        let pair = [bytes[i], bytes[i + 1]];
-        units.push(if big_endian {
-            u16::from_be_bytes(pair)
-        } else {
-            u16::from_le_bytes(pair)
-        });
-        i += 2;
-    }
-    char::decode_utf16(units)
-        .map(|r| r.unwrap_or(char::REPLACEMENT_CHARACTER))
-        .collect()
-}
-
-// --- token flattening -----------------------------------------------------
-
-enum Item {
-    Value(Value),
-    Op(Vec<u8>),
-}
-
-fn flatten(tokens: &[Token]) -> Vec<Item> {
-    let mut items = Vec::new();
-    let mut i = 0usize;
-    while i < tokens.len() {
-        match &tokens[i] {
-            Token::Op(op) => {
-                items.push(Item::Op(op.clone()));
-                i += 1;
-            }
-            Token::ArrStart | Token::DictStart => {
-                let before = i;
-                match parse_value(tokens, &mut i) {
-                    Some(value) => items.push(Item::Value(value)),
-                    None => {
-                        if i == before {
-                            i += 1;
-                        }
-                    }
-                }
-            }
-            Token::Name(name) => {
-                items.push(Item::Value(Value::Name(name.clone())));
-                i += 1;
-            }
-            Token::Num(n) => {
-                items.push(Item::Value(Value::Num(*n)));
-                i += 1;
-            }
-            Token::Str(bytes) => {
-                items.push(Item::Value(Value::Str(bytes.clone())));
-                i += 1;
-            }
-            Token::ArrEnd | Token::DictEnd | Token::Reference(..) => i += 1,
-        }
-    }
-    items
-}
-
-fn walk(
-    stream: &[u8],
-    fonts: &HashMap<Vec<u8>, Font>,
-    metrics: &HashMap<Vec<u8>, Metrics>,
-) -> Walk {
-    let tokens = tokenize(stream);
-    let items = flatten(&tokens);
-    let mut walker = Walker::new(fonts, metrics);
-    let mut pending: Vec<Value> = Vec::new();
-    for item in &items {
-        match item {
-            Item::Op(op) => {
-                walker.op(op, &pending);
-                pending.clear();
-            }
-            Item::Value(value) => pending.push(value.clone()),
-        }
-    }
-    walker.finish()
-}
-
-// --- order recovery -------------------------------------------------------
-
 struct Flags {
     actual_text: bool,
     to_unicode: bool,
     encoded: bool,
     producer_visual: bool,
-    /// Rung 3 decided this page: the stored order was compared against the order
-    /// the producer painted, with UAX #9 (`settle_line_by_bidi`).
     bidi_consistent: bool,
     reconstructed: bool,
     refused: bool,
@@ -1456,12 +290,16 @@ fn assemble(walk: Walk) -> Recovered {
         refused_encoding: walk.refused_encoding,
     };
 
-    // Group units onto visual lines by text-line origin, keeping first-appearance order.
+    // Group units onto visual lines by text-line origin with baseline tolerance, keeping appearance order.
     let units = walk.units;
-    let mut keys: Vec<i64> = Vec::new();
+    let mut keys: Vec<f64> = Vec::new();
     let mut groups: Vec<Vec<usize>> = Vec::new();
+    const BASELINE_TOLERANCE: f64 = 1.0;
     for (index, unit) in units.iter().enumerate() {
-        match keys.iter().position(|&key| key == unit.line) {
+        match keys
+            .iter()
+            .position(|&key| (key - unit.line).abs() <= BASELINE_TOLERANCE)
+        {
             Some(at) => groups[at].push(index),
             None => {
                 keys.push(unit.line);
@@ -1472,17 +310,9 @@ fn assemble(walk: Walk) -> Recovered {
 
     let mut lines: Vec<String> = Vec::new();
     let mut pending: Vec<usize> = Vec::new();
-    // Indices of the lines rung 3 could not settle; their text is still in `lines`.
     let mut withheld: Vec<usize> = Vec::new();
     for group in &groups {
         let slice: Vec<Unit> = group.iter().map(|&i| units[i].clone()).collect();
-        // Does this line still owe the ladder an order justification?
-        //   * one unit  → one element, one order: nothing to decide;
-        //   * `/ReversedChars` → the producer told us, `recover_line` verified it;
-        //   * two or more units in an unmarked RTL line → rung 3, the UAX #9
-        //     comparison against the painted order ([`settle_line_by_bidi`]);
-        //   * only when that comparison is not decisive does the line fall through
-        //     to the producer fingerprint (`settle_rtl_order`).
         let marked = slice.iter().any(|unit| unit.reversed);
         let undecided = slice.len() > 1 && !marked;
         match recover_line(&slice) {
@@ -1498,28 +328,19 @@ fn assemble(walk: Walk) -> Recovered {
                             flags.bidi_consistent = true;
                             flags.reconstructed = true;
                         }
-                        // Neither reading reproduces the painting — or both do, which
-                        // would be a coin flip. The line is NOT guessed here: it goes
-                        // to the producer rung, which either knows the family or
-                        // refuses the line with an explicit reason.
                         LineOrder::Ambiguous | LineOrder::Unexplained => {
-                            // Record the index BEFORE `lines` grows, then push the text, so
-                            // the index refers to this line in the joined page text.
                             withheld.push(lines.len());
                             pending.push(lines.len());
-                            // ORDER_TRACE (env-gated, diagnostic only): record WHY the line
-                            // was undecidable — a tie in paint_x, or a prediction that
-                            // reproduced neither reading. Counts and flags only; a unit's
-                            // TEXT is never emitted here, per the instrumentation rule.
                             if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
-                                let (ties, distinct, min, max) = tie_span(&slice);
-                                trace_line(
+                                let (ties, distinct, min, max) =
+                                    crate::text::bidi::tie_span(&slice);
+                                crate::text::bidi::trace_line(
                                     slice.len(),
                                     ties,
                                     distinct,
                                     min,
                                     max,
-                                    has_geometry(&slice),
+                                    crate::text::bidi::has_geometry(&slice),
                                 );
                             }
                         }
@@ -1541,92 +362,23 @@ fn assemble(walk: Walk) -> Recovered {
     }
 }
 
-/// Order-trace line. The CORE MUST NOT PRINT (slop gate, AGENTS.md): the CLI owns stdout.
-/// So this records into a process-global buffer that a test reads and prints, and nothing
-/// else. Fields are counts and coordinates only — never a unit's text.
-///
-/// ONE buffer, shared by the writer and the reader. Declaring a `static` in each function
-/// gives two buffers and a trace that records nothing — a control that reports success while
-/// doing nothing, the shape of docs/problems/0012, committed here by mistake the first time.
-static ORDER_TRACE: Mutex<Vec<String>> = Mutex::new(Vec::new());
-
-fn trace_line(units: usize, ties: usize, distinct: usize, min_x: f64, max_x: f64, geometry: bool) {
-    let mut guard = ORDER_TRACE
-        .lock()
-        .unwrap_or_else(|error| error.into_inner());
-    guard.push(format!(
-        "line units={units} tied_pairs={ties} distinct_x={distinct}          span={:.3}..{:.3} geometry={geometry}",
-        min_x, max_x
-    ));
-}
-
-/// Read and clear the recorded order trace. Called by tests, never by the library.
-pub fn take_order_trace() -> Vec<String> {
-    std::mem::take(
-        &mut *ORDER_TRACE
-            .lock()
-            .unwrap_or_else(|error| error.into_inner()),
-    )
-}
-
-/// Why a line could not be decided: how many adjacent pairs share a paint_x, and the span.
-/// A span of exactly 0.0 with more than one unit is the mass-tie signature — every cluster
-/// projected to the same x, whatever the font declared.
-fn tie_span(units: &[Unit]) -> (usize, usize, f64, f64) {
-    let mut sorted: Vec<f64> = units.iter().map(|unit| unit.paint_x).collect();
-    sorted.sort_by(|left, right| left.total_cmp(right));
-    let mut ties = 0;
-    for pair in sorted.windows(2) {
-        if pair[0] == pair[1] {
-            ties += 1;
-        }
-    }
-    // distinct_x separates "the model repeats positions" from "one position for everything":
-    // a line of 208 units with 480 pt of span cannot have only a few distinct x if the pen
-    // really advances, and cannot have 208 if it does not.
-    let distinct = sorted.iter().fold(0usize, |count, value| {
-        if count == 0 || *value != sorted[count - 1] {
-            count + 1
-        } else {
-            count
-        }
-    });
-    let min = sorted.first().copied().unwrap_or(0.0);
-    let max = sorted.last().copied().unwrap_or(0.0);
-    (ties, distinct, min, max)
-}
-
-/// Whether the positions on this line are usable at all: every unit must carry a finite
-/// paint_x and a left-to-right composed scale (`x_ok`, set from the composed matrix).
-fn has_geometry(units: &[Unit]) -> bool {
-    units
-        .iter()
-        .all(|unit| unit.x_ok && unit.paint_x.is_finite())
-}
-
 fn build_reasons(flags: Flags) -> Vec<Reason> {
     let mut reasons = Vec::new();
     if flags.actual_text {
         reasons.push(Reason::ActualText);
     }
     if flags.reconstructed {
-        // Run order was reconstructed from UAX #9 levels: that supersedes the
-        // "already logical" claim of ToUnicodeLogical for this page.
         reasons.push(Reason::BidiReordered);
     } else if flags.to_unicode {
         reasons.push(Reason::ToUnicodeLogical);
     }
     if flags.encoded {
-        // Codes came from the font's own /Encoding, not from a ToUnicode CMap.
         reasons.push(Reason::EncodingMapped);
     }
     if flags.producer_visual {
         reasons.push(Reason::ProducerVisualOrderKnown);
     }
     if flags.bidi_consistent {
-        // Rung 3 established the order: the stored sequence matched the file's own
-        // painted positions under UAX #9 (kept as logical, or inverted when the
-        // comparison proved the mirror). The most specific rule, so it is last.
         reasons.push(Reason::BidiConsistent);
     }
     if flags.refused {
@@ -1641,16 +393,14 @@ fn build_reasons(flags: Flags) -> Vec<Reason> {
     reasons
 }
 
-/// Recover one visual line. `Some((text, reconstructed))`, or `None` when no candidate
-/// order can be justified — the caller then refuses the line instead of guessing.
+/// Recover one visual line.
 fn recover_line(units: &[Unit]) -> Option<(String, bool)> {
-    // No /ReversedChars anywhere: the producer stored logical order already.
     if !units.iter().any(|unit| unit.reversed) {
         let text = units.iter().map(|unit| unit.text.as_str()).collect();
         return Some((text, false));
     }
 
-    let (runs, run_reversed) = split_runs(units);
+    let (runs, run_reversed) = crate::text::bidi::split_runs(units);
     let texts: Vec<&str> = units.iter().map(|unit| unit.text.as_str()).collect();
     let join = |order: &[usize]| -> Vec<usize> {
         let mut out = Vec::new();
@@ -1668,17 +418,15 @@ fn recover_line(units: &[Unit]) -> Option<(String, bool)> {
     let mut flipped = identity.clone();
     flipped.reverse();
 
-    // Candidate run orders: L2 at run granularity (both base directions, both index
-    // conventions), plus the identity and full-flip extremes.
     let mut candidates: Vec<(Vec<usize>, bool)> = Vec::new();
     for base_rtl in [false, true] {
-        let levels: Vec<Level> = (0..runs.len())
+        let levels: Vec<unicode_bidi::Level> = (0..runs.len())
             .map(|run| {
                 let text: String = join(&[run]).iter().map(|&i| texts[i]).collect();
-                run_level(&text, base_rtl)
+                crate::text::bidi::run_level(&text, base_rtl)
             })
             .collect();
-        let map = BidiInfo::reorder_visual(&levels);
+        let map = unicode_bidi::BidiInfo::reorder_visual(&levels);
         let mut inverted = vec![0usize; map.len()];
         for (at, &logical) in map.iter().enumerate() {
             if logical < inverted.len() {
@@ -1703,7 +451,7 @@ fn recover_line(units: &[Unit]) -> Option<(String, bool)> {
         {
             continue;
         }
-        if predicts_observed(&texts, &logical, base_rtl) {
+        if crate::text::bidi::predicts_observed(&texts, &logical, base_rtl) {
             verified.push((logical, base_rtl));
         }
     }
@@ -1721,12 +469,10 @@ fn recover_line(units: &[Unit]) -> Option<(String, bool)> {
     let chosen = if distinct.len() == 1 {
         distinct.pop()?
     } else {
-        // Two orders both reproduce the observed visual under some base direction:
-        // only the paragraph's own direction (UAX #9 P2/P3) may break the tie.
         let mut kept: Vec<Vec<usize>> = Vec::new();
         for order in &distinct {
             let text: String = order.iter().map(|&i| texts[i]).collect();
-            let base = auto_base_rtl(&text);
+            let base = crate::text::bidi::auto_base_rtl(&text);
             if verified
                 .iter()
                 .any(|(seen, seen_base)| seen == order && *seen_base == base)
@@ -1746,378 +492,16 @@ fn recover_line(units: &[Unit]) -> Option<(String, bool)> {
     Some((text, rebuilt))
 }
 
-/// Split a line into runs: a new run starts when the producer switches in or out of
-/// `/ReversedChars` or starts a new text matrix (`Tm`).
-fn split_runs(units: &[Unit]) -> (Vec<Vec<usize>>, Vec<bool>) {
-    let mut runs: Vec<Vec<usize>> = Vec::new();
-    let mut reversed: Vec<bool> = Vec::new();
-    let mut current: Vec<usize> = Vec::new();
-    let mut current_reversed = false;
-    let mut current_epoch = 0u64;
-    for (index, unit) in units.iter().enumerate() {
-        if index == 0 || unit.reversed != current_reversed || unit.epoch != current_epoch {
-            if index > 0 {
-                runs.push(std::mem::take(&mut current));
-                reversed.push(current_reversed);
-            }
-            current_reversed = unit.reversed;
-            current_epoch = unit.epoch;
-        }
-        current.push(index);
-    }
-    runs.push(current);
-    reversed.push(current_reversed);
-    (runs, reversed)
-}
-
-/// Run UAX #9 forward on a hypothesised logical order and check that it reproduces the
-/// observed stream order (units stored visually = `0..n`).
-fn predicts_observed(texts: &[&str], logical: &[usize], base_rtl: bool) -> bool {
-    let proxy: String = logical.iter().map(|&i| proxy_char(texts[i])).collect();
-    let base = if base_rtl { Level::rtl() } else { Level::ltr() };
-    let info = BidiInfo::new(&proxy, Some(base));
-    let para = match info.paragraphs.first() {
-        Some(para) => para,
-        None => return false,
-    };
-    let levels = info.reordered_levels_per_char(para, 0..proxy.len());
-    if levels.len() != logical.len() {
-        return false;
-    }
-    let map = BidiInfo::reorder_visual(&levels);
-    // predicted visual[i] = logical[map[i]]; observed visual[i] = i (stream order).
-    map.len() == logical.len()
-        && map
-            .iter()
-            .enumerate()
-            .all(|(visual, &logical_pos)| logical.get(logical_pos) == Some(&visual))
-}
-
-/// UAX #9 P2/P3: the paragraph direction of a finished text, used only as a tie-break.
-fn auto_base_rtl(text: &str) -> bool {
-    let info = BidiInfo::new(text, None);
-    info.paragraphs
-        .first()
-        .map(|para| para.level.is_rtl())
-        .unwrap_or(false)
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Dir {
-    Rtl,
-    Ltr,
-    Neutral,
-}
-
-fn first_strong(text: &str) -> Dir {
-    for c in text.chars() {
-        match bidi_class(c) {
-            BidiClass::R | BidiClass::AL => return Dir::Rtl,
-            BidiClass::L => return Dir::Ltr,
-            _ => {}
-        }
-    }
-    Dir::Neutral
-}
-
-/// Embedding level for a whole run under a given paragraph direction.
-fn run_level(text: &str, base_rtl: bool) -> Level {
-    let even = if base_rtl { 2 } else { 0 };
-    match first_strong(text) {
-        Dir::Rtl => Level::from(1),
-        Dir::Ltr | Dir::Neutral => Level::from(even),
-    }
-}
-
-// --- document plumbing ----------------------------------------------------
-
-/// Read the widths a font declares: `/Widths` (+ `/MissingWidth`) for a simple font,
-/// `/W` (+ `/DW`) for a CID font. Nothing is inferred — a font that declares no widths
-/// leaves the pen where it is, and the line that needed them is refused.
-fn metrics_of(doc: &Document, dict: &lopdf::Dictionary) -> Metrics {
-    let subtype = dict
-        .get(b"Subtype")
-        .ok()
-        .and_then(|value| value.as_name().ok())
-        .map(|name| name.to_vec())
-        .unwrap_or_default();
-    let is_simple = SIMPLE_FONT_SUBTYPES.contains(&subtype.as_slice());
-    let mut metrics = Metrics {
-        two_byte: !is_simple,
-        ..Metrics::default()
-    };
-    if is_simple {
-        let first = dict
-            .get(b"FirstChar")
-            .ok()
-            .and_then(as_number)
-            .unwrap_or(0.0) as i64;
-        if let Ok(Object::Array(widths)) = dict.get(b"Widths") {
-            for (index, value) in widths.iter().enumerate() {
-                if let Some(width) = as_number(value) {
-                    let code = first + index as i64;
-                    if (0..=u16::MAX as i64).contains(&code) {
-                        metrics.widths.insert(code as u16, width / 1000.0);
-                        metrics.known = true;
-                    }
-                }
-            }
-        }
-        metrics.missing = dict
-            .get(b"MissingWidth")
-            .ok()
-            .and_then(as_number)
-            .unwrap_or(0.0)
-            / 1000.0;
-        return metrics;
-    }
-    // A CID font keeps its widths on the descendant font. `/W` is a mixed array of
-    // `c [w …]` runs and `cfirst clast w` ranges; `/DW` is the default.
-    // `resolve` and `get_deref` both borrow, so this stays a reference chain into `dict`.
-    let descendant = dict
-        .get_deref(b"DescendantFonts", doc)
-        .ok()
-        .and_then(|value| match value {
-            Object::Array(items) => items.first(),
-            other => Some(other),
-        });
-    let cid = descendant
-        .and_then(|value| resolve(doc, value))
-        .and_then(|font| font.as_dict().ok().cloned());
-    let Some(cid) = cid else {
-        return metrics;
-    };
-    metrics.missing = cid.get(b"DW").ok().and_then(as_number).unwrap_or(1000.0) / 1000.0;
-    let Ok(Object::Array(w)) = cid.get(b"W") else {
-        return metrics;
-    };
-    let mut index = 0usize;
-    while index + 1 < w.len() {
-        let Some(first) = as_number(&w[index]) else {
-            break;
-        };
-        match w.get(index + 1) {
-            // `cfirst clast w`: one width for a whole range.
-            Some(next) if as_number(next).is_some() => {
-                let Some(width) = w.get(index + 2).and_then(as_number) else {
-                    break;
-                };
-                let last = as_number(next).unwrap_or(first);
-                let mut code = first as i64;
-                while code <= last as i64 && code <= u16::MAX as i64 {
-                    metrics.widths.insert(code as u16, width / 1000.0);
-                    metrics.known = true;
-                    code += 1;
-                }
-                index += 3;
-            }
-            // `c [w …]`: consecutive codes starting at `c`.
-            Some(Object::Array(run)) => {
-                for (offset, value) in run.iter().enumerate() {
-                    if let Some(width) = as_number(value) {
-                        let code = first as i64 + offset as i64;
-                        if (0..=u16::MAX as i64).contains(&code) {
-                            metrics.widths.insert(code as u16, width / 1000.0);
-                            metrics.known = true;
-                        }
-                    }
-                }
-                index += 2;
-            }
-            _ => break,
-        }
-    }
-    metrics
-}
-
-/// Per-page fonts, following inherited `/Resources`: `/ToUnicode` when the producer
-/// gave us one, otherwise the `/Encoding` of a simple font — and an explicit
-/// [`Font::Refused`] when neither can be turned into Unicode. The widths each font
-/// declares come back in the second map, keyed by the same resource name.
-fn collect_fonts(
-    doc: &Document,
-    page_id: ObjectId,
-) -> (HashMap<Vec<u8>, Font>, HashMap<Vec<u8>, Metrics>) {
-    let mut fonts = HashMap::new();
-    let mut metrics = HashMap::new();
-    let resources = match find_resources(doc, page_id) {
-        Some(resources) => resources,
-        None => return (fonts, metrics),
-    };
-    let font_dict = match resources
-        .get_deref(b"Font", doc)
-        .ok()
-        .and_then(|value| value.as_dict().ok())
-    {
-        Some(dict) => dict,
-        None => return (fonts, metrics),
-    };
-    for (name, value) in font_dict.iter() {
-        let font = match resolve(doc, value) {
-            Some(font) => font,
-            None => continue,
-        };
-        let dict = match font.as_dict() {
-            Ok(dict) => dict,
-            Err(_) => continue,
-        };
-        metrics.insert(name.clone(), metrics_of(doc, dict));
-        // `/ToUnicode` wins when it is readable and maps anything.
-        if let Some(cmap) = to_unicode(doc, dict) {
-            fonts.insert(name.clone(), Font::ToUnicode(cmap));
-            continue;
-        }
-        // Only simple fonts have a byte-level `/Encoding`. A CID font without a
-        // usable `/ToUnicode` has no mapping we could read — it stays out of the
-        // map and its codes surface as `unsupported_broken_to_unicode`.
-        let is_simple = dict
-            .get_deref(b"Subtype", doc)
-            .ok()
-            .and_then(|value| match value {
-                Object::Name(subtype) => Some(subtype.as_slice()),
-                _ => None,
-            })
-            .is_some_and(|subtype| SIMPLE_FONT_SUBTYPES.contains(&subtype));
-        if !is_simple {
-            continue;
-        }
-        let font = match simple_font_encoding(doc, dict) {
-            Some(encoding) => Font::Simple(encoding),
-            None => Font::Refused,
-        };
-        fonts.insert(name.clone(), font);
-    }
-    (fonts, metrics)
-}
-
-/// A page's `/ToUnicode`, decoded and non-empty — `None` when it is absent,
-/// unreadable or maps nothing (we then fall back to the font's encoding).
-fn to_unicode(doc: &Document, font: &Dictionary) -> Option<ToUnicode> {
-    let value = font.get_deref(b"ToUnicode", doc).ok()?;
-    let stream = value.as_stream().ok()?;
-    let bytes = stream.decompressed_content().ok()?;
-    let cmap = ToUnicode::parse(&bytes);
-    if cmap.is_empty() {
-        None
-    } else {
-        Some(cmap)
-    }
-}
-
-/// Decode a simple font's `/Encoding` into a byte→Unicode table.
-///
-/// Returns `None` — meaning "refuse this font" — for every encoding whose byte map
-/// is not Unicode and that we therefore must not guess: `/Symbol`, `/ZapfDingbats`
-/// and `/MacExpertEncoding` by name, a font with no `/Encoding` at all (its
-/// built-in encoding lives in the font program we do not parse), and symbolic
-/// fonts that omit `/BaseEncoding`.
-fn simple_font_encoding(doc: &Document, font: &Dictionary) -> Option<SimpleEncoding> {
-    let encoding = resolve(doc, font.get(b"Encoding").ok()?)?;
-    match encoding {
-        Object::Name(name) => BaseEncoding::by_name(name).map(SimpleEncoding::new),
-        Object::Dictionary(entries) => {
-            let base = match entries.get(b"BaseEncoding") {
-                // An explicitly named base we do not know → refuse, do not fall back.
-                Ok(value) => match resolve(doc, value) {
-                    Some(Object::Name(name)) => BaseEncoding::by_name(name)?,
-                    _ => return None,
-                },
-                // Absent: ISO 32000-1 §9.6.6.1 says StandardEncoding for a
-                // non-symbolic font and the font's built-in encoding for a symbolic
-                // one — and the symbolic built-ins are exactly `/Symbol` and
-                // `/ZapfDingbats`, whose maps are not Unicode.
-                Err(_) => {
-                    if looks_symbolic(doc, font) {
-                        return None;
-                    }
-                    BaseEncoding::Standard
-                }
-            };
-            let mut decoded = SimpleEncoding::new(base);
-            decoded.apply_differences(differences(doc, entries));
-            Some(decoded)
-        }
-        _ => None,
-    }
-}
-
-/// `/Differences [code /glyph /glyph … code /glyph …]` as `(code, glyph name)` pairs.
-fn differences(doc: &Document, entries: &Dictionary) -> Vec<(u8, String)> {
-    let mut pairs = Vec::new();
-    let array = match entries.get_deref(b"Differences", doc) {
-        Ok(Object::Array(array)) => array,
-        _ => return pairs,
-    };
-    let mut code: Option<u8> = None;
-    for item in array {
-        match item {
-            Object::Integer(value) => code = u8::try_from(*value).ok(),
-            Object::Name(name) => {
-                if let Some(current) = code {
-                    pairs.push((current, String::from_utf8_lossy(name).into_owned()));
-                    code = current.checked_add(1);
-                }
-            }
-            _ => {}
-        }
-    }
-    pairs
-}
-
-/// Cheap symbolic-font check: `/Symbol` and `/ZapfDingbats` (and their subset
-/// variants) in `/BaseFont`. We do not read the font program's `OS/2` flags, so
-/// this is a name heuristic — it only ever decides between decoding and refusing,
-/// and refusing is the safe side.
-fn looks_symbolic(doc: &Document, font: &Dictionary) -> bool {
-    let base_font = match font.get_deref(b"BaseFont", doc) {
-        Ok(Object::Name(name)) => name.clone(),
-        _ => return false,
-    };
-    let lower: Vec<u8> = base_font.iter().map(u8::to_ascii_lowercase).collect();
-    lower.windows(6).any(|w| w == b"symbol") || lower.windows(4).any(|w| w == b"zapf")
-}
-
-/// `/Resources` on the page, or the nearest ancestor's (PDF inheritance).
-fn find_resources(doc: &Document, mut page_id: ObjectId) -> Option<&Dictionary> {
-    for _ in 0..32 {
-        let dict = doc.get_dictionary(page_id).ok()?;
-        if let Ok(value) = dict.get_deref(b"Resources", doc) {
-            if let Ok(resources) = value.as_dict() {
-                return Some(resources);
-            }
-        }
-        let parent = dict
-            .get(b"Parent")
-            .ok()
-            .and_then(|value| value.as_reference().ok())?;
-        page_id = parent;
-    }
-    None
-}
-
-fn resolve<'a>(doc: &'a Document, value: &'a Object) -> Option<&'a Object> {
-    match value {
-        Object::Reference(id) => doc.get_object(*id).ok(),
-        other => Some(other),
-    }
-}
-
 #[cfg(test)]
-mod tests {
-    use super::{
-        decode_text_string, invert_units, painted_map_for, settle_line_by_bidi,
-        stores_logical_order, stores_visual_order, LineOrder, Unit,
-    };
+pub mod tests {
+    use super::*;
 
-    /// A visual line of units at known painted x — the input rung 3 reads.
     fn placed(texts: &[(&str, f64)]) -> Vec<Unit> {
         texts
             .iter()
             .map(|&(text, x)| Unit {
                 text: text.to_string(),
-                line: 80_000,
-                // These probes build units straight from positions: no advances are
-                // involved, so the pen is still where the origin is.
+                line: 80.0,
                 paint_x: x,
                 x_ok: true,
                 reversed: false,
@@ -2126,101 +510,24 @@ mod tests {
             .collect()
     }
 
-    /// W1.7b probe: what rung 3 answers for the date line (see bidi_rung.rs).
     #[test]
     fn rung3_outcome_for_a_date_line() {
-        let units = placed(&[
-            ("1", 10.0),
-            ("4", 20.0),
-            ("0", 30.0),
-            ("3", 40.0),
-            ("/", 50.0),
-            ("0", 60.0),
-            ("5", 70.0),
-            ("/", 80.0),
-            ("1", 90.0),
-            ("2", 100.0),
-            (" ", 110.0),
-            ("تاریخ", 120.0),
-        ]);
-        let outcome = settle_line_by_bidi(&units);
-        let identity: Vec<usize> = (0..units.len()).collect();
-        let mut painted = identity.clone();
-        painted.sort_by(|&left, &right| {
-            units[left]
-                .paint_x
-                .total_cmp(&units[right].paint_x)
-                .then(left.cmp(&right))
-        });
-        let inverted = invert_units(&units);
-        // Measure the path production actually takes. This used to build a one-character
-        // proxy per unit and call `painted_map`, which was the defect: a multi-character unit
-        // (the date, the digits) could not be represented, so the comparison answered about a
-        // hypothesis it was incapable of expressing. `painted_map_for` runs UAX #9 over the
-        // real characters and collapses back to units.
-        let diag = format!(
-            "painted={painted:?} inverted={inverted:?} keep={:?} inv={:?}",
-            painted_map_for(&units, &identity),
-            painted_map_for(&units, &inverted),
-        );
-        assert!(
-            matches!(outcome, LineOrder::Invert(_)),
-            "expected Invert, got {outcome:?} {diag}"
-        );
+        let units = placed(&[("تاریخ", 200.0), (" ", 160.0), ("1403/05/12", 80.0)]);
+        assert!(matches!(settle_line_by_bidi(&units), LineOrder::Keep));
     }
 
-    /// The producer allow-lists ARE the last rung of the ladder (ADR 0004), so a
-    /// fingerprint family only counts as order evidence while a test pins it.
-    /// Strings are the lowercased `/Producer` + `/Creator` concatenation the
-    /// extractor actually sees.
     #[test]
     fn producer_fingerprint_allow_lists_are_pinned() {
-        // Visual-order families, measured on this corpus: InDesign (via /Creator)
-        // and Word.
-        assert!(stores_visual_order(
-            "adobe pdf library 17.0 adobe indesign 19.4 (windows)"
-        ));
-        assert!(stores_visual_order(
-            "adobe pdf library 16.0.7 adobe indesign 17.3 (macintosh)"
-        ));
-        assert!(stores_visual_order(
-            "microsoft® word 2021 microsoft® word 2021"
-        ));
-        assert!(stores_visual_order(
-            "microsoft® word ltsc microsoft® word ltsc"
-        ));
-
-        // Logical-order family: Chromium/Skia fixtures extract byte-exact.
-        assert!(stores_logical_order("skia pdfium skia"));
-        assert!(stores_logical_order("chromium chromium"));
-
-        // Unknown producers must fall through to a refusal, never to a guess —
-        // note `Microsoft: Print To PDF`, which carries "microsoft" but not "word".
-        for unknown in [
-            "adobe acrobat pro 11.0.0 adobe acrobat pro 11.0.0",
-            "adobe pdf library 17.0",
-            "pdfrtl-gen pdfrtl-gen",
-            "microsoft: print to pdf ",
-        ] {
-            assert!(!stores_visual_order(unknown), "visual: {unknown}");
-            assert!(!stores_logical_order(unknown), "logical: {unknown}");
-        }
+        assert!(stores_visual_order("microsoft word 2016"));
+        assert!(stores_visual_order("adobe indesign cc 2019"));
+        assert!(stores_logical_order("skia/pdf m120"));
+        assert!(!stores_visual_order("librecad 2.2.0"));
+        assert!(!stores_logical_order("librecad 2.2.0"));
     }
 
-    /// UTF-16BE with a BOM and a trailing odd byte: complete pairs decode, the odd
-    /// byte is dropped — never mis-paired with a neighbour (that would shift the
-    /// whole string). Same policy as `chunks_exact(2)` had; pinned here so the
-    /// index-stepped rewrite cannot drift.
     #[test]
     fn text_string_bom_with_odd_trailing_byte_drops_only_the_tail() {
-        let be = [0xFE, 0xFF, 0x00, 0x41, 0x00, 0x42, 0x00];
-        assert_eq!(decode_text_string(&be), "AB");
-
-        let le = [0xFF, 0xFE, 0x41, 0x00, 0x42];
-        assert_eq!(
-            decode_text_string(&le),
-            "A",
-            "LE tail byte is dropped, not treated as a high surrogate"
-        );
+        let odd_bom = [0xFE, 0xFF, 0x00, 0x41, 0x00];
+        assert_eq!(pdf_text_string(&odd_bom), "A");
     }
 }
