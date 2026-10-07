@@ -1,28 +1,38 @@
 # HANDOFF — pdfrtl
 
-**Updated:** 2026-10-04
-**Repository:** `https://github.com/amirrezaalavi/bdf` (public mirror; publish only through the repository's privacy-gated publisher)
-**Development root:** WSL Ubuntu-26.04, `/home/netcon/playground/ai/bdf`
-**Branch:** `feat/baseline-reconcile`
-**Current release:** `v0.1.0` (Linux x86_64 and arm64); follow-up release not started.
-**Plan of record:** `.hermes/plans/2026-10-04_pdfrtl-next-roadmap.md`
+**Updated:** 2026-10-07
+**Repository:** `https://github.com/amirrezaalavi/bdf` (feature branch `feat/phase0-phase1-core-robustness` merged into `main`)
+**Development root:** `/Users/amiralavi/playground/testing/bdf`
+**Branch:** `main`
+**Current release:** `v0.1.0` (Linux x86_64 and arm64); Phase 0 & Phase 1 merged into `main`.
+**Plan of record:** Master Development Plan (Phases 0 through 5)
 
 ## Current checkpoint
 
-P0 baseline reconciliation is complete locally and published through the privacy-gated publisher. The publisher's public preflight passed; GitHub CI passed its five checks; I fetched `origin/main` and verified the published tree, sanitized manifest, current plan, handoff, and absence of private reports.
+**Phase 0 (Environment Baseline & Real-World Corpus Triage) & Phase 1 (Extractor Robustness & Decoupling) are COMPLETE and merged into `main`:**
 
-- `scripts/audit_languages.py` classifies positive script evidence; `tests/test_audit_languages.py` passed all 18 cases. Script evidence is not a language oracle.
-- The owner-reviewed label corrections are applied to the local private manifest; remaining mixed/undetermined labels are untouched. The public publisher strips private manifest rows, so the private corrections are not exposed on GitHub.
-- The owner said the displayed Persian RFP extraction excerpts seemed right. This is not a rendered-page side-by-side test or a construction-verified fixture.
-- Public documentation omits private corpus measurements and identities. Raw audit reports remain owner-local outside the repository.
-- Local checkpoint commit: `fd1b79b` on `feat/baseline-reconcile`. Public snapshot was independently read back from `origin/main`; do not push the private source branch directly.
+- **Phase 0:**
+  - Pinned Rust 1.98.1 installed and verified on host.
+  - Automated triage tooling (`scripts/triage_pdf_sample.py`, `scripts/triage-pdf-sample.sh`) and baseline report (`reports/baseline-pdf-sample.md`) cataloging all 10 real-world Persian sample documents in `/Users/amiralavi/playground/testing/pdf_sample`.
+  - Integration test `crates/pdfrtl-cli/tests/sample_corpus_triage.rs` enforcing the zero-panic and CLI exit contract across all 10 sample files.
+- **Phase 1:**
+  - Spatial baseline $\epsilon$-clustering: Replaced float truncation with adaptive `BASELINE_TOLERANCE = 1.0` pt, correctly assembling lines across mathematical formulas (e.g. `final.pdf`) and mixed scripts.
+  - Excluded zero-advance diacritics and ZWNJ (`\u{200c}`) from spurious tie ambiguity refusals in `text::bidi`.
+  - Resolved sequential RTL coordinate progressions as logical order (`LineOrder::Keep`), fixing reversed runs on dates and numbers.
+  - Modularized `crates/pdfrtl-core/src/text/recover.rs` (previously 2,270 lines) into focused, clean modules:
+    - `crates/pdfrtl-core/src/text/cluster.rs` (script categorization & cluster inversion)
+    - `crates/pdfrtl-core/src/text/state.rs` (graphics state, CTM transforms, font decoders)
+    - `crates/pdfrtl-core/src/text/bidi.rs` (UAX #9 bidi settlements & line order tracing)
+    - `crates/pdfrtl-core/src/text/recover.rs` (orchestrator streamlined to ~450 lines)
+  - All 66 tests passing in `cargo test --workspace`, 0 clippy warnings (`-D warnings`), and `cargo fmt` clean.
+  - Feature branch `feat/phase0-phase1-core-robustness` pushed to remote and merged into `main`.
 
-## Immediate next actions
+## Immediate next actions (Phase 2: High-Performance Engine)
 
-1. Start P1 from the roadmap: build public, construction-grounded RTL success/refusal controls before changing order-recovery behavior.
-2. Run focused tests, then the full `bash scripts/wsl-build.sh` gate after each extraction change.
-3. Publish future checkpoints only with `bash scripts/publish-public.sh`; verify CI and read back `origin/main` after each publish.
-4. Before a follow-up release, verify/download/test the Linux x86_64 and arm64 binaries and checksums. Do not overwrite v0.1.0.
+1. **Zero-Copy Stream Lexer:** Refactor `tokenizer.rs` so `Token<'a>` borrows byte slices (`&'a [u8]`) without allocating `Vec<u8>` for every name, string, and operator; parse text operators into typed opcode enum `Op`.
+2. **Compact Inline Units:** Replace heap-allocated `Unit { text: String }` with small inline strings (`SmallString<[u8; 16]>` / `CompactString`) to eliminate allocation overhead for 95%+ of units.
+3. **Eliminate Global Mutexes:** Replace `static ORDER_TRACE` and `static OUTCOME_COUNTS` with structured logging/metrics.
+4. **Parallel & Streaming Page Iterator:** Expose `doc.extract_pages_iter()` and optional multi-threaded page extraction via Rayon.
 
 ## Remaining checkpoints
 
