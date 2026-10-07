@@ -525,10 +525,20 @@ fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     // The tie is not the blocker anyway: 8 of the 8 refusing Persian files DO declare glyph
     // widths, so their units do not all share one origin and they never reach this branch.
     // docs/problems/0018 records the measurement and the withdrawn approach.
-    if painted
-        .windows(2)
-        .any(|pair| units[pair[0]].paint_x == units[pair[1]].paint_x)
-    {
+    let has_genuine_tie = painted.windows(2).any(|pair| {
+        let left = &units[pair[0]];
+        let right = &units[pair[1]];
+        if left.paint_x == right.paint_x {
+            // A zero-width combining/format mark (like ZWNJ or diacritics) attaches to its base
+            // glyph and naturally shares paint_x; that is not an unmeasured geometric tie.
+            let left_combining = left.text.chars().all(is_combining);
+            let right_combining = right.text.chars().all(is_combining);
+            !(left_combining || right_combining)
+        } else {
+            false
+        }
+    });
+    if has_genuine_tie {
         return LineOrder::Ambiguous;
     }
 
@@ -828,8 +838,8 @@ fn settle_rtl_order(page: &mut PageText, fingerprint: &str, pending: &[usize]) {
 #[derive(Debug, Clone)]
 struct Unit {
     text: String,
-    /// Quantised text-line origin (the matrix `f`), grouping units onto one line.
-    line: i64,
+    /// Baseline vertical position (the matrix `f`), grouping units onto one line.
+    line: f64,
     /// Where the PEN was when this unit was painted (CTM ∘ the advanced text matrix): the
     /// text-line origin plus every advance before it. The UAX #9 rung reads the painted run
     /// order from this — see [`settle_line_by_bidi`] — because a run whose glyphs share one
@@ -1280,7 +1290,7 @@ impl<'a> Walker<'a> {
 
     fn push_unit(&mut self, text: String) {
         let reversed = self.marks.iter().any(|mark| mark.tag == b"ReversedChars");
-        let line = (self.line.f * 1000.0).round() as i64;
+        let line = self.line.f;
         // The pen is tracked in text space and projected exactly once, here. `line` itself
         // is never moved: doing that shifts `line.f` too when the text matrix is skewed,
         // which re-groups the assembler's lines, and a real page shredded into one glyph
@@ -1456,12 +1466,16 @@ fn assemble(walk: Walk) -> Recovered {
         refused_encoding: walk.refused_encoding,
     };
 
-    // Group units onto visual lines by text-line origin, keeping first-appearance order.
+    // Group units onto visual lines by text-line origin with baseline tolerance, keeping appearance order.
     let units = walk.units;
-    let mut keys: Vec<i64> = Vec::new();
+    let mut keys: Vec<f64> = Vec::new();
     let mut groups: Vec<Vec<usize>> = Vec::new();
+    const BASELINE_TOLERANCE: f64 = 1.0;
     for (index, unit) in units.iter().enumerate() {
-        match keys.iter().position(|&key| key == unit.line) {
+        match keys
+            .iter()
+            .position(|&key| (key - unit.line).abs() <= BASELINE_TOLERANCE)
+        {
             Some(at) => groups[at].push(index),
             None => {
                 keys.push(unit.line);
@@ -2115,7 +2129,7 @@ mod tests {
             .iter()
             .map(|&(text, x)| Unit {
                 text: text.to_string(),
-                line: 80_000,
+                line: 80.0,
                 // These probes build units straight from positions: no advances are
                 // involved, so the pen is still where the origin is.
                 paint_x: x,
