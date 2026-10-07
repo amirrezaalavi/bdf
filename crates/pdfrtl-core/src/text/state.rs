@@ -17,12 +17,32 @@ pub struct Unit {
     pub line: f64,
     /// Where the PEN was when this unit was painted (CTM ∘ the advanced text matrix).
     pub paint_x: f64,
+    /// Visual width advance of this unit in PDF coordinate units.
+    pub width: f64,
+    /// The active font size when this unit was painted.
+    pub font_size: f64,
     /// False when the composed matrix does not run left-to-right (`a ≤ 0`).
     pub x_ok: bool,
     /// Inside `/ReversedChars`: the producer stored this run in visual order.
     pub reversed: bool,
     /// Bumped by each `Tm`; a new text matrix starts a new run.
     pub epoch: u64,
+}
+
+impl Unit {
+    #[inline]
+    pub fn bbox(&self) -> [f64; 4] {
+        let x0 = self.paint_x.min(self.paint_x + self.width);
+        let x1 = self.paint_x.max(self.paint_x + self.width);
+        let h = if self.font_size > 0.0 {
+            self.font_size
+        } else {
+            12.0
+        };
+        let y0 = self.line;
+        let y1 = self.line + h;
+        [x0, y0, x1, y1]
+    }
 }
 
 pub struct Walk {
@@ -353,8 +373,15 @@ impl<'a> Walker<'a> {
             .find_map(|mark| mark.actual_text.clone());
         if let Some(text) = actual.filter(|text| !text.is_empty()) {
             self.used_actual_text = true;
-            self.push_unit(&text);
+            let pen_before = self.pen;
             self.advance_over(bytes);
+            let w = ((self.pen - pen_before) * self.h_scale).abs();
+            let w = if w > 0.0 {
+                w
+            } else {
+                self.font_size * 0.5 * text.chars().count() as f64
+            };
+            self.push_unit(&text, w);
             return;
         }
         let fonts = self.fonts;
@@ -368,12 +395,19 @@ impl<'a> Walker<'a> {
         match font {
             Font::Refused => self.refused_encoding = true,
             Font::Simple(encoding) => {
+                let metrics = self.font.as_ref().and_then(|name| self.metrics.get(name));
                 for &code in bytes {
+                    let w = metrics
+                        .and_then(|m| m.width(u16::from(code)))
+                        .unwrap_or(0.0)
+                        * self.font_size
+                        * self.h_scale;
+                    let w = if w > 0.0 { w } else { self.font_size * 0.5 };
                     match encoding.decode(code) {
                         Some(text) => {
                             self.used_encoding = true;
                             if !text.is_empty() {
-                                self.push_unit(&text);
+                                self.push_unit(&text, w);
                             }
                         }
                         None => self.refused_encoding = true,
@@ -382,6 +416,7 @@ impl<'a> Walker<'a> {
                 }
             }
             Font::ToUnicode(cmap) => {
+                let metrics = self.font.as_ref().and_then(|name| self.metrics.get(name));
                 let width = cmap.code_len();
                 if width == 0 || width > 2 {
                     self.undecodable = true;
@@ -401,11 +436,18 @@ impl<'a> Walker<'a> {
                             break;
                         }
                     };
+                    let w = metrics
+                        .and_then(|m| m.width(code))
+                        .or_else(|| metrics.map(|m| m.missing))
+                        .unwrap_or(0.5)
+                        * self.font_size
+                        * self.h_scale;
+                    let w = if w > 0.0 { w } else { self.font_size * 0.5 };
                     match cmap.get(code) {
                         Some(text) => {
                             self.used_to_unicode = true;
                             if !text.is_empty() {
-                                self.push_unit(text);
+                                self.push_unit(text, w);
                             }
                         }
                         None => {
@@ -419,7 +461,7 @@ impl<'a> Walker<'a> {
         }
     }
 
-    pub fn push_unit(&mut self, text: &str) {
+    pub fn push_unit(&mut self, text: &str, width: f64) {
         let reversed = self.marks.iter().any(|mark| mark.tag == b"ReversedChars");
         let line = self.line.f;
         let origin_x = self.ctm.a * self.line.e + self.ctm.c * self.line.f + self.ctm.e;
@@ -429,6 +471,8 @@ impl<'a> Walker<'a> {
             text: UnitText::new(text),
             line,
             paint_x,
+            width: width * x_scale.abs().max(1.0),
+            font_size: self.font_size,
             x_ok: x_scale != 0.0 && x_scale.is_finite() && origin_x.is_finite(),
             reversed,
             epoch: self.epoch,

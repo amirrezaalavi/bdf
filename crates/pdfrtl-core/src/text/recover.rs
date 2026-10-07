@@ -3,6 +3,7 @@
 //! High-level recovery orchestrator connecting content stream walking (`state.rs`),
 //! cluster script analysis (`cluster.rs`), and UAX #9 bidirectional order settlement (`bidi.rs`).
 
+use crate::layout::{group_lines_into_blocks, TextBlock, TextLine, TextSpan};
 use crate::reasons::Reason;
 use crate::text::bidi::{settle_line_by_bidi, LineOrder};
 use crate::text::cluster::{has_rtl_run, visual_to_logical};
@@ -18,7 +19,7 @@ pub use crate::text::bidi::{take_order_trace, take_outcome_counts};
 const MAX_PAGE_CONTENT: usize = 32 * 1024 * 1024;
 
 /// One page's recovered text plus the reasons that justify its order.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct PageText {
     pub page: u32,
     pub text: String,
@@ -28,6 +29,8 @@ pub struct PageText {
     pub unordered_chars: usize,
     /// Lines this page decoded but could not put in reading order, WITH their text.
     pub unproven: Vec<UnprovenLine>,
+    /// Structured spatial blocks of lines and spans with bounding boxes.
+    pub blocks: Vec<TextBlock>,
 }
 
 /// A line whose order could not be established, reported rather than discarded.
@@ -69,6 +72,7 @@ impl PageText {
                 }
             }
             self.text.clear();
+            self.blocks.clear();
         }
     }
 }
@@ -85,6 +89,7 @@ struct Recovered {
     reasons: Vec<Reason>,
     pending: Vec<usize>,
     withheld: Vec<usize>,
+    blocks: Vec<TextBlock>,
 }
 
 fn recover(
@@ -116,6 +121,7 @@ pub fn extract_page(doc: &Document, page_num: u32, page_id: ObjectId, producer: 
                 reasons: recovered.reasons,
                 unordered_chars: 0,
                 unproven: Vec::new(),
+                blocks: recovered.blocks,
             };
             settle_rtl_order(&mut page, producer, &recovered.pending);
             let withheld = std::mem::take(&mut recovered.withheld);
@@ -128,6 +134,7 @@ pub fn extract_page(doc: &Document, page_num: u32, page_id: ObjectId, producer: 
             reasons: vec![Reason::UnsupportedPageContent],
             unordered_chars: 0,
             unproven: Vec::new(),
+            blocks: Vec::new(),
         },
     }
 }
@@ -317,12 +324,14 @@ fn assemble(walk: Walk) -> Recovered {
     }
 
     let mut lines: Vec<String> = Vec::new();
+    let mut layout_lines: Vec<TextLine> = Vec::new();
     let mut pending: Vec<usize> = Vec::new();
     let mut withheld: Vec<usize> = Vec::new();
     for group in &groups {
         let slice: Vec<Unit> = group.iter().map(|&i| units[i].clone()).collect();
         let marked = slice.iter().any(|unit| unit.reversed);
         let undecided = slice.len() > 1 && !marked;
+        let mut ordered_units: Vec<Unit> = slice.clone();
         match recover_line(&slice) {
             Some((mut text, rebuilt)) => {
                 if rebuilt {
@@ -332,6 +341,7 @@ fn assemble(walk: Walk) -> Recovered {
                     match settle_line_by_bidi(&slice) {
                         LineOrder::Keep => flags.bidi_consistent = true,
                         LineOrder::Invert(order) => {
+                            ordered_units = order.iter().map(|&i| slice[i].clone()).collect();
                             text = order.iter().map(|&i| slice[i].text.as_str()).collect();
                             flags.bidi_consistent = true;
                             flags.reconstructed = true;
@@ -354,6 +364,34 @@ fn assemble(walk: Walk) -> Recovered {
                         }
                     }
                 }
+                // Construct layout line and spans
+                let spans: Vec<TextSpan> = ordered_units
+                    .iter()
+                    .map(|u| TextSpan {
+                        text: u.text.to_string(),
+                        bbox: u.bbox(),
+                    })
+                    .collect();
+                let mut line_bbox = [
+                    f64::INFINITY,
+                    f64::INFINITY,
+                    f64::NEG_INFINITY,
+                    f64::NEG_INFINITY,
+                ];
+                for s in &spans {
+                    line_bbox[0] = line_bbox[0].min(s.bbox[0]);
+                    line_bbox[1] = line_bbox[1].min(s.bbox[1]);
+                    line_bbox[2] = line_bbox[2].max(s.bbox[2]);
+                    line_bbox[3] = line_bbox[3].max(s.bbox[3]);
+                }
+                if line_bbox[0].is_infinite() {
+                    line_bbox = [0.0, 0.0, 0.0, 0.0];
+                }
+                layout_lines.push(TextLine {
+                    text: text.clone(),
+                    bbox: line_bbox,
+                    spans,
+                });
                 lines.push(text);
             }
             None => {
@@ -362,11 +400,13 @@ fn assemble(walk: Walk) -> Recovered {
             }
         }
     }
+    let blocks = group_lines_into_blocks(layout_lines);
     Recovered {
         text: lines.join("\n"),
         reasons: build_reasons(flags),
         pending,
         withheld,
+        blocks,
     }
 }
 
@@ -511,6 +551,8 @@ pub mod tests {
                 text: text.into(),
                 line: 80.0,
                 paint_x: x,
+                width: 10.0,
+                font_size: 12.0,
                 x_ok: true,
                 reversed: false,
                 epoch: 0,

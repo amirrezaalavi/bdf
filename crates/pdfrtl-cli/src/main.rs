@@ -45,6 +45,13 @@ struct Cli {
     cmd: Cmd,
 }
 
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+enum OutputFormat {
+    Text,
+    Pages,
+    Blocks,
+}
+
 #[derive(Subcommand)]
 enum Cmd {
     /// Report document facts: pages, producer, encryption, marked content
@@ -54,9 +61,14 @@ enum Cmd {
     },
     /// Recover logical-order text: /ReversedChars runs, /ActualText clusters, ToUnicode
     Extract {
+        /// Output flavor: text, pages (default json envelope), or blocks (hierarchical layout)
+        #[arg(long, value_enum, default_value_t = OutputFormat::Pages)]
+        format: OutputFormat,
         /// Path to a PDF file
         file: PathBuf,
     },
+    /// Start the Model Context Protocol (MCP) JSON-RPC stdio server
+    Mcp,
 }
 
 fn envelope<T: serde::Serialize>(ok: bool, data: &T, reasons: &[pdfrtl_core::Reason]) -> String {
@@ -93,7 +105,14 @@ fn main() -> ExitCode {
                 ExitCode::from(EXIT_IO)
             }
         },
-        Cmd::Extract { file } => run_extract(cli.json, cli.include_unproven, &file),
+        Cmd::Extract { format, file } => run_extract(cli.json, cli.include_unproven, format, &file),
+        Cmd::Mcp => match pdfrtl_mcp::run_stdio() {
+            Ok(()) => ExitCode::from(EXIT_OK),
+            Err(err) => {
+                eprintln!("pdfrtl mcp error: {err:#}");
+                ExitCode::from(EXIT_IO)
+            }
+        },
     }
 }
 
@@ -108,12 +127,17 @@ fn main() -> ExitCode {
 ///
 /// Refusing to guess is a correct outcome, so io errors stay exit 4 and this path
 /// never borrows that code: exit 4 means "the document itself could not be opened".
-fn run_extract(json: bool, include_unproven: bool, file: &std::path::Path) -> ExitCode {
+fn run_extract(
+    json: bool,
+    include_unproven: bool,
+    format: OutputFormat,
+    file: &std::path::Path,
+) -> ExitCode {
     let pages = match pdfrtl_core::extract(file) {
         Ok(pages) => pages,
         Err(err) => {
             let message = format!("{err:#}");
-            if json {
+            if json || format != OutputFormat::Text {
                 let payload = serde_json::json!({ "error": message });
                 println!("{}", envelope(false, &payload, &[]));
             } else {
@@ -154,12 +178,12 @@ fn run_extract(json: bool, include_unproven: bool, file: &std::path::Path) -> Ex
     };
 
     if all_decoded {
-        if json {
+        if json || format == OutputFormat::Pages || format == OutputFormat::Blocks {
             println!(
                 "{}",
                 envelope(
                     true,
-                    &extract_payload(&text, &pages, include_unproven),
+                    &extract_payload(&text, &pages, include_unproven, format),
                     &reasons
                 )
             );
@@ -197,8 +221,8 @@ fn run_extract(json: bool, include_unproven: bool, file: &std::path::Path) -> Ex
         )
     };
 
-    if json {
-        let mut payload = extract_payload(&text, &pages, include_unproven);
+    if json || format == OutputFormat::Pages || format == OutputFormat::Blocks {
+        let mut payload = extract_payload(&text, &pages, include_unproven, format);
         payload["error"] = serde_json::json!(summary);
         println!("{}", envelope(false, &payload, &reasons));
     } else {
@@ -226,7 +250,38 @@ fn extract_payload(
     text: &str,
     pages: &[pdfrtl_core::PageText],
     include_unproven: bool,
+    format: OutputFormat,
 ) -> serde_json::Value {
+    let unordered: usize = pages.iter().map(|page| page.unordered_chars).sum();
+    let unproven_lines: usize = pages.iter().map(|page| page.unproven.len()).sum();
+
+    if format == OutputFormat::Blocks {
+        let page_payload: Vec<serde_json::Value> = pages
+            .iter()
+            .map(|page| {
+                let bbox = pdfrtl_core::PageLayout::compute_bbox(&page.blocks);
+                serde_json::json!({
+                    "page": page.page,
+                    "bbox": bbox,
+                    "ok": page.is_decoded(),
+                    "reasons": page.reasons.iter().map(|r| r.as_str()).collect::<Vec<_>>(),
+                    "unordered_chars": page.unordered_chars,
+                    "blocks": page.blocks,
+                    "unproven": if include_unproven {
+                        serde_json::to_value(&page.unproven).unwrap_or(serde_json::Value::Null)
+                    } else {
+                        serde_json::Value::Array(Vec::new())
+                    },
+                })
+            })
+            .collect();
+        return serde_json::json!({
+            "unordered_chars": unordered,
+            "unproven_lines": unproven_lines,
+            "pages": page_payload,
+        });
+    }
+
     let page_payload: Vec<serde_json::Value> = pages
         .iter()
         .map(|page| {
@@ -245,8 +300,6 @@ fn extract_payload(
             })
         })
         .collect();
-    let unordered: usize = pages.iter().map(|page| page.unordered_chars).sum();
-    let unproven_lines: usize = pages.iter().map(|page| page.unproven.len()).sum();
     serde_json::json!({
         "text": text,
         "unordered_chars": unordered,

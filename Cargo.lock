@@ -621,6 +621,7 @@ dependencies = [
  "anyhow",
  "clap",
  "pdfrtl-core",
+ "pdfrtl-mcp",
  "serde",
  "serde_json",
 ]

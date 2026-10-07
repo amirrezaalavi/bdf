@@ -142,12 +142,27 @@ Level-1 facts. Never decodes text.
 `has_actual_text` and `font_count` are `null` until P1 analyses them — `null` means
 "not analysed", never "no".
 
-### `pdfrtl extract <file>` (P1)
+### `pdfrtl extract <file>`
 
-Planned fields per text run: `page`, `text` (logical order), `reason`, `object_id`,
-`char_range`, `bbox`, `font`. Streaming: `--jsonl` emits one run per line.
+Extracts logical-order text page by page with justifications.
 
-### `pdfrtl search`, `generate`, `edit`, `sign` (P2–P4)
+Options:
+* `--json` — emit the JSON envelope on stdout.
+* `--format <text|pages|blocks>` — choose output shape:
+  * `pages` (default with `--json`): page-level logical text array.
+  * `text`: plain logical text.
+  * `blocks`: hierarchical spatial layout (`PageLayout` -> `TextBlock` -> `TextLine` -> `TextSpan`) with bounding boxes `[x0, y0, x1, y1]`.
+* `--include-unproven` — include raw stored text of lines whose order could not be established.
+
+### `pdfrtl mcp`
+
+Runs the Model Context Protocol (MCP) JSON-RPC 2.0 stdio server, exposing:
+* `inspect` (metadata & producer fingerprint)
+* `extract_text` (proven logical text with reason justifications)
+* `extract_layout` (spatial reading blocks and bounding boxes)
+* `search` (bilingual Arabic/Persian/Hebrew normalising search)
+
+### `pdfrtl search`, `generate`, `edit`, `sign` (P4–P5)
 
 Reserved names; see `.hermes/plans/` for the phased scope. Adding a verb requires: a
 reason code if it touches text, a fixture, and a `docs/CLI.md` section in the same

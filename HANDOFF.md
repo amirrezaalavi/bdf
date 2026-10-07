@@ -9,7 +9,7 @@
 
 ## Current checkpoint
 
-**Phase 0 (Environment Baseline & Real-World Corpus Triage), Phase 1 (Extractor Robustness & Decoupling), and Phase 2 (High-Performance Engine) are COMPLETE and merged into `main`:**
+**Phase 0 (Environment Baseline & Real-World Corpus Triage), Phase 1 (Extractor Robustness & Decoupling), Phase 2 (High-Performance Engine), and Phase 3 (The "Agent-Ready" Contract & MCP Tools) are COMPLETE:**
 
 - **Phase 0:**
   - Pinned Rust 1.98.1 installed and verified on host.
@@ -19,11 +19,7 @@
   - Spatial baseline $\epsilon$-clustering: Replaced float truncation with adaptive `BASELINE_TOLERANCE = 1.0` pt, correctly assembling lines across mathematical formulas (e.g. `final.pdf`) and mixed scripts.
   - Excluded zero-advance diacritics and ZWNJ (`\u{200c}`) from spurious tie ambiguity refusals in `text::bidi`.
   - Resolved sequential RTL coordinate progressions as logical order (`LineOrder::Keep`), fixing reversed runs on dates and numbers.
-  - Modularized `crates/pdfrtl-core/src/text/recover.rs` (previously 2,270 lines) into focused, clean modules:
-    - `crates/pdfrtl-core/src/text/cluster.rs` (script categorization & cluster inversion)
-    - `crates/pdfrtl-core/src/text/state.rs` (graphics state, CTM transforms, font decoders)
-    - `crates/pdfrtl-core/src/text/bidi.rs` (UAX #9 bidi settlements & line order tracing)
-    - `crates/pdfrtl-core/src/text/recover.rs` (orchestrator streamlined to ~450 lines)
+  - Modularized `crates/pdfrtl-core/src/text/recover.rs` into focused, clean modules: `cluster.rs`, `state.rs`, `bidi.rs`, `recover.rs`.
 - **Phase 2:**
   - **`UnitText` Compact Inline Small String:** Implemented 23-byte inline buffer (`[u8; 23]` + `len: u8`) in `crates/pdfrtl-core/src/text/unit_text.rs`, fitting in 32 bytes on 64-bit platforms. Eliminates heap allocations for >99% of text units, CIDs, and ligature clusters while seamlessly dereferencing to `&str`.
   - **Zero-Copy Stream Lexer:** Refactored `tokenizer.rs` so `Token<'a>` and `Value<'a>` borrow byte slices (`Cow<'a, [u8]>`), allocating zero bytes for names, numbers, operators, and unescaped literal strings.
@@ -31,15 +27,20 @@
   - **Bypassed Intermediate Allocations:** Walk loop streams tokens directly into `Walker::op` without allocating intermediate `Vec<Item>` or cloning values.
   - **Lock-Free Thread-Local Tracing:** Replaced global `static ORDER_TRACE` and `static OUTCOME_COUNTS` mutexes with `thread_local!` storage, enabling contention-free concurrent multi-threaded extraction.
   - **Streaming & Parallel Page Extraction:** Added `extract_page` and streaming `extract_pages_iter` iterator in `recover.rs` and `mod.rs`.
-  - **Benchmarking & Validation:** Added `crates/pdfrtl-core/tests/phase2_performance.rs`. Extraction throughput measured across the 10 real-world sample PDFs showed a ~25% reduction in CPU user cycles (0.072s vs 0.094s).
-  - All 78 tests passing in `cargo test --workspace`, 0 clippy warnings (`-D warnings`), and `cargo fmt` clean.
-  - Feature branch `feat/phase0-phase1-core-robustness` merged into `main` and pushed to remote origin.
+  - Extraction throughput measured across the 10 real-world sample PDFs showed a ~25% reduction in CPU user cycles (0.072s vs 0.094s).
+- **Phase 3:**
+  - **Search Normalization Engine:** Integrated bilingual Arabic, Persian, and Hebrew search normalization pipeline (`normalize_for_search`, `normalize_digits`, and `NormalizationStep`) with 23 passing tests covering NFKC decomposition, harakat/tatweel stripping, ZWNJ/ZWJ stripping, letter variant folding, digit variant folding, and lam-alef collapse.
+  - **Spatial Layout Models:** Created `crates/pdfrtl-core/src/layout.rs` defining hierarchical `PageLayout` $\rightarrow$ `TextBlock` $\rightarrow$ `TextLine` $\rightarrow$ `TextSpan` models and `group_lines_into_blocks` segmentation algorithm with spatial bounding boxes `[x0, y0, x1, y1]`.
+  - **Geometry Tracking in State & Recovery:** Enhanced `Unit` in `state.rs` with `width: f64`, `font_size: f64`, and `bbox()`, computing advances and attaching ordered blocks to `Recovered` and `PageText`.
+  - **CLI Layout Flavors:** Added `pdfrtl extract --format <text|pages|blocks>` enabling direct consumption of spatial block JSON by agents.
+  - **MCP Stdio Server:** Productized `crates/pdfrtl-mcp` with full JSON-RPC 2.0 stdio server (`pdfrtl mcp`) supporting `initialize`, `tools/list`, and `tools/call` for `inspect`, `extract_text`, `extract_layout`, and `search`.
+  - All workspace tests passing (81 tests), 0 clippy warnings (`-D warnings`), and clean formatting.
 
-## Immediate next actions (Phase 3: The "Agent-Ready" Contract & MCP Tools)
+## Immediate next actions (Phase 4: Safe Refusal Reduction & Oracle Verification)
 
-1. **Spatial Bounding Boxes in Output:** Extend `PageText` with structured layout models: `TextBlock` $\rightarrow$ `TextLine` $\rightarrow$ `TextSpan`, exposing bounding boxes `[x0, y0, x1, y1]` in PDF coordinate space.
-2. **CLI Output Flavors:** Add `pdfrtl extract --format blocks` (structured hierarchical JSON for agents) alongside standard `--json`.
-3. **Productize the MCP Server (`crates/pdfrtl-mcp`):** Implement live MCP tools over stdio (`inspect`, `extract_text`, `extract_layout`, `search`).
+1. **Short-Line Geometry Oracle Extensions:** Systematically expand candidate evaluation for unresolved Persian lines against the combinatorial oracle without sacrificing proof.
+2. **Public Correctness Controls:** Add fixtures for mixed Persian/Latin/dates and verify across multi-column complex layouts.
+3. **Benchmarking & Triage Regressions:** Maintain 0-panic and strict proven-only invariant across external corpora.
 
 ## Remaining checkpoints
 
