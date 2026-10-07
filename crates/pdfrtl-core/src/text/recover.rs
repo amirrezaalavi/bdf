@@ -9,7 +9,7 @@ use crate::text::cluster::{has_rtl_run, visual_to_logical};
 use crate::text::encoding::Font;
 use crate::text::state::{collect_fonts, walk, Metrics, Unit, Walk};
 use anyhow::Result;
-use lopdf::Document;
+use lopdf::{Document, ObjectId};
 use std::collections::HashMap;
 
 pub use crate::text::bidi::{take_order_trace, take_outcome_counts};
@@ -100,42 +100,50 @@ pub fn stream_units(stream: &[u8], fonts: &HashMap<Vec<u8>, Font>) -> Vec<String
     walk(stream, fonts, &HashMap::new())
         .units
         .into_iter()
-        .map(|unit| unit.text)
+        .map(|unit| unit.text.to_string())
         .collect()
+}
+
+/// Extract one page of a loaded document by its page number and object ID.
+pub fn extract_page(doc: &Document, page_num: u32, page_id: ObjectId, producer: &str) -> PageText {
+    match doc.get_page_content_with_limit(page_id, MAX_PAGE_CONTENT) {
+        Ok(content) => {
+            let (fonts, metrics) = collect_fonts(doc, page_id);
+            let mut recovered = recover(&content, &fonts, &metrics);
+            let mut page = PageText {
+                page: page_num,
+                text: recovered.text,
+                reasons: recovered.reasons,
+                unordered_chars: 0,
+                unproven: Vec::new(),
+            };
+            settle_rtl_order(&mut page, producer, &recovered.pending);
+            let withheld = std::mem::take(&mut recovered.withheld);
+            page.withdraw_unordered(withheld);
+            page
+        }
+        Err(_) => PageText {
+            page: page_num,
+            text: String::new(),
+            reasons: vec![Reason::UnsupportedPageContent],
+            unordered_chars: 0,
+            unproven: Vec::new(),
+        },
+    }
+}
+
+/// An iterator yielding [`PageText`] page-by-page without buffering all pages in memory.
+pub fn extract_pages_iter<'a>(doc: &'a Document) -> impl Iterator<Item = PageText> + 'a {
+    let producer = producer_fingerprint(doc);
+    let pages = doc.get_pages();
+    pages
+        .into_iter()
+        .map(move |(page_num, page_id)| extract_page(doc, page_num, page_id, &producer))
 }
 
 /// Recover every page of a loaded document, in page order.
 pub fn extract_document(doc: &Document) -> Result<Vec<PageText>> {
-    let mut pages = Vec::new();
-    let producer = producer_fingerprint(doc);
-    for (page_num, page_id) in doc.get_pages() {
-        let page = match doc.get_page_content_with_limit(page_id, MAX_PAGE_CONTENT) {
-            Ok(content) => {
-                let (fonts, metrics) = collect_fonts(doc, page_id);
-                let mut recovered = recover(&content, &fonts, &metrics);
-                let mut page = PageText {
-                    page: page_num,
-                    text: recovered.text,
-                    reasons: recovered.reasons,
-                    unordered_chars: 0,
-                    unproven: Vec::new(),
-                };
-                settle_rtl_order(&mut page, &producer, &recovered.pending);
-                let withheld = std::mem::take(&mut recovered.withheld);
-                page.withdraw_unordered(withheld);
-                page
-            }
-            Err(_) => PageText {
-                page: page_num,
-                text: String::new(),
-                reasons: vec![Reason::UnsupportedPageContent],
-                unordered_chars: 0,
-                unproven: Vec::new(),
-            },
-        };
-        pages.push(page);
-    }
-    Ok(pages)
+    Ok(extract_pages_iter(doc).collect())
 }
 
 /// The document's `/Producer` and `/Creator`, lowercased.
@@ -500,7 +508,7 @@ pub mod tests {
         texts
             .iter()
             .map(|&(text, x)| Unit {
-                text: text.to_string(),
+                text: text.into(),
                 line: 80.0,
                 paint_x: x,
                 x_ok: true,
