@@ -120,7 +120,7 @@ pub fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     let stored_is_painted = painted == identity;
     let is_rtl_progression = count >= 2
         && units.windows(2).all(|w| w[0].paint_x >= w[1].paint_x)
-        && units.first().unwrap().paint_x > units.last().unwrap().paint_x
+        && units[0].paint_x > units[count - 1].paint_x
         && units.iter().any(|u| u.text.chars().any(is_rtl));
 
     let keeps = predicts_painted(units, &identity, &painted) || is_rtl_progression;

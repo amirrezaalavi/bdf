@@ -602,7 +602,10 @@ mod tests {
         let stream = b"[ (item1) 42 /Item2 ]";
         let tokens = tokenize(stream);
         let mut i = 0;
-        let val = parse_value(&tokens, &mut i).expect("parsed array");
+        let val = match parse_value(&tokens, &mut i) {
+            Some(v) => v,
+            None => panic!("parsed array was None"),
+        };
         match val {
             Value::Arr(items) => {
                 assert_eq!(items.len(), 3);
