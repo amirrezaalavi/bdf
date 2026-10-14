@@ -25,3 +25,4 @@ reports/verify/
 
 # Release binaries are build output, never committed (scripts/build-release.sh)
 dist/
+/oracles/

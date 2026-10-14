@@ -111,10 +111,6 @@ pub fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
             false
         }
     });
-    if has_genuine_tie {
-        return LineOrder::Ambiguous;
-    }
-
     let identity: Vec<usize> = (0..count).collect();
     let inverted = invert_units(units);
     let stored_is_painted = painted == identity;
@@ -127,24 +123,43 @@ pub fn settle_line_by_bidi(units: &[Unit]) -> LineOrder {
     let inverts =
         stored_is_painted && inverted != identity && predicts_painted(units, &inverted, &painted);
 
+    let initial = if has_genuine_tie {
+        LineOrder::Ambiguous
+    } else {
+        match (keeps, inverts) {
+            (true, false) => LineOrder::Keep,
+            (false, true) => LineOrder::Invert(inverted),
+            (true, true) => LineOrder::Ambiguous,
+            (false, false) => LineOrder::Unexplained,
+        }
+    };
+
+    let outcome = match initial {
+        LineOrder::Keep | LineOrder::Invert(_) => initial,
+        LineOrder::Ambiguous | LineOrder::Unexplained => {
+            if count <= crate::text::oracle::MAX_ENUMERABLE_UNITS {
+                let resolved = solve_short_line_by_geometry(units);
+                match resolved {
+                    LineOrder::Keep | LineOrder::Invert(_) => resolved,
+                    LineOrder::Ambiguous => LineOrder::Ambiguous,
+                    LineOrder::Unexplained => initial,
+                }
+            } else {
+                initial
+            }
+        }
+    };
+
     if std::env::var_os("PDFRTL_TRACE_ORDER").is_some() {
-        record_pattern(if keeps && inverts {
-            "both_fit"
-        } else if keeps {
-            "stored_only"
-        } else if inverts {
-            "reversed_only"
-        } else {
-            "neither"
+        record_pattern(match &outcome {
+            LineOrder::Keep => "stored_only",
+            LineOrder::Invert(_) => "reversed_only",
+            LineOrder::Ambiguous => "both_fit",
+            LineOrder::Unexplained => "neither",
         });
     }
 
-    match (keeps, inverts) {
-        (true, false) => LineOrder::Keep,
-        (false, true) => LineOrder::Invert(inverted),
-        (true, true) => LineOrder::Ambiguous,
-        (false, false) => LineOrder::Unexplained,
-    }
+    outcome
 }
 
 pub fn predicts_painted(units: &[Unit], logical: &[usize], painted: &[usize]) -> bool {
@@ -304,7 +319,176 @@ pub fn run_level(text: &str, base_rtl: bool) -> Level {
     let even = if base_rtl { 2 } else { 0 };
     match first_strong(text) {
         Dir::Rtl => Level::from(1),
-        Dir::Ltr | Dir::Neutral => Level::from(even),
+        Dir::Ltr => Level::from(even),
+        Dir::Neutral => {
+            if text.chars().any(crate::text::cluster::is_bidi_number) {
+                Level::from(even)
+            } else if base_rtl {
+                Level::from(1)
+            } else {
+                Level::from(0)
+            }
+        }
+    }
+}
+
+pub fn predicted_visual_runs(units: &[Unit], logical: &[usize]) -> Option<Vec<usize>> {
+    let count = logical.len();
+    if count < 2 {
+        return None;
+    }
+    let full_text: String = logical.iter().map(|&i| units[i].text.as_str()).collect();
+    let base_rtl = auto_base_rtl(&full_text);
+
+    let levels: Vec<Level> = logical
+        .iter()
+        .map(|&i| run_level(&units[i].text, base_rtl))
+        .collect();
+
+    let visual = BidiInfo::reorder_visual(&levels);
+    if visual.len() != count {
+        return None;
+    }
+    Some(visual.into_iter().map(|logical_pos| logical[logical_pos]).collect())
+}
+
+fn permute_helper(items: &mut Vec<usize>, at: usize, visit: &mut impl FnMut(&[usize])) {
+    if at == items.len() {
+        visit(items);
+        return;
+    }
+    for i in at..items.len() {
+        items.swap(at, i);
+        permute_helper(items, at + 1, visit);
+        items.swap(at, i);
+    }
+}
+
+pub fn predicted_visual_order(units: &[Unit], candidate: &[usize]) -> Option<Vec<usize>> {
+    if let Some(v) = painted_map_for(units, candidate) {
+        return Some(v);
+    }
+    predicted_visual_runs(units, candidate)
+}
+
+pub fn permutation_matches_geometry(units: &[Unit], candidate: &[usize], tolerance: f64) -> bool {
+    let visual = match predicted_visual_order(units, candidate) {
+        Some(v) => v,
+        None => return false,
+    };
+
+    if visual.len() != units.len() {
+        return false;
+    }
+
+    // Geometry check: visual order must be left-to-right on the page within tolerance.
+    for window in visual.windows(2) {
+        let (left_idx, right_idx) = (window[0], window[1]);
+        let u_l = &units[left_idx];
+        let u_r = &units[right_idx];
+
+        // Pen positions: u_l must not be to the right of u_r
+        if u_l.paint_x > u_r.paint_x + tolerance {
+            return false;
+        }
+
+        // Bounding boxes: left edge of u_l must not be to the right of left edge of u_r
+        let bbox_l = u_l.bbox();
+        let bbox_r = u_r.bbox();
+        if bbox_l[0] > bbox_r[0] + tolerance {
+            return false;
+        }
+
+        // Horizontal centers: center of u_l must not be to the right of center of u_r
+        let center_l = (bbox_l[0] + bbox_l[2]) * 0.5;
+        let center_r = (bbox_r[0] + bbox_r[2]) * 0.5;
+        if center_l > center_r + tolerance {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn solve_short_line_by_geometry(units: &[Unit]) -> LineOrder {
+    let count = units.len();
+    if count < 2
+        || count > crate::text::oracle::MAX_ENUMERABLE_UNITS
+        || units.iter().any(|u| !u.x_ok)
+    {
+        return LineOrder::Unexplained;
+    }
+
+    let has_strong_rtl = units.iter().any(|u| {
+        u.text.chars().any(|c| {
+            matches!(
+                unicode_bidi::bidi_class(c),
+                unicode_bidi::BidiClass::R | unicode_bidi::BidiClass::AL
+            )
+        })
+    });
+    let has_strong_ltr = units.iter().any(|u| {
+        u.text
+            .chars()
+            .any(|c| matches!(unicode_bidi::bidi_class(c), unicode_bidi::BidiClass::L))
+    });
+
+    if !has_strong_rtl && !has_strong_ltr {
+        return LineOrder::Ambiguous;
+    }
+
+    // Pure strong RTL lines without numbers or neutrals can only be stored or inverted under UAX #9
+    let has_non_strong_rtl = units.iter().any(|u| {
+        u.text.chars().any(|c| {
+            !matches!(
+                unicode_bidi::bidi_class(c),
+                unicode_bidi::BidiClass::R | unicode_bidi::BidiClass::AL
+            )
+        })
+    });
+
+    let font_size = units.iter().map(|u| u.font_size).fold(0.0f64, f64::max);
+    let relaxed_tol = if font_size > 0.0 {
+        (font_size * 0.15).max(1.0)
+    } else {
+        1.5
+    };
+
+    let mut current_perm: Vec<usize> = (0..count).collect();
+    let mut matching_orders: Vec<Vec<usize>> = Vec::new();
+
+    for tol in [1e-6, relaxed_tol] {
+        matching_orders.clear();
+        permute_helper(&mut current_perm, 0, &mut |candidate| {
+            if !has_non_strong_rtl {
+                let identity: Vec<usize> = (0..count).collect();
+                let mut rev = identity.clone();
+                rev.reverse();
+                if candidate != identity.as_slice() && candidate != rev.as_slice() {
+                    return;
+                }
+            }
+            if permutation_matches_geometry(units, candidate, tol) {
+                matching_orders.push(candidate.to_vec());
+            }
+        });
+
+        if !matching_orders.is_empty() {
+            break;
+        }
+    }
+
+    match matching_orders.len() {
+        1 => {
+            let proven = matching_orders.pop().unwrap();
+            let identity: Vec<usize> = (0..count).collect();
+            if proven == identity {
+                LineOrder::Keep
+            } else {
+                LineOrder::Invert(proven)
+            }
+        }
+        n if n >= 2 => LineOrder::Ambiguous,
+        _ => LineOrder::Unexplained,
     }
 }
 

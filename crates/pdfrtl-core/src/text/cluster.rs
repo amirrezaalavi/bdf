@@ -1,6 +1,29 @@
 //! Script classification and cluster inversion for visual/logical RTL runs.
 
 use super::state::Unit;
+use unicode_bidi::{bidi_class, BidiClass};
+
+pub fn is_strong_rtl(ch: char) -> bool {
+    matches!(bidi_class(ch), BidiClass::R | BidiClass::AL)
+}
+
+pub fn is_bidi_number(ch: char) -> bool {
+    matches!(bidi_class(ch), BidiClass::EN | BidiClass::AN)
+}
+
+pub fn is_bidi_neutral(ch: char) -> bool {
+    matches!(
+        bidi_class(ch),
+        BidiClass::CS
+            | BidiClass::ES
+            | BidiClass::ET
+            | BidiClass::ON
+            | BidiClass::WS
+            | BidiClass::BN
+            | BidiClass::S
+            | BidiClass::B
+    )
+}
 
 pub fn is_rtl(ch: char) -> bool {
     let cp = ch as u32;
@@ -12,7 +35,7 @@ pub fn is_rtl(ch: char) -> bool {
             | 0x08A0..=0x08FF
             | 0xFB50..=0xFDFF
             | 0xFE70..=0xFEFF
-    )
+    ) && !is_bidi_number(ch)
 }
 
 /// Combining marks and bidi/format controls that must stay glued to their base
@@ -50,9 +73,11 @@ pub fn is_combining(ch: char) -> bool {
 }
 
 /// A character that can *start* an embedded left-to-right run: Latin/Greek
-/// letters and digits (never a right-to-left one).
+/// letters and digits (both European and Arabic/Persian numbers).
 pub fn ltr_start(ch: char) -> bool {
-    ch.is_alphanumeric() && !is_rtl(ch) && (ch as u32) < 0x0900
+    is_bidi_number(ch)
+        || matches!(bidi_class(ch), BidiClass::L)
+        || (ch.is_alphanumeric() && !is_strong_rtl(ch))
 }
 
 /// A unit whose text begins with a combining/format character: it belongs to the
@@ -61,12 +86,40 @@ pub fn starts_combining(text: &str) -> bool {
     text.chars().next().is_some_and(is_combining)
 }
 
-/// Characters allowed *inside* an LTR run: the ASCII punctuation that occurs in
-/// Latin tokens (URLs, decimals, dates).
+/// Characters allowed *inside* an LTR or numeric run: punctuation that occurs in
+/// Latin tokens, dates, and numbers.
 pub fn ltr_run_char(ch: char) -> bool {
     matches!(
         ch,
-        '.' | ',' | ':' | '/' | '-' | '_' | '@' | '#' | '%' | '?' | '!' | '&' | '=' | '+' | '\''
+        '.' | ','
+            | ':'
+            | '/'
+            | '-'
+            | '_'
+            | '@'
+            | '#'
+            | '%'
+            | '?'
+            | '!'
+            | '&'
+            | '='
+            | '+'
+            | '\''
+            | '"'
+            | '('
+            | ')'
+            | '['
+            | ']'
+            | '،'
+            | '؛'
+            | '؟'
+            | '٪'
+            | '٫'
+            | '٬'
+            | '۔'
+    ) || matches!(
+        bidi_class(ch),
+        BidiClass::CS | BidiClass::ES | BidiClass::ET
     ) || ltr_start(ch)
 }
 
@@ -119,6 +172,14 @@ pub fn visual_to_logical(line: &str) -> String {
                     || (is_space(&clusters[end]) && ltr_after_space(&clusters, end))
                 {
                     end += 1;
+                } else {
+                    break;
+                }
+            }
+            while end > k + 1 {
+                let last = clusters[end - 1].first().copied();
+                if last.is_some_and(|c| is_bidi_neutral(c) && !matches!(c, '%' | '٪')) {
+                    end -= 1;
                 } else {
                     break;
                 }
@@ -178,6 +239,14 @@ pub fn invert_units(units: &[Unit]) -> Vec<usize> {
                     || (is_space(&clusters[end]) && ltr_after_space(&clusters, end))
                 {
                     end += 1;
+                } else {
+                    break;
+                }
+            }
+            while end > at + 1 {
+                let last = first_char(&clusters[end - 1]);
+                if last.is_some_and(|c| is_bidi_neutral(c) && !matches!(c, '%' | '٪')) {
+                    end -= 1;
                 } else {
                     break;
                 }
